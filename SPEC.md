@@ -446,7 +446,7 @@ POST /repos/{owner}/{repo}/issues/{issue}/assignees
 - **送ったプロンプトが届いたかを確かめる**：`herdr agent prompt` が成功しても、送信済みとはみなさない。送った後、エージェントが `working` になる（または出力が変わる）のを一定時間（例：30 秒）待って確かめ、確かめられてから effects に記録する
   - `idle` のまま変わらないとき：入力欄に貼られたまま Enter が届いていない可能性がある。`herdr agent read` で入力欄にプロンプトが残っているかを確かめ、残っていれば Enter を 1 回だけ送って、もう一度確かめる。入力欄が空なのに `idle` のまま、または Enter の後も変わらないときは、送り直さずに `launch_recovery`（または `operation_recovery`）の gate にする（二重送信を避ける）
   - 起動直後の初回プロンプト・承認後の続き（`on_approve.prompt`）・result.json の再依頼など、エージェントにプロンプトを送るすべての箇所で同じ確認をする
-  - 実例：#2261 の初回プロンプトが入力欄に貼られたまま Enter が届かず、エージェントは idle で止まっていたが、state.json の effects には `repro:1:initial-prompt` が記録され、status は running のままだった
+  - 起きた例：初回プロンプトが入力欄に貼られたまま Enter が届かず、エージェントは idle で止まっていたが、state.json の effects には `repro:1:initial-prompt` が記録され、status は running のままだった
 - **step 完了時の agent 終了**：所有 agent を終了し、タブを残す。承認後の継続・質問待ちでは終了しない。`runner.close_on_complete`（既定 true）で制御する。
 
 ## 10.3 出力の見た目
@@ -457,12 +457,12 @@ flow の全コマンドの、人が読む出力を同じ見た目に揃える（
 - 表：`status`（一覧と 1 件の詳細）、`tick` / `tick --dry-run` の結果、`lock list`、`logs`。列の幅は表示幅で揃え（全角を 2 として数える）、長い値は端末の幅に合わせて折り返すか省略する
 - 色の意味を全コマンドで揃える：承認待ち（`waiting_gate`）は黄、`running` は青、`failed`・エラーは赤、`done`・成功は緑、`stopped`・対象外は灰。dry-run の `MUTATION SKIPPED` などの補足は薄く
 - 色は端末（TTY）のときだけ付ける。`NO_COLOR` があれば付けない（picocolors の判定に従う）。パイプやファイルへの出力・テストでは ANSI を含めない
-- `approve` / `reject` / `retry` / `stop` / `lock` は、何をしたかを 1 行で出す（例：`✔ #3953 を対象外にしました（理由: ...）`）。承認待ちの通知は、Issue・gate・確かめるもの・承認のコマンドを揃った形で出す
+- `approve` / `reject` / `retry` / `stop` / `lock` は、何をしたかを 1 行で出す（例：`✔ #123 を対象外にしました（理由: ...）`）。承認待ちの通知は、Issue・gate・確かめるもの・承認のコマンドを揃った形で出す
 - 時刻は日本時間（WORKFLOW.md の設定）で、`YYYY-MM-DD HH:mm:ss` の形に揃える
 - 表は行の間に区切り線を入れない（見出しの下だけ）。行数を Issue の数 + 見出しに近づける
 - 経過時間は秒ではなく、人が読める形にする（例：`45秒`、`12分`、`3時間5分`、`1日21時間`）。`--json` は秒のまま
 - `logs` は枠のある表にしない。1 件ずつ、見出しの行（時刻・Issue・step・イベント）と、その下に字下げした内容を出す。内容は切らずに端末の幅で折り返す
-- 長いパスを切るときは、前を省いて後ろ（ファイル名・ディレクトリ名）を残す（例：`…/worktrees/example-app/flow-repro-2261`）。成果物のパスは Issue のディレクトリからの相対パスで出す
+- 長いパスを切るときは、前を省いて後ろ（ファイル名・ディレクトリ名）を残す（例：`…/worktrees/example-app/flow-repro-123`）。成果物のパスは Issue のディレクトリからの相対パスで出す
 - `status` の並び順は段階の順にする。段階の順は WORKFLOW.md の `stage_store.order`（段階の名前の配列）で決め、コードに書かない。example-app では `.dev/issues` の並び（`mise issue:dir` のディレクトリ名の番号の順）と同じ `[対象外, 完了, 検証済, 検証NG, 修正中, Issue更新済, 再現済, 未着手]`。同じ段階の中は Issue 番号の小さい順。`order` に無い段階・段階の無い Issue は最後。`--json` も同じ順にする
 
 ## 10.4 同梱のコマンドとスキル

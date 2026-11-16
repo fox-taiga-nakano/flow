@@ -3,6 +3,13 @@
 Issue が自分にアサインされてから、PR がマージされて worktree を片付けるまでの流れ。
 設定は対象リポジトリの `.flow/WORKFLOW.md`、仕様はこのリポジトリの [SPEC.md](SPEC.md)。
 
+> このガイドは、[導入時の設定](docs/integration.md) の example-app での使用例に沿った運用例です。
+> 次のものは example-app の設定で、flow には組み込まれていません。利用先では、`WORKFLOW.md` と手元のツールに合わせて読み替えてください。
+>
+> - 段階の名前（未着手・再現済・Issue更新済・修正中・検証済・検証NG・完了・対象外）と、Issue ディレクトリ `.dev/issues`
+> - スキル（`issue-refine`・`pr-verify`・`pr-finish`）と mise タスク（`mise pw:repro` など）
+> - 成果物（`repro.md`・`scripts/repro.sh`・`evidence/`）と base ブランチの決め方（`origin` の一番新しい `delivery/*`）
+
 ## 前提
 
 - herdr の中で、リポジトリのルートのペインから実行する（エージェントは herdr のペインで起動される）
