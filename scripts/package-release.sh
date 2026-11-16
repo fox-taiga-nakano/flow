@@ -18,7 +18,7 @@ trap 'rm -rf "$stage"' EXIT
 mkdir -p "$stage/bin" "$stage/lib" "$stage/templates" "$(dirname "$output")"
 cp -R "$root/tools" "$root/skills" "$stage/"
 cp "$root/dist/main.mjs" "$stage/lib/main.mjs"
-cp "$root/LICENSE" "$stage/"
+cp -R "$root/LICENSE" "$root/README.md" "$root/docs" "$stage/"
 cp "$root/templates/WORKFLOW.md" "$root/templates/mise.toml" "$root/templates/gitignore" "$root/templates/worktree.json" "$stage/templates/"
 (cd "$root" && pnpm licenses list --prod --json | node scripts/release-licenses.mjs) > "$stage/THIRD_PARTY_LICENSES.txt"
 cat > "$stage/bin/flow" <<'SCRIPT'
@@ -28,5 +28,5 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 exec node "$root/lib/main.mjs" "$@"
 SCRIPT
 chmod 755 "$stage/bin/flow"
-tar -czf "$output" -C "$stage" LICENSE bin lib skills templates tools THIRD_PARTY_LICENSES.txt
+tar -czf "$output" -C "$stage" LICENSE README.md bin docs lib skills templates tools THIRD_PARTY_LICENSES.txt
 printf 'Created %s\n' "$output"

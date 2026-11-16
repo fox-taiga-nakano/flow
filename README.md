@@ -189,7 +189,7 @@ steps:
 `.claude/skills/flow-repro/SKILL.md` に従い、Issue #{issue.number} を再現してください。
 ```
 
-- 全体の例は [templates/WORKFLOW.md](templates/WORKFLOW.md)、各項目は [仕様書](SPEC.md) にあります
+- 全体の例は [templates/WORKFLOW.md](templates/WORKFLOW.md)、各項目は [仕様書](docs/spec.md) にあります
 - Issue のディレクトリと worktree は同梱の `flow issue` / `flow wt` で扱います。別の方法で管理するなら、`WORKFLOW.md` のコマンドを差し替えます
 - worktree の設定 `.herdr/worktree.json` は flow 以外のツールとも共有できます（[templates/worktree.json](templates/worktree.json)）
 
@@ -223,9 +223,9 @@ flow は、自分が所有すると記録した worktree・エージェントだ
 
 |                                     |                                        |
 | ----------------------------------- | -------------------------------------- |
-| [仕様書](SPEC.md)                   | 設定の形式と動作の詳細                 |
+| [仕様書](docs/spec.md)              | 設定の形式と動作の詳細                 |
 | [導入時の設定](docs/integration.md) | 必須の項目と、設定の置き場所の考え方   |
-| [ガイド](GUIDE.md)                  | Issue のアサインからマージまでの運用例 |
+| [ガイド](docs/guide.md)             | Issue のアサインからマージまでの運用例 |
 
 ## 開発
 

@@ -7,7 +7,7 @@ description: メインのエージェントとしてflowを管理する。メイ
 
 メインのエージェントがflowの進行を見守り、ユーザーがgateの判断と質問への回答をする。ユーザーはメインのエージェントとの会話だけを見ていればよく、Issueを並列に進めても各agentのペインを回らなくて済むようにする。運用は「メインのペインの横のペインで `flow run`」「メインが `flow watch` とそのペインの出力で監視」「成果物を読んで要点・懸念を示してから承認・回答を求める」。新しいセッションでも、この運用を聞き直さない。
 
-設定はプロジェクトの `.flow/WORKFLOW.md` を正とし、このスキルの説明より設定を優先する（gate名・段階・step・成果物・並列数・autoのgate）。flowの使い方は flow の GUIDE.md・README.md・SPEC.md（flowのインストール先にある）と `flow help <command>` で確かめる。
+設定はプロジェクトの `.flow/WORKFLOW.md` を正とし、このスキルの説明より設定を優先する（gate名・段階・step・成果物・並列数・autoのgate）。flowの使い方は flow の README.md・docs/guide.md・docs/spec.md（flowのインストール先にある）と `flow help <command>` で確かめる。
 
 `flow` はプロジェクトで決めた方法で実行する（PATHにある `flow`、またはmiseのタスクなら `mise exec -- flow`）。以下では `flow` と書く。
 

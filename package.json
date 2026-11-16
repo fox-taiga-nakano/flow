@@ -7,11 +7,10 @@
     "flow": "dist/main.mjs"
   },
   "files": [
-    "GUIDE.md",
     "README.md",
-    "SPEC.md",
     "bin",
     "dist",
+    "docs",
     "skills",
     "templates",
     "tools"

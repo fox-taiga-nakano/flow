@@ -56,7 +56,7 @@ Issue ディレクトリと worktree のコマンドは flow に同梱してい�
 
 ## WORKFLOW.md の必須設定
 
-`.flow/WORKFLOW.md` は YAML front matter と `## prompt: <名前>` の本文で構成します。主な検証項目は次のとおりです。細かな形式と利用可能な変数は [仕様書](../SPEC.md) を参照してください。
+`.flow/WORKFLOW.md` は YAML front matter と `## prompt: <名前>` の本文で構成します。主な検証項目は次のとおりです。細かな形式と利用可能な変数は [仕様書](spec.md) を参照してください。
 
 [WORKFLOW.md テンプレート](../templates/WORKFLOW.md)は必須項目を含む構成例です。`REPLACE` を含む値、未設定コマンド、プロンプトを変更してください。未設定コマンドはエラーで終了します。テンプレートを変更せずに `validate` が通っても、利用できる設定であることは意味しません。
 
