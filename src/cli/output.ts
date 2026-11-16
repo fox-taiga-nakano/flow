@@ -3,11 +3,11 @@ import { inspect, stripVTControlCharacters } from "node:util";
 import pc from "picocolors";
 import stringWidth from "string-width";
 
-import type { Event } from "./core/events.js";
-import type { HeldLock, Waiter } from "./core/locks.js";
-import type { StatusRow } from "./core/orchestrator.js";
+import type { Event } from "../core/events.js";
+import type { HeldLock, Waiter } from "../core/locks.js";
+import type { StatusRow } from "../core/orchestrator.js";
+import type { Notifier, State } from "../core/types.js";
 import { type IssueLocation, elapsedTime, pathTail, relativeArtifacts, wrapText } from "./display-text.js";
-import type { Notifier, State } from "./types.js";
 
 export type Tone = "pending" | "active" | "error" | "success" | "inactive" | "muted";
 export type Cell =

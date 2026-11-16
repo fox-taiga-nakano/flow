@@ -4,16 +4,16 @@ import { stripVTControlCharacters } from "node:util";
 import stringWidth from "string-width";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { createProgram } from "../src/cli/commands.js";
-import { type CliServices, showStatus, table } from "../src/cli/runtime.js";
-import type { Event } from "../src/core/events.js";
-import { atomic } from "../src/core/files.js";
-import type { StatusRow } from "../src/core/orchestrator.js";
-import { orderStages } from "../src/core/stage-order.js";
-import { parseWorkflow } from "../src/core/workflow.js";
-import { elapsedTime, pathTail, relativeArtifacts, wrapText } from "../src/display-text.js";
-import { Output } from "../src/output.js";
-import { harness } from "./helpers.js";
+import { createProgram } from "../../src/cli/commands.js";
+import { elapsedTime, pathTail, relativeArtifacts, wrapText } from "../../src/cli/display-text.js";
+import { Output } from "../../src/cli/output.js";
+import { type CliServices, showStatus, table } from "../../src/cli/runtime.js";
+import type { Event } from "../../src/core/events.js";
+import { atomic } from "../../src/core/files.js";
+import type { StatusRow } from "../../src/core/orchestrator.js";
+import { orderStages } from "../../src/core/stage-order.js";
+import { parseWorkflow } from "../../src/core/workflow.js";
+import { harness } from "../helpers.js";
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -221,11 +221,11 @@ describe("configured stage order", () => {
     "order: 対象外",
     "order: [対象外, '../完了']",
   ])("rejects invalid stage names/settings: %s", async (setting) => {
-    const source = await fs.readFile(path.join(import.meta.dirname, "../test/fixtures/WORKFLOW.md"), "utf8");
+    const source = await fs.readFile(path.join(import.meta.dirname, "../fixtures/WORKFLOW.md"), "utf8");
     expect(() => parseWorkflow(source.replace(/^  order:.*$/m, "  " + setting))).toThrow("stage_store.order");
   });
   it("keeps order optional for older workflows, and supports a different valid order", async () => {
-    const source = await fs.readFile(path.join(import.meta.dirname, "../test/fixtures/WORKFLOW.md"), "utf8");
+    const source = await fs.readFile(path.join(import.meta.dirname, "../fixtures/WORKFLOW.md"), "utf8");
     expect(parseWorkflow(source.replace(/^  order:.*\n/m, "")).stage_store.order).toBeUndefined();
     expect(parseWorkflow(source.replace(/^  order:.*$/m, "  order: [対象外, 完了]")).stage_store.order).toEqual([
       "対象外",

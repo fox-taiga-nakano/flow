@@ -1,9 +1,9 @@
 import path from "node:path";
 
-import type { AgentResult, StageStore, State, Workflow } from "../types.js";
 import { isDbResetRequest } from "./db-reset.js";
 import { artifact, atomic, exists, json } from "./files.js";
 import { FlowPaths } from "./paths.js";
+import type { AgentResult, StageStore, State, Workflow } from "./types.js";
 
 export function initialState(issue: number, now = new Date().toISOString()): State {
   return {

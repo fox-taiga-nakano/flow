@@ -5,8 +5,8 @@ import { vi } from "vite-plus/test";
 import { RestAssignment } from "../src/adapters/assignment.js";
 import { atomic } from "../src/core/files.js";
 import { Orchestrator } from "../src/core/orchestrator.js";
+import type { Adapters, RunnerAgent, TrackerIssue, TrackerPR, Workflow, WorkspaceInfo } from "../src/core/types.js";
 import { parseWorkflow } from "../src/core/workflow.js";
-import type { Adapters, RunnerAgent, TrackerIssue, TrackerPR, Workflow, WorkspaceInfo } from "../src/types.js";
 
 type TestFunctions<T> = { [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (...args: A) => R : T[K] };
 type TestAdapters = {

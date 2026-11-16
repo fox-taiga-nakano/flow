@@ -2,11 +2,11 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { afterEach, expect, it } from "vite-plus/test";
 
-import { Events, logDates } from "../src/core/events.js";
-import { atomic, exists } from "../src/core/files.js";
-import { migrateLegacy } from "../src/core/migration.js";
-import { FlowPaths, localDate } from "../src/core/paths.js";
-import { temp } from "./helpers.js";
+import { Events, logDates } from "../../src/core/events.js";
+import { atomic, exists } from "../../src/core/files.js";
+import { migrateLegacy } from "../../src/core/migration.js";
+import { FlowPaths, localDate } from "../../src/core/paths.js";
+import { temp } from "../helpers.js";
 
 const dirs: string[] = [];
 async function setup() {

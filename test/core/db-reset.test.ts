@@ -2,11 +2,11 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { atomic } from "../src/core/files.js";
-import { FlowPaths } from "../src/core/paths.js";
-import { parseWorkflow } from "../src/core/workflow.js";
-import type { DbResetRequest } from "../src/types.js";
-import { harness, pr } from "./helpers.js";
+import { atomic } from "../../src/core/files.js";
+import { FlowPaths } from "../../src/core/paths.js";
+import type { DbResetRequest } from "../../src/core/types.js";
+import { parseWorkflow } from "../../src/core/workflow.js";
+import { harness, pr } from "../helpers.js";
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -218,7 +218,7 @@ describe("flow-owned DB reset", () => {
       FlowPaths.result(h.files.get(1)!, s.step, 1),
     ];
     const before = await Promise.all(files.map((file) => fs.readFile(file, "utf8")));
-    const { Orchestrator } = await import("../src/core/orchestrator.js");
+    const { Orchestrator } = await import("../../src/core/orchestrator.js");
     const dry = new Orchestrator(h.workflow, h.a, h.dir, true, () => {});
     await dry.tick();
     expect(await Promise.all(files.map((file) => fs.readFile(file, "utf8")))).toEqual(before);
@@ -303,7 +303,7 @@ describe("DB reset configuration", () => {
     ['locks: [slot, "db:shared"]', "locks: [slot]"],
     ["  db_reset: auto", ""],
   ])("rejects invalid configuration (%s)", async (oldValue, newValue) => {
-    const source = await fs.readFile(path.resolve(import.meta.dirname, "../test/fixtures/WORKFLOW.md"), "utf8");
+    const source = await fs.readFile(path.resolve(import.meta.dirname, "../fixtures/WORKFLOW.md"), "utf8");
     expect(() => parseWorkflow(source.replace(oldValue, newValue))).toThrow(/db_reset|database/);
   });
 });

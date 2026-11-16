@@ -2,13 +2,13 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { HerdrRunner, HerdrWorkspace } from "../src/adapters/herdr.js";
-import { atomic } from "../src/core/files.js";
-import { Ownership } from "../src/core/ownership.js";
-import { initialState } from "../src/core/state.js";
-import { parseWorkflow } from "../src/core/workflow.js";
-import type { ExecRequest, WorkspaceInfo } from "../src/types.js";
-import { config, starts, harness, pr, temp } from "./helpers.js";
+import { HerdrRunner, HerdrWorkspace } from "../../src/adapters/herdr.js";
+import { atomic } from "../../src/core/files.js";
+import { Ownership } from "../../src/core/ownership.js";
+import { initialState } from "../../src/core/state.js";
+import type { ExecRequest, WorkspaceInfo } from "../../src/core/types.js";
+import { parseWorkflow } from "../../src/core/workflow.js";
+import { config, starts, harness, pr, temp } from "../helpers.js";
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -355,7 +355,7 @@ describe("adapter enforcement at mutation boundaries", () => {
 });
 
 it("validates the flow- agent prefix in WORKFLOW.md", async () => {
-  const source = await fs.readFile(path.join(import.meta.dirname, "../test/fixtures/WORKFLOW.md"), "utf8");
+  const source = await fs.readFile(path.join(import.meta.dirname, "../fixtures/WORKFLOW.md"), "utf8");
   expect(() => parseWorkflow(source.replace(/name: ['"]flow-verify-\{issue\}['"]/, 'name: "verify-{issue}"'))).toThrow(
     "agent",
   );

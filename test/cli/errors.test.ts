@@ -5,9 +5,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, expect, it, vi } from "vite-plus/test";
 
-import { createProgram } from "../src/cli/commands.js";
-import { localize } from "../src/cli/help.js";
-import type { CliServices } from "../src/cli/runtime.js";
+import { createProgram } from "../../src/cli/commands.js";
+import { localize } from "../../src/cli/help.js";
+import type { CliServices } from "../../src/cli/runtime.js";
 
 const choices = "選べる値: copilot, self, stop, keep, retarget, applied, retry, skip";
 const cases = [
@@ -223,7 +223,7 @@ it.each(cases)("gives details and native help for $args", async ({ args, command
     errFile = path.join(dir, "err");
   const out = openSync(outFile, "w"),
     err = openSync(errFile, "w");
-  const cli = path.resolve(import.meta.dirname, "../dist/main.mjs");
+  const cli = path.resolve(import.meta.dirname, "../../dist/main.mjs");
   const result = spawnSync(process.execPath, [cli, ...args], { stdio: ["ignore", out, err] });
   closeSync(out);
   closeSync(err);
@@ -294,7 +294,7 @@ it.each([
     errFile = path.join(dir, "unknown-err");
   const out = openSync(outFile, "w"),
     err = openSync(errFile, "w");
-  const result = spawnSync(process.execPath, [path.resolve(import.meta.dirname, "../dist/main.mjs"), name], {
+  const result = spawnSync(process.execPath, [path.resolve(import.meta.dirname, "../../dist/main.mjs"), name], {
     stdio: ["ignore", out, err],
   });
   closeSync(out);

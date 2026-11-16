@@ -3,11 +3,11 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { expect, it, vi } from "vite-plus/test";
 
-import { createProgram } from "../src/cli/commands.js";
-import type { CliServices } from "../src/cli/runtime.js";
-import type { Orchestrator } from "../src/core/orchestrator.js";
-import { FlowPaths } from "../src/core/paths.js";
-import { temp } from "./helpers.js";
+import { createProgram } from "../../src/cli/commands.js";
+import type { CliServices } from "../../src/cli/runtime.js";
+import type { Orchestrator } from "../../src/core/orchestrator.js";
+import { FlowPaths } from "../../src/core/paths.js";
+import { temp } from "../helpers.js";
 
 async function fixture() {
   const root = await temp();

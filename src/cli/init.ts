@@ -4,7 +4,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 import { parseWorkflow } from "../core/workflow.js";
-import type { Tone } from "../output.js";
+import type { Tone } from "./output.js";
 import { packageRoot } from "./tools.js";
 
 export type InitLine = { tone: Tone; text: string };

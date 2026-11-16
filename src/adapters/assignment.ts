@@ -1,5 +1,5 @@
 import { quote, render } from "../core/template.js";
-import type { Exec, Step, Workflow } from "../types.js";
+import type { Exec, Step, Workflow } from "../core/types.js";
 
 export type Assignment = { body: unknown; command: string };
 function fields(step: Step, workflow: Workflow, issue: number, base: string) {

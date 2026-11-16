@@ -3,13 +3,13 @@ import { stripVTControlCharacters } from "node:util";
 import stringWidth from "string-width";
 import { describe, expect, it } from "vite-plus/test";
 
-import { showStatus } from "../src/cli/runtime.js";
-import type { Event } from "../src/core/events.js";
-import { atomic } from "../src/core/files.js";
-import { initialState } from "../src/core/state.js";
-import { wrapText } from "../src/display-text.js";
-import { Output } from "../src/output.js";
-import { harness } from "./helpers.js";
+import { wrapText } from "../../src/cli/display-text.js";
+import { Output } from "../../src/cli/output.js";
+import { showStatus } from "../../src/cli/runtime.js";
+import type { Event } from "../../src/core/events.js";
+import { atomic } from "../../src/core/files.js";
+import { initialState } from "../../src/core/state.js";
+import { harness } from "../helpers.js";
 
 const message =
   "従業員サイトの DateInputField を確認し、onClear・clearable・clearButtonAriaLabel を整理する。RangeDatePicker と勤務区分マスタの動作も確認してください。 ".repeat(

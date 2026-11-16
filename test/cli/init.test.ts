@@ -4,14 +4,14 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it, vi } from "vite-plus/test";
 
-import { createProgram } from "../src/cli/commands.js";
-import { parseRemote } from "../src/cli/init.js";
-import type { CliServices } from "../src/cli/runtime.js";
-import { FlowPaths } from "../src/core/paths.js";
-import { parseWorkflow } from "../src/core/workflow.js";
-import { temp } from "./helpers.js";
+import { createProgram } from "../../src/cli/commands.js";
+import { parseRemote } from "../../src/cli/init.js";
+import type { CliServices } from "../../src/cli/runtime.js";
+import { FlowPaths } from "../../src/core/paths.js";
+import { parseWorkflow } from "../../src/core/workflow.js";
+import { temp } from "../helpers.js";
 
-const root = path.resolve(import.meta.dirname, "..");
+const root = path.resolve(import.meta.dirname, "../..");
 const git = (...args: string[]) => promisify(execFile)("git", args);
 
 async function project(origin?: string) {

@@ -23,7 +23,7 @@ import type {
   Workflow,
   Workspace,
   WorkspaceInfo,
-} from "../types.js";
+} from "../core/types.js";
 import { promptView, terminalText } from "./prompt-delivery.js";
 
 export function pairs(output: string): Record<string, string> {

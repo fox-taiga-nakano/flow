@@ -1,8 +1,8 @@
 import { Command, CommanderError } from "commander";
 import stringWidth from "string-width";
 
-import { Output } from "../output.js";
 import { errorMessage } from "./errors.js";
+import { Output } from "./output.js";
 import type { CliServices } from "./runtime.js";
 
 export const summaries: Record<string, string> = {

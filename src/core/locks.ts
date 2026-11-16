@@ -1,6 +1,6 @@
-import type { Workflow, WorkspaceInfo } from "../types.js";
 import { alive, atomic, exists, json, mutex } from "./files.js";
 import { FlowPaths } from "./paths.js";
+import type { Workflow, WorkspaceInfo } from "./types.js";
 
 export type HeldLock = {
   resource: string;

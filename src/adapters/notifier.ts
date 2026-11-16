@@ -1,7 +1,7 @@
+import { Output } from "../cli/output.js";
 import { render } from "../core/template.js";
+import type { Exec, Notifier, Workflow } from "../core/types.js";
 import { issueLink } from "../core/workflow.js";
-import { Output } from "../output.js";
-import type { Exec, Notifier, Workflow } from "../types.js";
 
 export class CommandNotifier implements Notifier {
   constructor(

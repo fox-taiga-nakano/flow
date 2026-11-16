@@ -1,6 +1,6 @@
 import { CommandError } from "../core/command-error.js";
 import { quote } from "../core/template.js";
-import type { Exec, Tracker, TrackerIssue, TrackerPR, Workflow } from "../types.js";
+import type { Exec, Tracker, TrackerIssue, TrackerPR, Workflow } from "../core/types.js";
 
 export type RawIssue = {
   number: number;

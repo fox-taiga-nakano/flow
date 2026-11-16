@@ -5,9 +5,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { expect, it, vi } from "vite-plus/test";
 
-import { createProgram } from "../src/cli/commands.js";
-import { summaries } from "../src/cli/help.js";
-import type { CliServices } from "../src/cli/runtime.js";
+import { createProgram } from "../../src/cli/commands.js";
+import { summaries } from "../../src/cli/help.js";
+import type { CliServices } from "../../src/cli/runtime.js";
 
 it("Commander renders usage, Japanese descriptions, examples and gates without opening adapters", async () => {
   for (const command of Object.keys(summaries)) {
@@ -52,7 +52,7 @@ it("native help and --help render identical command help", async () => {
 });
 it("all help and error categories use Japanese labels and the expected process exit codes", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "flow-help-"));
-  const cli = path.resolve(import.meta.dirname, "../dist/main.mjs");
+  const cli = path.resolve(import.meta.dirname, "../../dist/main.mjs");
   const english =
     /Usage:|Options:|Arguments:|Commands:|Global Options:|error:|unknown option|unknown command|missing required|too many arguments|Did you mean|default:|choices:|display help|\[options\]|\[command\]/;
   const good = [

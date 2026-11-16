@@ -1,12 +1,12 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { afterEach, expect, it, vi } from "vite-plus/test";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { DirsStageStore } from "../src/adapters/dirs.js";
-import { initialState } from "../src/core/state.js";
-import { parseWorkflow } from "../src/core/workflow.js";
-import type { ExecRequest } from "../src/types.js";
-import { harness, pr } from "./helpers.js";
+import { DirsStageStore } from "../../src/adapters/dirs.js";
+import { initialState } from "../../src/core/state.js";
+import type { ExecRequest, Status } from "../../src/core/types.js";
+import { parseWorkflow } from "../../src/core/workflow.js";
+import { harness, pr } from "../helpers.js";
 
 const dirs: string[] = [];
 async function setup(options: Parameters<typeof harness>[0] = {}) {
@@ -125,7 +125,7 @@ it("uses the configured rejected stage rather than a hard-coded label", async ()
   expect(h.a.runner.start).not.toHaveBeenCalled();
 });
 it("validates the rejected stage and forbids assigning it to a step", async () => {
-  const source = await fs.readFile(path.resolve(import.meta.dirname, "../test/fixtures/WORKFLOW.md"), "utf8");
+  const source = await fs.readFile(path.resolve(import.meta.dirname, "../fixtures/WORKFLOW.md"), "utf8");
   expect(() => parseWorkflow(source.replace("  rejected: 対象外\n", ""))).toThrow("rejected");
   expect(() => parseWorkflow(source.replace("rejected: 対象外", "rejected: 未着手"))).toThrow("rejected");
   expect(() => parseWorkflow(source.replace("when_stage: 未着手", "when_stage: 対象外"))).toThrow("when_stage");
@@ -223,4 +223,45 @@ it("saves to the moved Issue directory after an external command renames it", as
   });
   expect(JSON.parse(await fs.readFile(path.join(after, "flow/state.json"), "utf8"))).not.toHaveProperty("inflight");
   await expect(fs.access(before)).rejects.toThrow();
+});
+describe("reject without a gate", () => {
+  it.each(["retry_wait", "failed", "stopped", "idle", "done", "waiting_remote"] as Status[])(
+    "rejects %s without a gate and retry restores the original stage",
+    async (status) => {
+      const h = await setup({ stage: "修正中" });
+      const s = initialState(1);
+      s.status = status;
+      await h.o.save(s);
+      await h.o.control(1, "reject", { reason: "対象外" });
+      expect(h.stages.get(1)).toBe("対象外");
+      expect((await h.o.states.read(1))?.history.at(-1)?.reason).toBe("対象外");
+      await h.o.control(1, "retry");
+      expect(h.stages.get(1)).toBe("修正中");
+    },
+  );
+  it("rejects an unregistered Issue without a gate, and ensures its directory", async () => {
+    const h = await setup();
+    h.stages.delete(1);
+    await h.o.control(1, "reject");
+    expect(h.a.runner.closeIssueTab).toHaveBeenCalledWith(1);
+    expect(h.a.stages.ensure).toHaveBeenCalledWith(1);
+    expect(h.stages.get(1)).toBe("対象外");
+  });
+  it("still refuses an explicit nonexistent gate", async () => {
+    const h = await setup();
+    await h.o.save(initialState(1));
+    await expect(h.o.control(1, "reject", { gate: "start" })).rejects.toThrow("gate");
+    expect(h.a.stages.set).not.toHaveBeenCalled();
+  });
+  it("stops a running owned agent before marking the Issue rejected", async () => {
+    const h = await setup();
+    await h.o.tick();
+    vi.mocked(h.a.stages.set).mockImplementation(async (n, s) => {
+      expect(h.a.runner.stop).toHaveBeenCalledTimes(1);
+      h.stages.set(n, s);
+    });
+    await h.o.control(1, "reject");
+    expect(h.stages.get(1)).toBe("対象外");
+    expect(vi.mocked(h.a.runner.close).mock.calls.map(([a]) => a.name)).toEqual(["flow-repro-1"]);
+  });
 });

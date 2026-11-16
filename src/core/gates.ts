@@ -1,4 +1,4 @@
-import type { AgentResult, Gate, State, Workflow } from "../types.js";
+import type { AgentResult, Gate, State, Workflow } from "./types.js";
 
 export function gateKey(s: State, name: string, phase: Gate["phase"]): string {
   return `${s.step}:${phase === "before" ? 0 : s.attempt}:${phase}:${name}`;

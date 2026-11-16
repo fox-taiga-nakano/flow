@@ -1,11 +1,11 @@
 import { promises as fs } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { HerdrRunner, type RawAgent } from "../src/adapters/herdr.js";
-import { promptView, terminalText } from "../src/adapters/prompt-delivery.js";
-import { Ownership } from "../src/core/ownership.js";
-import type { AgentHandle, ExecRequest } from "../src/types.js";
-import { config, harness, pr, temp } from "./helpers.js";
+import { HerdrRunner, type RawAgent } from "../../src/adapters/herdr.js";
+import { promptView, terminalText } from "../../src/adapters/prompt-delivery.js";
+import { Ownership } from "../../src/core/ownership.js";
+import type { AgentHandle, ExecRequest } from "../../src/core/types.js";
+import { config, harness, pr, temp } from "../helpers.js";
 
 const dirs: string[] = [];
 afterEach(async () => {

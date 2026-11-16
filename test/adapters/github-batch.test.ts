@@ -1,12 +1,12 @@
 import { promises as fs } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { GitHubTracker, type RawIssue, type RawPR } from "../src/adapters/github.js";
-import { CommandError } from "../src/core/command-error.js";
-import { initialState } from "../src/core/state.js";
-import { parseWorkflow } from "../src/core/workflow.js";
-import type { ExecRequest } from "../src/types.js";
-import { config, harness, issue } from "./helpers.js";
+import { GitHubTracker, type RawIssue, type RawPR } from "../../src/adapters/github.js";
+import { CommandError } from "../../src/core/command-error.js";
+import { initialState } from "../../src/core/state.js";
+import type { ExecRequest } from "../../src/core/types.js";
+import { parseWorkflow } from "../../src/core/workflow.js";
+import { config, harness, issue } from "../helpers.js";
 
 const rawIssue = (n: number): RawIssue => ({
   ...issue(n),
@@ -232,7 +232,7 @@ describe("GitHub snapshots", () => {
   });
 
   it.each([0, -1, 1.5, "100"])("rejects invalid tracker.pr_limit %s", async (limit) => {
-    const source = await fs.readFile(new URL("../test/fixtures/WORKFLOW.md", import.meta.url), "utf8");
+    const source = await fs.readFile(new URL("../fixtures/WORKFLOW.md", import.meta.url), "utf8");
     expect(() => parseWorkflow(source.replace("pr_limit: 100", `pr_limit: ${JSON.stringify(limit)}`))).toThrow(
       "pr_limit",
     );

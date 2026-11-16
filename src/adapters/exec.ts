@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
 import { CommandError } from "../core/command-error.js";
-import type { Exec, ExecRequest } from "../types.js";
+import type { Exec, ExecRequest } from "../core/types.js";
 
 const execute = promisify(execFile);
 export class ShellExec implements Exec {

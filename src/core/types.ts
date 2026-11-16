@@ -1,4 +1,4 @@
-import type { Ownership } from "./core/ownership.js";
+import type { Ownership } from "./ownership.js";
 
 export type TrackerIssue = {
   number: number;

@@ -5,17 +5,17 @@ import pc from "picocolors";
 import stringWidth from "string-width";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { CommandNotifier } from "../src/adapters/notifier.js";
-import { createProgram } from "../src/cli/commands.js";
-import type { CliServices } from "../src/cli/runtime.js";
-import type { Event } from "../src/core/events.js";
-import { atomic } from "../src/core/files.js";
-import { type Orchestrator, type StatusRow, gateAnswer } from "../src/core/orchestrator.js";
-import { FlowPaths } from "../src/core/paths.js";
-import { initialState } from "../src/core/state.js";
-import { issueLink, parseWorkflow } from "../src/core/workflow.js";
-import { Output, nowLabel, stateTone } from "../src/output.js";
-import { config, harness, temp } from "./helpers.js";
+import { CommandNotifier } from "../../src/adapters/notifier.js";
+import { createProgram } from "../../src/cli/commands.js";
+import { Output, nowLabel, stateTone } from "../../src/cli/output.js";
+import type { CliServices } from "../../src/cli/runtime.js";
+import type { Event } from "../../src/core/events.js";
+import { atomic } from "../../src/core/files.js";
+import { type Orchestrator, type StatusRow, gateAnswer } from "../../src/core/orchestrator.js";
+import { FlowPaths } from "../../src/core/paths.js";
+import { initialState } from "../../src/core/state.js";
+import { issueLink, parseWorkflow } from "../../src/core/workflow.js";
+import { config, harness, temp } from "../helpers.js";
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -245,7 +245,7 @@ describe("shared tables and colors", () => {
     );
   });
   it("validates the workflow display timezone", async () => {
-    const source = await fs.readFile(path.join(import.meta.dirname, "../test/fixtures/WORKFLOW.md"), "utf8");
+    const source = await fs.readFile(path.join(import.meta.dirname, "../fixtures/WORKFLOW.md"), "utf8");
     expect(parseWorkflow(source).timezone).toBe("Asia/Tokyo");
     expect(() => parseWorkflow(source.replace("timezone: Asia/Tokyo", "timezone: wrong-zone"))).toThrow("timezone");
     expect(parseWorkflow(source.replace("timezone: Asia/Tokyo\n", "")).timezone).toBeUndefined();

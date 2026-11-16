@@ -4,12 +4,12 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
-import { atomic, mutex } from "../src/core/files.js";
-import { Locks } from "../src/core/locks.js";
-import { checkState, initialState } from "../src/core/state.js";
-import { render } from "../src/core/template.js";
-import { WorkflowLoader, parseWorkflow } from "../src/core/workflow.js";
-import { config, temp } from "./helpers.js";
+import { atomic, mutex } from "../../src/core/files.js";
+import { Locks } from "../../src/core/locks.js";
+import { checkState, initialState } from "../../src/core/state.js";
+import { render } from "../../src/core/template.js";
+import { WorkflowLoader, parseWorkflow } from "../../src/core/workflow.js";
+import { config, temp } from "../helpers.js";
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -31,7 +31,7 @@ describe("workflow and file boundaries", () => {
   it("rejects bad config and caches last valid config across processes", async () => {
     const dir = await tmp();
     const file = path.join(dir, "WORKFLOW.md");
-    const source = await fs.readFile(path.join(import.meta.dirname, "../test/fixtures/WORKFLOW.md"), "utf8");
+    const source = await fs.readFile(path.join(import.meta.dirname, "../fixtures/WORKFLOW.md"), "utf8");
     await fs.writeFile(file, source);
     const loader = new WorkflowLoader(file, dir);
     await loader.load();
@@ -132,14 +132,14 @@ describe("resource locks", () => {
     const l = await locks();
     await l.acquire(["db:exclusive"], 1);
     const resultFile = path.join(l.dir, "child-result.json");
-    const script = `import {Locks} from ${JSON.stringify(path.join(import.meta.dirname, "./.build/src/core/locks.mjs"))}; import {writeFile} from 'node:fs/promises'; const l=new Locks(${JSON.stringify(l.dir)},${JSON.stringify(l.config)}); await writeFile(${JSON.stringify(resultFile)},JSON.stringify(await l.acquire(['db:shared'],2)));`;
+    const script = `import {Locks} from ${JSON.stringify(path.join(import.meta.dirname, "../.build/src/core/locks.mjs"))}; import {writeFile} from 'node:fs/promises'; const l=new Locks(${JSON.stringify(l.dir)},${JSON.stringify(l.config)}); await writeFile(${JSON.stringify(resultFile)},JSON.stringify(await l.acquire(['db:shared'],2)));`;
     await promisify(execFile)(process.execPath, ["--input-type=module", "-e", script]);
     expect(JSON.parse(await fs.readFile(resultFile, "utf8"))).toBeNull();
   });
 });
 
 it("validates explicit NG auto choices and preserves shell parameter expressions", async () => {
-  const source = await fs.readFile(path.join(import.meta.dirname, "../test/fixtures/WORKFLOW.md"), "utf8");
+  const source = await fs.readFile(path.join(import.meta.dirname, "../fixtures/WORKFLOW.md"), "utf8");
   expect(() => parseWorkflow(source.replace("ng_action: manual", "ng_action: auto"))).toThrow("choice");
   expect(render("${SHELL_VAR} {attempt}", { attempt: 2 })).toBe("${SHELL_VAR} 2");
 });

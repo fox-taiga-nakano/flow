@@ -2,15 +2,15 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { CopilotRemote, normalizeAuthor, remoteStatus } from "../src/adapters/copilot.js";
-import { DirsStageStore } from "../src/adapters/dirs.js";
-import { ShellExec } from "../src/adapters/exec.js";
-import { GitHubTracker, parseIssue, parsePR } from "../src/adapters/github.js";
-import { HerdrRunner, HerdrWorkspace, pairs, parseAgents, parseWorkspaces } from "../src/adapters/herdr.js";
-import { Ownership } from "../src/core/ownership.js";
-import { config, issue, pr, temp } from "./helpers.js";
+import { CopilotRemote, normalizeAuthor, remoteStatus } from "../../src/adapters/copilot.js";
+import { DirsStageStore } from "../../src/adapters/dirs.js";
+import { ShellExec } from "../../src/adapters/exec.js";
+import { GitHubTracker, parseIssue, parsePR } from "../../src/adapters/github.js";
+import { HerdrRunner, HerdrWorkspace, pairs, parseAgents, parseWorkspaces } from "../../src/adapters/herdr.js";
+import { Ownership } from "../../src/core/ownership.js";
+import { config, issue, pr, temp } from "../helpers.js";
 
-const fixture = (f: string) => fs.readFile(path.join(import.meta.dirname, "fixtures", f), "utf8");
+const fixture = (f: string) => fs.readFile(path.join(import.meta.dirname, "../fixtures", f), "utf8");
 const dirs: string[] = [];
 afterEach(async () => {
   for (const d of dirs.splice(0)) await fs.rm(d, { recursive: true, force: true });
@@ -113,7 +113,7 @@ describe("adapters through fake exec", () => {
   it("uses configured directory pattern and only previews ensure/set in dry-run", async () => {
     const w = await config();
     const e = {
-      run: vi.fn(async (_r: import("../src/types.js").ExecRequest) => "/project/issues/2-検証済_3740"),
+      run: vi.fn(async (_r: import("../../src/core/types.js").ExecRequest) => "/project/issues/2-検証済_3740"),
     };
     const store = new DirsStageStore(e, w.stage_store, w.vars, true);
     expect(await store.get(3740)).toBe("検証済");
@@ -138,7 +138,7 @@ describe("adapters through fake exec", () => {
       findPullRequests: vi.fn(async () => [pr()]),
     };
     const e = {
-      run: vi.fn(async (_r: import("../src/types.js").ExecRequest) =>
+      run: vi.fn(async (_r: import("../../src/core/types.js").ExecRequest) =>
         JSON.stringify([JSON.parse(await fixture("timeline-4050.json"))]),
       ),
     };

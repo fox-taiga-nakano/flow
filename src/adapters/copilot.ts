@@ -1,6 +1,6 @@
 import { normalizeAuthor } from "../core/identity.js";
 import { quote } from "../core/template.js";
-import type { Exec, RemoteAgent, Step, Tracker, Workflow } from "../types.js";
+import type { Exec, RemoteAgent, Step, Tracker, Workflow } from "../core/types.js";
 import { GraphQLAssignment, RestAssignment } from "./assignment.js";
 
 export type TimelineEvent = {

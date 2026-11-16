@@ -2,9 +2,9 @@ import { Command } from "commander";
 import { stripVTControlCharacters } from "node:util";
 import { expect, it, vi } from "vite-plus/test";
 
-import { createProgram } from "../src/cli/commands.js";
-import { localize, summaries } from "../src/cli/help.js";
-import type { CliServices } from "../src/cli/runtime.js";
+import { createProgram } from "../../src/cli/commands.js";
+import { localize, summaries } from "../../src/cli/help.js";
+import type { CliServices } from "../../src/cli/runtime.js";
 
 const io = { output: vi.fn(), error: vi.fn() };
 function program() {

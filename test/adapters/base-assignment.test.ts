@@ -2,11 +2,11 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { afterEach, expect, it, vi } from "vite-plus/test";
 
-import { GraphQLAssignment, RestAssignment } from "../src/adapters/assignment.js";
-import { CopilotRemote } from "../src/adapters/copilot.js";
-import { ShellExec } from "../src/adapters/exec.js";
-import { initialState } from "../src/core/state.js";
-import { config, harness, pr } from "./helpers.js";
+import { GraphQLAssignment, RestAssignment } from "../../src/adapters/assignment.js";
+import { CopilotRemote } from "../../src/adapters/copilot.js";
+import { ShellExec } from "../../src/adapters/exec.js";
+import { initialState } from "../../src/core/state.js";
+import { config, harness, pr } from "../helpers.js";
 
 const dirs: string[] = [];
 const setup = async (options: Parameters<typeof harness>[0] = {}) => {

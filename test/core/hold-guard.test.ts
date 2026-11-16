@@ -2,8 +2,8 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { parseWorkflow } from "../src/core/workflow.js";
-import { starts, harness } from "./helpers.js";
+import { parseWorkflow } from "../../src/core/workflow.js";
+import { starts, harness } from "../helpers.js";
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -125,7 +125,7 @@ describe("guard system prompt", () => {
 
 describe("hold configuration", () => {
   const workflow = async (edit: (s: string) => string) =>
-    edit(await fs.readFile(path.resolve(import.meta.dirname, "../test/fixtures/WORKFLOW.md"), "utf8"));
+    edit(await fs.readFile(path.resolve(import.meta.dirname, "../fixtures/WORKFLOW.md"), "utf8"));
   it("requires hold_labels and held together", async () => {
     const text = await workflow((s) => s.replace("  held: 保留\n", ""));
     expect(() => parseWorkflow(text)).toThrow("セットで指定");

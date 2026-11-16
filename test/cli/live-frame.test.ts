@@ -1,11 +1,11 @@
 import { EventEmitter } from "node:events";
 import { describe, expect, it } from "vite-plus/test";
 
-import { LiveFrame } from "../src/cli/live-frame.js";
-import { changedFields, runFrame } from "../src/cli/run-frame.js";
-import { outputWriter } from "../src/cli/stdio.js";
-import type { StatusRow } from "../src/core/orchestrator.js";
-import { Output } from "../src/output.js";
+import { LiveFrame } from "../../src/cli/live-frame.js";
+import { Output } from "../../src/cli/output.js";
+import { changedFields, runFrame } from "../../src/cli/run-frame.js";
+import { outputWriter } from "../../src/cli/stdio.js";
+import type { StatusRow } from "../../src/core/orchestrator.js";
 
 const CLEAR = "\x1b[H\x1b[2J\x1b[3J";
 function screen(columns = 40, rows = 10) {

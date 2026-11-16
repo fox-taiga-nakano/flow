@@ -2,9 +2,9 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { parse } from "yaml";
 
-import type { Step, Workflow } from "../types.js";
 import { atomic, json } from "./files.js";
 import { FlowPaths } from "./paths.js";
+import type { Step, Workflow } from "./types.js";
 
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 const strings = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === "string");

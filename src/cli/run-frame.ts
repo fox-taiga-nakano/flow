@@ -1,5 +1,5 @@
 import type { StatusRow } from "../core/orchestrator.js";
-import type { ChangedField, IssueLink, Output } from "../output.js";
+import type { ChangedField, IssueLink, Output } from "./output.js";
 
 /** What `flow run` shows, kept apart from fetching so any change can redraw it. */
 export type RunModel = {

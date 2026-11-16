@@ -4,8 +4,8 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { afterEach, expect, it, vi } from "vite-plus/test";
 
-import { outputWriter } from "../src/cli/stdio.js";
-import { temp } from "./helpers.js";
+import { outputWriter } from "../../src/cli/stdio.js";
+import { temp } from "../helpers.js";
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -49,7 +49,7 @@ it.each(["sync", "async"])("preserves unrelated %s output errors", (mode) => {
 async function run(mode: string, target: "stdout" | "stderr", piped: boolean) {
   const root = await temp();
   dirs.push(root);
-  const fixture = path.resolve(import.meta.dirname, ".build/test/fixtures/epipe-cli.mjs");
+  const fixture = path.resolve(import.meta.dirname, "../.build/test/fixtures/epipe-cli.mjs");
   // All positional parameters are passed as shell argv, never interpolated.
   // pipefail checks the producer's status too; closing stderr leaves stdout available.
   const script = piped
@@ -118,7 +118,7 @@ it("run | head -1 completes its current tick and releases the run mutex without 
   expect(result.states.every((s: { status: string }) => s.status === "running")).toBe(true);
 });
 it("the actual CLI entry point keeps argument errors nonzero when its stderr pipe closes", () => {
-  const cli = path.resolve(import.meta.dirname, "../dist/main.mjs");
+  const cli = path.resolve(import.meta.dirname, "../../dist/main.mjs");
   const result = spawnSync(
     "bash",
     ["-c", 'set -o pipefail; "$@" 2>&1 1>/dev/null | head -1', "epipe-test", process.execPath, cli, "--unknown"],
@@ -129,7 +129,7 @@ it("the actual CLI entry point keeps argument errors nonzero when its stderr pip
   expect(result.stdout).not.toContain("EPIPE");
 });
 it("the actual CLI help entry point supports head -1 with exit code zero", () => {
-  const cli = path.resolve(import.meta.dirname, "../dist/main.mjs");
+  const cli = path.resolve(import.meta.dirname, "../../dist/main.mjs");
   const result = spawnSync(
     "bash",
     ["-c", 'set -o pipefail; "$@" | head -1', "epipe-test", process.execPath, cli, "--help"],

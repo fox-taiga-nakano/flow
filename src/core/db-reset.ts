@@ -1,13 +1,13 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-import type { DbResetRequest, State } from "../types.js";
 import { exists } from "./files.js";
 import { approved, gateKey } from "./gates.js";
 import type { Orchestrator } from "./orchestrator.js";
 import { sameWorkspace } from "./ownership.js";
 import { FlowPaths } from "./paths.js";
 import { render } from "./template.js";
+import type { DbResetRequest, State } from "./types.js";
 
 export function isDbResetRequest(value: unknown): value is DbResetRequest {
   if (!value || typeof value !== "object") return false;

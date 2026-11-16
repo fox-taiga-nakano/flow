@@ -1,8 +1,8 @@
 import path from "node:path";
 
-import type { AgentHandle, RunnerAgent, WorkspaceInfo } from "../types.js";
 import { atomic, exists, json, mutex } from "./files.js";
 import { FlowPaths } from "./paths.js";
+import type { AgentHandle, RunnerAgent, WorkspaceInfo } from "./types.js";
 
 export type Owner = { issue: number; step: string };
 export type OwnedWorkspace = WorkspaceInfo & Owner & { createdAt: string; source: "created" | "adopted" };

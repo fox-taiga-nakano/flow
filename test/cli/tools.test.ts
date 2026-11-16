@@ -4,14 +4,14 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it, vi } from "vite-plus/test";
 
-import { createProgram } from "../src/cli/commands.js";
-import type { CliServices } from "../src/cli/runtime.js";
-import { packageRoot, selfPath, tools } from "../src/cli/tools.js";
-import { FlowPaths } from "../src/core/paths.js";
-import { readCursor, scan } from "../src/core/watch.js";
-import { temp } from "./helpers.js";
+import { createProgram } from "../../src/cli/commands.js";
+import type { CliServices } from "../../src/cli/runtime.js";
+import { packageRoot, selfPath, tools } from "../../src/cli/tools.js";
+import { FlowPaths } from "../../src/core/paths.js";
+import { readCursor, scan } from "../../src/core/watch.js";
+import { temp } from "../helpers.js";
 
-const root = path.resolve(import.meta.dirname, "..");
+const root = path.resolve(import.meta.dirname, "../..");
 
 async function fixture() {
   const dir = await temp();

@@ -12,11 +12,11 @@ import { Orchestrator, type StatusRow } from "../core/orchestrator.js";
 import { Ownership } from "../core/ownership.js";
 import { FlowPaths } from "../core/paths.js";
 import { orderStages } from "../core/stage-order.js";
+import type { Adapters, State, Workflow } from "../core/types.js";
 import { WorkflowLoader, issueLink } from "../core/workflow.js";
-import type { IssueLocation } from "../display-text.js";
-import { type IssueLink, Output } from "../output.js";
-import type { Adapters, State, Workflow } from "../types.js";
+import type { IssueLocation } from "./display-text.js";
 import { LiveFrame, type LiveScreen } from "./live-frame.js";
+import { type IssueLink, Output } from "./output.js";
 import { outputClosed, stderr, stdout } from "./stdio.js";
 import { type RunTool, runTool } from "./tools.js";
 

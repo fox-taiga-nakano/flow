@@ -2,10 +2,10 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { HerdrRunner, HerdrWorkspace, type RawAgent } from "../src/adapters/herdr.js";
-import { Ownership, OwnershipError, WorkspaceBusyError } from "../src/core/ownership.js";
-import type { ExecRequest } from "../src/types.js";
-import { config, temp } from "./helpers.js";
+import { HerdrRunner, HerdrWorkspace, type RawAgent } from "../../src/adapters/herdr.js";
+import { Ownership, OwnershipError, WorkspaceBusyError } from "../../src/core/ownership.js";
+import type { ExecRequest } from "../../src/core/types.js";
+import { config, temp } from "../helpers.js";
 
 const dirs: string[] = [];
 afterEach(async () => {

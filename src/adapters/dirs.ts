@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { FlowPaths } from "../core/paths.js";
 import { render } from "../core/template.js";
-import type { Exec, StageStore, Workflow } from "../types.js";
+import type { Exec, StageStore, Workflow } from "../core/types.js";
 
 export class DirsStageStore implements StageStore {
   private paths = new Map<number, string>();

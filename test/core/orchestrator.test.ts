@@ -2,8 +2,8 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { atomic } from "../src/core/files.js";
-import { starts, harness, pr } from "./helpers.js";
+import { atomic } from "../../src/core/files.js";
+import { starts, harness, pr } from "../helpers.js";
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -586,7 +586,7 @@ describe("refine worktree cleanup", () => {
     await h.result(1);
     await h.o.tick();
     if (dirty) {
-      const { WorkspaceDirtyError } = await import("../src/core/ownership.js");
+      const { WorkspaceDirtyError } = await import("../../src/core/ownership.js");
       vi.mocked(h.a.workspace.remove).mockRejectedValueOnce(new WorkspaceDirtyError("未コミット"));
     }
     await h.o.control(1, "approve");
@@ -640,7 +640,7 @@ describe("reviewed cleanup and issue tab safety", () => {
     await expect(h.o.removeWorkspaces(s)).rejects.toThrow();
   });
   it("notifies once while the issue tab remains busy, and again after recovery", async () => {
-    const { IssueTabBusyError } = await import("../src/core/ownership.js");
+    const { IssueTabBusyError } = await import("../../src/core/ownership.js");
     const h = await setup({ stage: "再現済" });
     vi.mocked(h.a.runner.start)
       .mockRejectedValueOnce(new IssueTabBusyError("occupied"))
@@ -671,7 +671,7 @@ describe("reviewed cleanup and issue tab safety", () => {
     expect((await h.o.states.read(1))?.status).toBe("stopped");
   });
   it.each(["reject", "cleanup"])("forgets an unverifiable tab and notifies during %s", async (action) => {
-    const { OwnershipError } = await import("../src/core/ownership.js");
+    const { OwnershipError } = await import("../../src/core/ownership.js");
     const h = await setup();
     await h.o.owned.addTab({ issue: 1, workspaceId: "main", tabId: "tab", paneId: "pane", createdAt: "now" });
     vi.mocked(h.a.runner.closeIssueTab).mockRejectedValue(new OwnershipError("identity mismatch"));
