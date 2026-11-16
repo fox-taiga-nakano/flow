@@ -19,7 +19,7 @@ mkdir -p "$stage/bin" "$stage/lib" "$stage/templates" "$(dirname "$output")"
 cp -R "$root/tools" "$root/skills" "$stage/"
 cp "$root/dist/main.mjs" "$stage/lib/main.mjs"
 cp "$root/LICENSE" "$stage/"
-cp "$root/templates/WORKFLOW.md" "$root/templates/mise.toml" "$root/templates/gitignore" "$stage/templates/"
+cp "$root/templates/WORKFLOW.md" "$root/templates/mise.toml" "$root/templates/gitignore" "$root/templates/worktree.json" "$stage/templates/"
 (cd "$root" && pnpm licenses list --prod --json | node scripts/release-licenses.mjs) > "$stage/THIRD_PARTY_LICENSES.txt"
 cat > "$stage/bin/flow" <<'SCRIPT'
 #!/usr/bin/env bash

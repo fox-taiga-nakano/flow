@@ -32,7 +32,7 @@ export const notes: Record<string, string> = {
   open: "例: flow open 3170\n関わる gate: なし",
   issue:
     "例: flow issue dir 3170\n関わる gate: なし。Issue のディレクトリは環境変数 ISSUE_DIR（メインのチェックアウトからの相対パス）の下。サブコマンド: dir・mark・push・status",
-  wt: "例: flow wt list\n関わる gate: なし。設定はメインのチェックアウトの .herdr/worktree.json。サブコマンド: create・list・ports・sync・remove・stop・agent・hook",
+  wt: "例: flow wt list\n関わる gate: なし。設定はメインのチェックアウトの .flow/worktree.json。サブコマンド: create・list・ports・sync・remove・stop・agent・hook",
   watch:
     "例: flow watch --prime\n例: flow watch --timeout 600\n関わる gate: なし。承認待ち（action）・エラーの新しいイベントを返す。読み取り位置だけを .flow/run/watch.json に保存",
   reject:

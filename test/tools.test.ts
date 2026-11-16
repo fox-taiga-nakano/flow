@@ -42,6 +42,36 @@ describe("flow issue / flow wt", () => {
     for (const lib of ["issue.sh", "wt.sh"])
       await promisify(execFile)("bash", ["-n", path.join(root, "tools/lib", lib)]);
   });
+  it("reads the worktree config from .flow/worktree.json and accepts the bundled template", async () => {
+    const main = await temp();
+    await promisify(execFile)("git", ["init", "-q", main]);
+    await fs.mkdir(path.join(main, ".flow"));
+    await fs.copyFile(path.join(root, "templates/worktree.json"), path.join(main, ".flow/worktree.json"));
+    const { stdout } = await promisify(execFile)("bash", [
+      "-c",
+      'source "$1" && wt_load "$2" && wt_require_config && printf %s "$WT_CONFIG"',
+      "bash",
+      path.join(root, "tools/lib/wt.sh"),
+      main,
+    ]);
+    expect(await fs.realpath(stdout)).toBe(await fs.realpath(path.join(main, ".flow/worktree.json")));
+  });
+  it("stops with a move instruction when only the old .herdr/worktree.json exists", async () => {
+    const main = await temp();
+    await promisify(execFile)("git", ["init", "-q", main]);
+    await fs.mkdir(path.join(main, ".herdr"));
+    await fs.writeFile(path.join(main, ".herdr/worktree.json"), "{}");
+    const run = promisify(execFile)("bash", [
+      "-c",
+      'source "$1" && wt_load "$2"',
+      "bash",
+      path.join(root, "tools/lib/wt.sh"),
+      main,
+    ]);
+    await expect(run).rejects.toMatchObject({
+      stderr: expect.stringContaining("mv .herdr/worktree.json .flow/worktree.json"),
+    });
+  });
   it("passes arguments and flags as mise-style usage variables without opening the workflow", async () => {
     const f = await fixture();
     await f.run(["wt", "create", "feature/x", "--no-hooks"]);

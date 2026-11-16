@@ -22,7 +22,7 @@ stage_store:
 workspace:
   kind: herdr
   commands:
-    # flow 同梱の flow wt を使います。設定はメインのチェックアウトの .herdr/worktree.json です。
+    # flow 同梱の flow wt を使います。設定はメインのチェックアウトの .flow/worktree.json です。
     # 現在の設定検証では workspace: none でもこれらの項目が必要です。
     list: "flow wt list"
     create_for_branch: "flow wt create {branch}"

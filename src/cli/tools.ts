@@ -41,7 +41,7 @@ export const tools: Record<"issue" | "wt", Record<string, Tool>> = {
   wt: {
     create: {
       description:
-        "ブランチを herdr worktree に展開し、.herdr/worktree.json に従ってコピー・ポート割り当て・フックまで行う",
+        "ブランチを herdr worktree に展開し、.flow/worktree.json に従ってコピー・ポート割り当て・フックまで行う",
       args: [arg("branch", "対象ブランチ（リモートのみでも可）")],
       flags: [{ name: "no-hooks", help: "フック（post_sync / post_create）を実行しない" }],
       example: "flow wt create feature/foo",
@@ -52,19 +52,19 @@ export const tools: Record<"issue" | "wt", Record<string, Tool>> = {
       example: "flow wt list",
     },
     ports: {
-      description: "worktree に dev ポートの slot を割り当て、.herdr/worktree.json の env_files に反映",
+      description: "worktree に dev ポートの slot を割り当て、.flow/worktree.json の env_files に反映",
       args: [arg("path", "対象 worktree（省略時はカレント）", false)],
       flags: [{ name: "slot", value: "n", help: "slot（1〜9）。省略時は割り当て済み、無ければ空いている最小の slot" }],
       example: "flow wt ports ../app-wt --slot 2",
     },
     sync: {
-      description: "メインから .herdr/worktree.json の sync のファイルを worktree にコピーし、ポートとフックを反映",
+      description: "メインから .flow/worktree.json の sync のファイルを worktree にコピーし、ポートとフックを反映",
       args: [arg("path", "コピー先 worktree（省略時はカレント）", false)],
       flags: [{ name: "no-hooks", help: "post_sync フックを実行しない" }],
       example: "flow wt sync ../app-wt",
     },
     remove: {
-      description: "worktree を削除（.herdr/worktree.json の pre_remove フックがあれば先に実行）",
+      description: "worktree を削除（.flow/worktree.json の pre_remove フックがあれば先に実行）",
       args: [arg("workspace", "herdr の workspace ID（flow wt list で確認）")],
       flags: [
         { name: "force", help: "未コミットの変更があっても削除する" },
@@ -84,7 +84,7 @@ export const tools: Record<"issue" | "wt", Record<string, Tool>> = {
       example: "flow wt agent verify-123",
     },
     hook: {
-      description: ".herdr/worktree.json のフックをチェックアウトのルートで実行",
+      description: ".flow/worktree.json のフックをチェックアウトのルートで実行",
       args: [
         arg("name", "フック名（post_create / post_sync / pre_serve / pre_remove）"),
         arg("path", "対象のチェックアウト（省略時はカレント）", false),

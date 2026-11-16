@@ -70,7 +70,7 @@ mise run flow run
 flow だけで運用できるよう、Issue ディレクトリと worktree を扱うコマンド、監視コマンド、運用スキルを同梱しています。
 
 - **`flow issue <dir|mark|push|status>`**：Issue ごとのディレクトリ `<ISSUE_DIR>/<並び順>-<段階>_<番号>` を扱います。`ISSUE_DIR`（メインのチェックアウトからの相対パス）を環境変数で渡してください（例：利用先の mise の `[env]`）。段階の並びは `ISSUE_STATUSES`（空白区切り）で変えられます。`push`・`status` は既定の段階名（未着手・再現済・Issue更新済・修正中・完了）を使います
-- **`flow wt <create|list|ports|sync|remove|stop|agent|hook>`**：Herdr の worktree を作り、メインのチェックアウトの `.herdr/worktree.json`（`sync`・`slot_step`・`services`・`env_files`・`hooks`）に従ってファイルのコピー・ポートの割り当て・フックを行います。設定の形式は [tools/lib/wt.sh](tools/lib/wt.sh) の先頭にあります
+- **`flow wt <create|list|ports|sync|remove|stop|agent|hook>`**：Herdr の worktree を作り、メインのチェックアウトの `.flow/worktree.json`（`sync`・`slot_step`・`services`・`env_files`・`hooks`）に従ってファイルのコピー・ポートの割り当て・フックを行います。設定の形式は [tools/lib/wt.sh](tools/lib/wt.sh) の先頭にあります
 - **`flow watch`**：本番ログの承認待ち・エラーを待ち、JSON で返します。運用スキルが使います
 - **`skills/flow-operator/`**：メインのエージェントが `flow run` を横のペインで動かし、承認待ち・質問をユーザーに示して操作するスキルです。利用先の `.claude/skills/`（または `.agents/skills/`）にリンクかコピーしてください。並列で進めても、メインのエージェントとの会話だけを見ていれば済むようになります
 
@@ -113,7 +113,7 @@ mise run flow approve 123 base_changed --choice keep
 
 対象プロジェクトに `.flow/WORKFLOW.md` を作成します。YAML front matter に tracker、stage store、worktree、エージェント、承認、step などを設定し、本文に `## prompt: <step>` を記述します。`vars.main` は対象プロジェクトの絶対パスに設定してください。
 
-[WORKFLOW.md テンプレート](templates/WORKFLOW.md)と [mise 設定例](templates/mise.toml)、[Git 除外設定例](templates/gitignore)を用意しています。WORKFLOW の `REPLACE` を含む値と未設定のコマンド（`base.resolve` など）、プロンプトを利用先に合わせて変更してください。テンプレートの未設定コマンドはエラーで終了します。`validate` は構文のみを検証し、設定漏れや外部コマンドの動作は確認しません。
+[WORKFLOW.md テンプレート](templates/WORKFLOW.md)と [mise 設定例](templates/mise.toml)、[Git 除外設定例](templates/gitignore)、[worktree 設定例](templates/worktree.json)を用意しています。WORKFLOW の `REPLACE` を含む値と未設定のコマンド（`base.resolve` など）、プロンプトを利用先に合わせて変更してください。テンプレートの未設定コマンドはエラーで終了します。`validate` は構文のみを検証し、設定漏れや外部コマンドの動作は確認しません。
 
 設定形式と各項目は [仕様書](SPEC.md) を参照してください。[テスト用の WORKFLOW.md](test/fixtures/WORKFLOW.md) は特定プロジェクトのタスクやスキルを前提にしたフィクスチャです。
 

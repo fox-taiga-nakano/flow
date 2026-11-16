@@ -469,7 +469,7 @@ flow の全コマンドの、人が読む出力を同じ見た目に揃える（
 
 flow をほかのツールなしで運用できるよう、WORKFLOW.md から呼ぶ Issue ディレクトリ・worktree のコマンド、監視、運用スキルを同梱する。flow 本体の判断（0 章）には入れず、WORKFLOW.md のコマンドとして使う（差し替えられる）。
 
-- **`flow issue` / `flow wt`**：`tools/` の bash スクリプト。flow のコマンドが引数を解釈し、mise の usage と同じ `usage_<名前>` の環境変数で渡す。`.flow/` と WORKFLOW.md は読まない。Issue のディレクトリは環境変数 `ISSUE_DIR`（メインのチェックアウトからの相対パス）の下の `<並び順>-<段階>_<番号>`、段階の並びは `ISSUE_STATUSES`。worktree の設定はメインのチェックアウトの `.herdr/worktree.json`
+- **`flow issue` / `flow wt`**：`tools/` の bash スクリプト。flow のコマンドが引数を解釈し、mise の usage と同じ `usage_<名前>` の環境変数で渡す。WORKFLOW.md と flow の状態（`.flow/state/` など）は読まない。Issue のディレクトリは環境変数 `ISSUE_DIR`（メインのチェックアウトからの相対パス）の下の `<並び順>-<段階>_<番号>`、段階の並びは `ISSUE_STATUSES`。worktree の設定はメインのチェックアウトの `.flow/worktree.json`（ひな形は `templates/worktree.json`。以前の `.herdr/worktree.json` だけがあるときは、移すよう求めて止まる）
 - **自分自身の呼び出し**：flow は起動時に、自分のパッケージの `bin/` と実行中の Node のディレクトリを `PATH` の先頭に足す。WORKFLOW.md のコマンドとスクリプトの中の `flow` は、実行中の flow と同じ版・同じ Node になる。スクリプトがほかのシェル（herdr のペイン）で flow を呼ぶときは、flow が渡す `FLOW_NODE`・`FLOW_MAIN` を使う。tick ごとに何度も呼ぶ読み取り（`stage_store.commands.dir` など）は、Node の起動を省くため `FLOW_TOOLS`（同梱スクリプトのディレクトリ）のスクリプトを直接呼んでもよい（例：`usage_number={issue} "$FLOW_TOOLS/issue/dir"`）
 - **`flow watch`**：本番の `logs/<日付>/events.ndjson` を、読み取り位置（`run/watch.json`）から読む。`action`・`error`・`warning`・`command_error`・`notifier_error`・`tick_error` のイベント（dry-run を除く）が来るか timeout まで待つ。`--prime` と初回は末尾を記録するだけ。書きかけの行は次回に読み、置き換え（inode が変わる）・切り詰めは先頭から読む。二重に起動しない。state・ロック・ログは書かない
 - **`skills/flow-operator/`**：メインのエージェントが `flow run` を横のペインで動かし、`flow watch` で検知した承認待ち・質問をユーザーに示し、ユーザーの判断で `approve` / `answer` などを行う運用スキル。利用先の `.claude/skills/` などに置いて使う
