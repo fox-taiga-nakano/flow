@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flow Operator"
+  short_description: "flowを監視し、成果物を確認してユーザーの承認後に進行する"
+  default_prompt: "$flow-operator を使って、flowの承認待ちと失敗を確認し、成果物の要点と懸念を報告してください。"

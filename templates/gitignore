@@ -1,0 +1,4 @@
+# プロジェクトの .gitignore に追加します。WORKFLOW.md は必要に応じて追跡できます。
+/.flow/state/
+/.flow/run/
+/.flow/logs/

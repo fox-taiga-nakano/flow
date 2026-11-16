@@ -1,0 +1,9 @@
+# 利用先の mise.toml にマージしてください。既存の [tools] などは残します。
+# 公開済み Release のバージョンを指定してください。
+[tools]
+"github:fox-taiga-nakano/flow" = { version = "0.1.0", asset_pattern = "flow-universal.tar.gz", bin_path = "bin" }
+
+[tasks.flow]
+tools.node = "24.22.1"
+raw_args = true
+run = "flow"

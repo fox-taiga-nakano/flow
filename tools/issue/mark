@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(dirname "$(realpath "$0")")/../lib/issue.sh"
+issue_load
+issue_mark "$usage_number" "$usage_status"

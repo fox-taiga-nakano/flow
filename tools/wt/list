@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# worktree と herdr workspace の対応を、dev ポートの slot と合わせて「workspace<TAB>slot<TAB>branch<TAB>path」で出力する
+set -euo pipefail
+herdr worktree list --cwd "$PWD" | jq -r '.result.worktrees[] | [(.open_workspace_id // "-"), (if .is_linked_worktree then "-" else "0" end), .branch, .path] | @tsv' |
+  while IFS=$'\t' read -r ws slot branch path; do
+    [ "$slot" != - ] || slot="$(sed -n 's/^PORT_SLOT=//p' "$path/.ports.env" 2>/dev/null || true)"
+    printf '%s\t%s\t%s\t%s\n' "$ws" "${slot:--}" "$branch" "$path"
+  done

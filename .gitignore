@@ -1,0 +1,40 @@
+# 依存とビルドの成果物 (pnpm install / pnpm build で作り直す。bin/flow は dist/ を実行する)
+node_modules/
+dist/
+test/.build/
+*.tsbuildinfo
+coverage/
+
+# pnpm のストア (.npmrc の store-dir。Codex のサンドボックスで作ったもの)
+.pnpm-store/
+.pnpm-home/
+
+# テストの一時ディレクトリ
+test/.tmp/
+
+# 実行時のファイル (SPEC.md 11 章)。どれもこのマシンの状態なのでコミットしない
+state/
+run/
+logs/
+dev/
+
+# エディタ・OS
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# 新しいリポジトリに移すときに外すもの (このプロジェクト固有・作業用のファイル)
+#   WORKFLOW.md                 特定プロジェクト固有の設定。プラグインのリポジトリでは templates/WORKFLOW.md にひな形を置く
+#   TASK.md / IMPLEMENTATION_REPORT.md   Codex への依頼と報告
+
+# Test runtime and project-local state
+.flow/
+
+# 作業メモ (教訓・計画)
+tasks/
+
+.claude/plans/*
+
+# Serena (エディタ連携ツール) のローカル設定・キャッシュ
+.serena/

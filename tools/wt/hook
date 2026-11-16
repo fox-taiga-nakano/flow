@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(dirname "$(realpath "$0")")/../lib/wt.sh"
+wt_load "${usage_path:-.}"
+wt_require_config
+[[ " $WT_HOOKS " == *" $usage_name "* ]] || wt_die "未知のフックです: $usage_name ($WT_HOOKS)"
+wt_export_env
+wt_run_hook "$usage_name"

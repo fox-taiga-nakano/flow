@@ -1,0 +1,47 @@
+{
+  "name": "flow-orchestrator",
+  "version": "0.1.0",
+  "description": "Project-configurable issue workflow orchestrator",
+  "license": "MIT",
+  "bin": {
+    "flow": "dist/main.mjs"
+  },
+  "files": [
+    "GUIDE.md",
+    "README.md",
+    "SPEC.md",
+    "bin",
+    "dist",
+    "skills",
+    "templates",
+    "tools"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "vp pack",
+    "build:test-fixtures": "vp pack --no-config test/fixtures/epipe-cli.mjs src/core/locks.ts --out-dir test/.build && cp test/fixtures/WORKFLOW.md test/.build/test/fixtures/WORKFLOW.md",
+    "check": "vp check",
+    "format": "vp fmt",
+    "format:check": "vp fmt --check",
+    "pretest": "pnpm build && pnpm build:test-fixtures",
+    "test": "vp test run",
+    "typecheck": "tsc --noEmit",
+    "lint": "vp lint"
+  },
+  "dependencies": {
+    "cli-table3": "0.6.5",
+    "commander": "15.0.0",
+    "picocolors": "1.1.1",
+    "string-width": "8.1.0",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "typescript": "^5.9.2",
+    "vite-plus": "^1.4.0"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@12.15.0"
+}

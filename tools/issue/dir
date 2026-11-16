@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(dirname "$(realpath "$0")")/../lib/issue.sh"
+issue_load
+if [ -n "${usage_create:-}" ]; then
+  issue_dir_ensure "$usage_number"
+else
+  rc=0; issue_dir "$usage_number" || rc=$?
+  [ "$rc" -ne 1 ] || issue_die "Issue #$usage_number のディレクトリがありません (--create で作成)"
+  exit "$rc"
+fi

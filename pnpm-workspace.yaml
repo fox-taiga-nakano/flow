@@ -1,0 +1,7 @@
+packages: []
+allowBuilds:
+  esbuild: true
+pmOnFail: ignore
+
+ignoredOptionalDependencies:
+  - "@colors/colors"
