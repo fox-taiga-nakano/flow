@@ -20,6 +20,7 @@ export const summaries: Record<string, string> = {
   stop: "所有するエージェントを停止",
   lock: "資源ロックを取得・解放・表示",
   logs: "イベントログを表示",
+  init: "テンプレートから WORKFLOW.md・worktree の設定・スキルを作る",
   validate: "WORKFLOW.md の設定を検証",
 };
 export const notes: Record<string, string> = {
@@ -41,6 +42,7 @@ export const notes: Record<string, string> = {
   stop: "例: flow stop 3170\n関わる gate: 承認待ちも停止。worktree は削除しません。",
   lock: "例: flow lock acquire db:exclusive --issue 3170 --wait --timeout 60000\n関わる gate: db_reset が manual の場合は排他取得前に承認",
   logs: "例: flow logs 3170 --follow\n関わる gate: 承認待ちの通知も記録",
+  init: "例: flow --project ~/projects/app init\n関わる gate: なし。既にあるファイルは上書きせず飛ばす。スキルは .agents/skills/ にコピーし、.claude/skills/ からリンク",
   validate: "例: flow validate\n関わる gate: 設定の定義を検証。操作は実行しません。",
 };
 

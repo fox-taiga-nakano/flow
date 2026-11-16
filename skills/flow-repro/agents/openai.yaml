@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flow Repro"
+  short_description: "Issueを再現し、再現スクリプトと修正前のエビデンスを残す"
+  default_prompt: "$flow-repro を使って、Issue #<番号> の repro step を進めてください。"

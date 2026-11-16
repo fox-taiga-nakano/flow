@@ -261,7 +261,7 @@ steps: # 段階（stage）ごとに、次に行う step を決める
     gate_after: pr_body
     on_approve:
       {
-        prompt: "pr_body が承認されました。pr-finish スキルの A の「了承を得て更新する」を実行し、result.json を書き直してください。",
+        prompt: "pr_body が承認されました。pr-finish スキルの A の「了承を得て更新する」を実行し、{flow_dir}/result-finish-{attempt}.json を書き直してください。",
       }
   cleanup:
     when_pr_merged: true
@@ -472,7 +472,9 @@ flow をほかのツールなしで運用できるよう、WORKFLOW.md から呼
 - **`flow issue` / `flow wt`**：`tools/` の bash スクリプト。flow のコマンドが引数を解釈し、mise の usage と同じ `usage_<名前>` の環境変数で渡す。`.flow/` と WORKFLOW.md は読まない（flow を導入していないプロジェクトでも同じ設定で使える）。Issue のディレクトリは環境変数 `ISSUE_DIR`（メインのチェックアウトからの相対パス）の下の `<並び順>-<段階>_<番号>`、段階の並びは `ISSUE_STATUSES`。worktree の設定はメインのチェックアウトの `.herdr/worktree.json`（ひな形は `templates/worktree.json`）
 - **自分自身の呼び出し**：flow は起動時に、自分のパッケージの `bin/` と実行中の Node のディレクトリを `PATH` の先頭に足す。WORKFLOW.md のコマンドとスクリプトの中の `flow` は、実行中の flow と同じ版・同じ Node になる。スクリプトがほかのシェル（herdr のペイン）で flow を呼ぶときは、flow が渡す `FLOW_NODE`・`FLOW_MAIN` を使う。tick ごとに何度も呼ぶ読み取り（`stage_store.commands.dir` など）は、Node の起動を省くため `FLOW_TOOLS`（同梱スクリプトのディレクトリ）のスクリプトを直接呼んでもよい（例：`usage_number={issue} "$FLOW_TOOLS/issue/dir"`）
 - **`flow watch`**：本番の `logs/<日付>/events.ndjson` を、読み取り位置（`run/watch.json`）から読む。`action`・`error`・`warning`・`command_error`・`notifier_error`・`tick_error` のイベント（dry-run を除く）が来るか timeout まで待つ。`--prime` と初回は末尾を記録するだけ。書きかけの行は次回に読み、置き換え（inode が変わる）・切り詰めは先頭から読む。二重に起動しない。state・ロック・ログは書かない
-- **`skills/flow-operator/`**：メインのエージェントが `flow run` を横のペインで動かし、`flow watch` で検知した承認待ち・質問をユーザーに示し、ユーザーの判断で `approve` / `answer` などを行う運用スキル。利用先の `.claude/skills/` などに置いて使う
+- **`skills/flow-operator/`**：メインのエージェントが `flow run` を横のペインで動かし、`flow watch` で検知した承認待ち・質問をユーザーに示し、ユーザーの判断で `approve` / `answer` などを行う運用スキル
+- **step のスキル `skills/flow-repro`・`flow-refine`・`flow-verify`・`flow-finish`**：`templates/WORKFLOW.md` の各 step のプロンプトが従う、プロジェクトに依存しない手順。成果物は各 step の `done_when` と同じ（repro：`repro.md`・`scripts/repro.sh`・`evidence/before/checks.tsv`、refine：`issue.md`、verify：`evidence/after/checks.tsv` と段階、finish：`pr-body.md`）。プロジェクトに依存する部分は各スキルの「プロジェクトに合わせて書き換える」節に集める
+- **`flow init`**：対象プロジェクト（`--project` またはカレント）にテンプレートを置く。`.flow/WORKFLOW.md`（`vars.main` を対象の絶対パス、`owner`・`repo` を git の origin から埋め、書く前に検証する）、`.herdr/worktree.json`、`skills/` の各スキルを `.agents/skills/<名前>/` にコピーし `.claude/skills/<名前>` から相対のシンボリックリンクを張る。既にあるものは上書きせず、飛ばしたことを表示する。WORKFLOW.md は開かない
 - Release のアーカイブには `tools/` と `skills/` を含める
 
 ## 11. ファイルの置き場所

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flow Verify"
+  short_description: "PRのブランチで再現スクリプトを実行し、検証済か検証NGかを決める"
+  default_prompt: "$flow-verify を使って、Issue #<番号> の verify step を進めてください。"

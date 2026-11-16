@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flow Finish"
+  short_description: "検証の結果をPRの本文に加える下書きを作り、承認後に更新する"
+  default_prompt: "$flow-finish を使って、Issue #<番号> の finish step を進めてください。"

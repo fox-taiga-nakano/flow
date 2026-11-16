@@ -1,5 +1,6 @@
 import { Command, InvalidArgumentError, Option } from "commander";
 import { promises as fs } from "node:fs";
+import path from "node:path";
 
 import { mutex } from "../core/files.js";
 import type { StatusRow } from "../core/orchestrator.js";
@@ -9,6 +10,7 @@ import { readCursor, scan, writeCursor } from "../core/watch.js";
 import { issueLink } from "../core/workflow.js";
 import { Output } from "../output.js";
 import { localize, notes, summaries } from "./help.js";
+import { initProject, nextSteps } from "./init.js";
 import { type RunModel, changedFields, runFrame } from "./run-frame.js";
 import { type CliServices, issueLocations, showStatus, table } from "./runtime.js";
 import { registerTools, runTool } from "./tools.js";
@@ -401,6 +403,11 @@ export function createProgram(services: CliServices): Command {
         if (options.follow) await services.sleep(500);
       } while (options.follow && !services.outputSignal?.aborted);
     });
+  command("init").action(async () => {
+    for (const line of await initProject(path.dirname(services.paths.root)))
+      services.output(view.result(line.text, line.tone));
+    services.output(nextSteps);
+  });
   command("validate").action(async () => {
     await services.open(false, false, false);
     services.output(view.result("WORKFLOW.md: valid"));
