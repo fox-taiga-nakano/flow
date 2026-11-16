@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 # flow wt <コマンド> (tools/wt/*) の共通処理。各スクリプトが source する
 #
-# 設定はメインのチェックアウトの .flow/worktree.json (worktree からも常にメイン側を読む)。項目はすべて省略可。
+# 設定はメインのチェックアウトの .herdr/worktree.json (flow を使わない worktree のツールとも共有できる。worktree からも常にメイン側を読む)。項目はすべて省略可。
 #   sync       メインから worktree にコピーするパスの配列 (glob 可。末尾 / はディレクトリごと置き換え)
 #   slot_step  ポート = port + slot × slot_step (slot はメイン 0、worktree 1〜9。<worktree>/.ports.env の PORT_SLOT)
 #   services   { "<名前>": { "port": <既定ポート>, "cmd": "<wt:serve で起動するコマンド (任意)>" } }
@@ -24,11 +24,7 @@ flow_self_command() { printf '%q %q' "${FLOW_NODE:?flow から実行してくだ
 wt_load() {
   WT_PATH="$(cd "${1:-.}" 2>/dev/null && git rev-parse --show-toplevel 2>/dev/null)" || wt_die "git のチェックアウトではありません: ${1:-.}"
   WT_MAIN="$(dirname "$(git -C "$WT_PATH" rev-parse --path-format=absolute --git-common-dir)")"
-  WT_CONFIG="$WT_MAIN/.flow/worktree.json"
-  # 以前の置き場所のままだと設定が黙って無視されるので、移すよう止める
-  if [ ! -e "$WT_CONFIG" ] && [ -e "$WT_MAIN/.herdr/worktree.json" ]; then
-    wt_die "worktree の設定は .flow/worktree.json に移りました。移してください: git -C $(printf %q "$WT_MAIN") mv .herdr/worktree.json .flow/worktree.json"
-  fi
+  WT_CONFIG="$WT_MAIN/.herdr/worktree.json"
 }
 
 wt_has_config() { [ -f "$WT_CONFIG" ]; }

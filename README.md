@@ -70,7 +70,7 @@ mise run flow run
 flow だけで運用できるよう、Issue ディレクトリと worktree を扱うコマンド、監視コマンド、運用スキルを同梱しています。
 
 - **`flow issue <dir|mark|push|status>`**：Issue ごとのディレクトリ `<ISSUE_DIR>/<並び順>-<段階>_<番号>` を扱います。`ISSUE_DIR`（メインのチェックアウトからの相対パス）を環境変数で渡してください（例：利用先の mise の `[env]`）。段階の並びは `ISSUE_STATUSES`（空白区切り）で変えられます。`push`・`status` は既定の段階名（未着手・再現済・Issue更新済・修正中・完了）を使います
-- **`flow wt <create|list|ports|sync|remove|stop|agent|hook>`**：Herdr の worktree を作り、メインのチェックアウトの `.flow/worktree.json`（`sync`・`slot_step`・`services`・`env_files`・`hooks`）に従ってファイルのコピー・ポートの割り当て・フックを行います。設定の形式は [tools/lib/wt.sh](tools/lib/wt.sh) の先頭にあります
+- **`flow wt <create|list|ports|sync|remove|stop|agent|hook>`**：Herdr の worktree を作り、メインのチェックアウトの `.herdr/worktree.json`（`sync`・`slot_step`・`services`・`env_files`・`hooks`）に従ってファイルのコピー・ポートの割り当て・フックを行います。設定の形式は [tools/lib/wt.sh](tools/lib/wt.sh) の先頭にあります
 - **`flow watch`**：本番ログの承認待ち・エラーを待ち、JSON で返します。運用スキルが使います
 - **`skills/flow-operator/`**：メインのエージェントが `flow run` を横のペインで動かし、承認待ち・質問をユーザーに示して操作するスキルです。利用先の `.claude/skills/`（または `.agents/skills/`）にリンクかコピーしてください。並列で進めても、メインのエージェントとの会話だけを見ていれば済むようになります
 

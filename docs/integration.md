@@ -11,7 +11,7 @@ flow の設定に必要な項目と、`example-app` での使用例をまとめ�
 | flow の実行ファイル、GitHub・Herdr 連携、承認・状態管理、コマンド引数の展開 | flow 本体・Release                                             | どのプロジェクトでも共通の動作として提供する                    |
 | flow と Node.js のバージョン、`mise run flow` の入口                        | 利用先の mise 設定                                             | プロジェクトごとにバージョンを固定し、既存の Node.js と分離する |
 | Issue の選択、段階、step、gate、プロンプト、外部コマンドの指定              | 利用先の `.flow/WORKFLOW.md`                                   | プロジェクトの運用に合わせる設定を一か所に集める                |
-| worktree へコピーするファイル、ポート、フック（同梱の `flow wt` の設定）    | 利用先の `.flow/worktree.json`                                 | flow の設定と同じ `.flow/` に置き、リポジトリで追跡する         |
+| worktree へコピーするファイル、ポート、フック（同梱の `flow wt` の設定）    | 利用先の `.herdr/worktree.json`                                | flow を使わない worktree の操作とも同じ設定を共有する           |
 | DB・ブラウザなどを操作する実際のコマンド                                    | 利用先のリポジトリまたは明示的に管理する共通ツール             | Issue ディレクトリと worktree 以外のコマンドは同梱しない        |
 | GitHub トークンやその他の秘密情報                                           | 利用者・実行環境の認証設定                                     | `WORKFLOW.md` やリポジトリには書かない                          |
 | 所有・ロック・実行履歴・ログ                                                | 利用先の `.flow/state/`・`run/`・`logs/` と Issue ディレクトリ | 設定とは別の実行時データ。更新時に保持する                      |
@@ -41,7 +41,7 @@ Issue ディレクトリと worktree のコマンドは flow に同梱してい�
 
 ## 一元化の進め方
 
-1. **同梱のコマンドに揃える。** Issue ディレクトリと worktree は `flow issue` / `flow wt` を使い、`ISSUE_DIR` と `.flow/worktree.json` を利用先で用意する。プロジェクト固有のポート、DB、開発サーバー、フックやプロンプト、段階のスキルは利用先に残す。
+1. **同梱のコマンドに揃える。** Issue ディレクトリと worktree は `flow issue` / `flow wt` を使い、`ISSUE_DIR` と `.herdr/worktree.json` を利用先で用意する。プロジェクト固有のポート、DB、開発サーバー、フックやプロンプト、段階のスキルは利用先に残す。
 2. **運用スキルを置く。** `skills/flow-operator` を利用先の `.claude/skills/` などにリンクかコピーする。
 3. **導入の初期化・診断を検討する。** テンプレートの自動配置や、設定済みコマンド・ツール・認証の読み取り専用チェックを flow 側で提供すると、初期設定と検証を揃えられる。現時点の `validate` は設定形式の検証であり、これらの診断やテンプレートの自動配置は未実装。
 4. **互換性を確認して切り替える。** 既存の `.flow/` の設定と状態を保持し、旧版を停止したうえで、同じコマンド結果・所有記録・dry-run の予定を確認する。標準アダプターへの移行を自動的に行う機能は現在ありません。
@@ -96,14 +96,14 @@ DB リセットを使う step には `database.stop`、`database.reset.snapshot`
 | 用途         | 使用している設定                                                                                           |
 | ------------ | ---------------------------------------------------------------------------------------------------------- |
 | Issue の段階 | `ISSUE_DIR=.dev/issues` と、同梱の `flow issue dir`・`mark`・`push`・`status`                              |
-| worktree     | 同梱の `flow wt list`・`create`・`ports`・`sync`・`remove`、Herdr、および `.flow/worktree.json`            |
+| worktree     | 同梱の `flow wt list`・`create`・`ports`・`sync`・`remove`、Herdr、および `.herdr/worktree.json`           |
 | 作業手順     | `repro`・`refine`・`implement`・`verify`・`finish`・`cleanup`。段階名と成果物のパスはこのプロジェクト固有  |
 | エージェント | Claude、`## prompt: guard`、`pr-verify`・`issue-refine`・`pr-finish` などのスキル                          |
 | Copilot      | `gh`、対象リポジトリへの権限、`vars.owner`・`vars.repo`、REST アサインと `review_requested` による完了確認 |
 | base         | `base.resolve` が Git の `origin` から `delivery/*` を読み取る設定                                         |
 | DB・ブラウザ | `flow wt stop`、`db:reset --snapshot` / `--seed`、`pw:repro` など。DB リセットを使う step に必要           |
 
-Issue ディレクトリと worktree のコマンドは flow 同梱のものです。`.flow/worktree.json`、DB・ブラウザのタスク、プロンプトに書かれたスキル・ファイルは利用先で用意します。
+Issue ディレクトリと worktree のコマンドは flow 同梱のものです。`.herdr/worktree.json`、DB・ブラウザのタスク、プロンプトに書かれたスキル・ファイルは利用先で用意します。
 
 ## 旧配置から Release 版へ移す場合
 
