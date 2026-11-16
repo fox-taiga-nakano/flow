@@ -1,32 +1,81 @@
+<div align="center">
+
 # flow
 
-GitHub Issue の処理を Herdr のエージェントや Copilot に振り分け、承認・進捗・再試行を管理する CLI です。プロジェクトごとの作業手順は `WORKFLOW.md` で定義します。
+**アサインされた Issue を、AI エージェントがマージまで運ぶ。人は承認するだけ。**
 
-## 主な機能
+再現 → Issue の整理 → 実装（Copilot）→ 動作確認 → PR の仕上げ → 後片付け。<br>
+各段階を [Herdr](https://herdr.dev/) のエージェントに並列で進めさせ、要所だけを人の承認で止めるオーケストレーター CLI です。
 
-- GitHub Issue の取得と、設定した段階に応じた作業の割り振り
-- Herdr のエージェントや worktree の起動・管理
-- 承認待ち、質問、失敗時の再試行と復旧
-- 状態・ログの表示と dry-run による実行予定の確認
+[![Release](https://img.shields.io/github/v/release/fox-taiga-nakano/flow?style=flat-square)](https://github.com/fox-taiga-nakano/flow/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D24-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+
+[特徴](#特徴) · [しくみ](#しくみ) · [インストール](#インストール) · [クイックスタート](#クイックスタート) · [コマンド](#コマンド) · [設定](#設定) · [ドキュメント](#ドキュメント)
+
+</div>
+
+---
+
+```console
+$ flow init
+✔ 作成: .flow/WORKFLOW.md（vars: example-org/example-app）
+✔ 作成: .herdr/worktree.json
+✔ 作成: .agents/skills/flow-repro
+✔ 作成: .claude/skills/flow-repro → .agents/skills/flow-repro
+...
+$ flow validate
+✔ WORKFLOW.md: valid
+$ flow run
+```
+
+## 特徴
+
+- **段階ごとに専任のエージェント** — Issue の段階に応じて、Herdr のペインで step ごとのエージェントを起動します。Issue ごと・worktree ごとに分かれるので、複数の Issue を並列に進められます
+- **人は要所で承認するだけ** — 開始・Issue の公開・Copilot のアサイン・PR 本文の更新などは gate で止まり、`flow approve` を待ちます。どの gate を自動にするかは設定で選べます
+- **修正前と修正後を同じ手順で比べる** — repro で作った再現スクリプトを、verify で PR のブランチに対して実行し直します。エビデンスとチェックの結果がそのまま PR に載ります
+- **止まっても安全に再開** — 状態・所有記録・ロックを `.flow/` に保存します。再試行・復旧・停止は flow が所有するものだけに行い、人の作業には触れません
+- **手順はプロジェクトのもの** — 段階・step・gate・プロンプトは `.flow/WORKFLOW.md` に書きます。flow 本体にはプロジェクト固有の名前を持ちません
+- **始めるのは一瞬** — `flow init` が設定のテンプレートと各 step のスキルを置きます。`flow run --dry-run` で、実際に動かす前に予定を確かめられます
+
+## しくみ
+
+```mermaid
+flowchart LR
+    A([Issue がアサインされる]) -- start --> R[repro<br>再現]
+    R -- repro_result --> F[refine<br>Issue の整理]
+    F -- issue_push --> I[implement<br>Copilot が実装]
+    I -- verify_start --> V[verify<br>動作確認]
+    V -- NG: ng_action --> I
+    V -- OK: finish_start --> P[finish<br>PR 本文の仕上げ]
+    P -- pr_body --> M([PR のマージ])
+    M -- cleanup --> C[cleanup<br>worktree の削除]
+```
+
+矢印のラベルは gate（承認のポイント）です。`flow` は tick ごとに GitHub と各 Issue の状態を読み、次に進める step を決めます。gate が `manual` なら承認を待ち、`auto` ならそのまま進めます。
+
+| step      | 動く場所                 | エージェント         | 作るもの                                           |
+| --------- | ------------------------ | -------------------- | -------------------------------------------------- |
+| repro     | base から作る worktree   | `flow-repro` スキル  | `repro.md`・`scripts/repro.sh`・修正前のエビデンス |
+| refine    | メインのチェックアウト   | `flow-refine` スキル | `issue.md`（承認後に Issue の本文へ）              |
+| implement | GitHub                   | Copilot              | PR                                                 |
+| verify    | PR のブランチの worktree | `flow-verify` スキル | 修正後のエビデンス、検証済か検証NG                 |
+| finish    | PR のブランチの worktree | `flow-finish` スキル | `pr-body.md`（承認後に PR の本文へ）               |
+| cleanup   | —                        | —                    | worktree の削除                                    |
 
 ## インストール
 
-### 必要な環境
+### 必要なもの
 
 - Linux または macOS、Bash
-- [mise](https://mise.jdx.dev/) と [Herdr](https://herdr.dev/)
-- Node.js 24 以上（下記の mise タスクでは 24.22.1 を使用）
-- GitHub CLI (`gh`) と対象リポジトリにアクセスできる認証
+- [mise](https://mise.jdx.dev/)、[Herdr](https://herdr.dev/)
+- Node.js 24 以上
+- [GitHub CLI](https://cli.github.com/)（`gh`）と、対象リポジトリにアクセスできる認証
 - 同梱の `flow issue` / `flow wt` を使う場合：git、`jq`、`ss`（iproute2）、`column`
-- `WORKFLOW.md` で指定するコマンド、エージェント、スキルなど
 
-Herdr を使う step では、対象プロジェクトに対応する Herdr セッションが必要です。使用する workflow によって、Copilot やプロジェクト固有の mise タスクなども必要になります。
+### mise で入れる
 
-### GitHub Releases
-
-GitHub Releases の `flow-universal.tar.gz` を mise で導入できます。アーカイブには CLI と実行時の JavaScript 依存が含まれます。Node.js は別途必要です。
-
-対象プロジェクトの `mise.toml` に次を追加し、バージョンを公開済みの Release に合わせて変更してください。
+対象プロジェクトの `mise.toml` に追加します。`version` は [Releases](https://github.com/fox-taiga-nakano/flow/releases) の最新に合わせてください。
 
 ```toml
 [tools]
@@ -43,127 +92,159 @@ mise install
 mise run flow --help
 ```
 
-mise タスクは flow 用に Node.js を選択し、引数をそのまま CLI に渡します。flow 本体は mise の管理領域に置かれ、各プロジェクトの設定・状態は対象プロジェクトの `.flow/` に保存されます。
+アーカイブには CLI・実行時の依存・テンプレート・スキル・同梱コマンドが入っています（Node.js は別に必要です）。以下では `mise run flow` を `flow` と書きます。
 
 ## クイックスタート
 
-1. [テンプレート](templates/)を参考に、対象プロジェクトに `.flow/WORKFLOW.md` を用意します。設定の詳細は[設定](#設定)を参照してください。
-2. 対象プロジェクトに対応する Herdr セッションを起動します。
-3. 設定と実行予定を確認します。
+**1. テンプレートを置く** — 対象プロジェクトのメインのチェックアウトで実行します。既にあるファイルは上書きしません。
 
 ```sh
-mise run flow validate
-mise run flow tick --dry-run
-mise run flow status
+flow init
 ```
 
-`validate` は設定を検証します。`tick --dry-run` では予定を確認できますが、読み取りコマンドの実行や dry-run 用の記録は行います。出力を確認したうえで、Herdr セッション内から運用を開始してください。
+| 置かれるもの            | 内容                                                 |
+| ----------------------- | ---------------------------------------------------- |
+| `.flow/WORKFLOW.md`     | 全 step の構成。`vars` は git の origin から埋めます |
+| `.herdr/worktree.json`  | worktree にコピーするファイル・ポート・フック        |
+| `.agents/skills/flow-*` | 各 step のスキル（`.claude/skills/` からリンク）     |
+
+**2. プロジェクトに合わせる** — `init` が表示する「次の作業」に従います。
+
+- `.flow/WORKFLOW.md` の `base.resolve`（PR のマージ先の base を出力するコマンド）
+- 環境変数 `ISSUE_DIR`（Issue ごとのディレクトリの置き場所。例：`mise.toml` の `[env]`）
+- `.gitignore` に `/.flow/state/`・`/.flow/run/`・`/.flow/logs/`
+- 各スキルの「プロジェクトに合わせて書き換える」節（開発サーバーの起動、画面の操作、テスト）
+
+**3. 確かめてから動かす** — Herdr のセッションの中で実行します。
 
 ```sh
-mise run flow run
+flow validate        # 設定を検証
+flow tick --dry-run  # 次の tick の予定を表示（読み取りだけで、変更はしない）
+flow run             # tick を繰り返す（Ctrl+C で、実行中の tick を終えてから止まる）
 ```
 
-`run` は tick を繰り返します。Ctrl+C で停止すると、実行中の tick を完了してから終了します。
-
-## 同梱のコマンドとスキル
-
-flow だけで運用できるよう、Issue ディレクトリと worktree を扱うコマンド、監視コマンド、運用スキルを同梱しています。
-
-- **`flow issue <dir|mark|push|status>`**：Issue ごとのディレクトリ `<ISSUE_DIR>/<並び順>-<段階>_<番号>` を扱います。`ISSUE_DIR`（メインのチェックアウトからの相対パス）を環境変数で渡してください（例：利用先の mise の `[env]`）。段階の並びは `ISSUE_STATUSES`（空白区切り）で変えられます。`push`・`status` は既定の段階名（未着手・再現済・Issue更新済・修正中・完了）を使います
-- **`flow wt <create|list|ports|sync|remove|stop|agent|hook>`**：Herdr の worktree を作り、メインのチェックアウトの `.herdr/worktree.json`（`sync`・`slot_step`・`services`・`env_files`・`hooks`）に従ってファイルのコピー・ポートの割り当て・フックを行います。設定の形式は [tools/lib/wt.sh](tools/lib/wt.sh) の先頭にあります
-- **`flow watch`**：本番ログの承認待ち・エラーを待ち、JSON で返します。運用スキルが使います
-- **`skills/flow-operator/`**：メインのエージェントが `flow run` を横のペインで動かし、承認待ち・質問をユーザーに示して操作するスキルです。利用先の `.claude/skills/`（または `.agents/skills/`）にリンクかコピーしてください。並列で進めても、メインのエージェントとの会話だけを見ていれば済むようになります
-
-[テンプレート](templates/WORKFLOW.md)は Issue ディレクトリと worktree の操作にこれらのコマンドを使います。flow が実行するコマンドからの `flow` は、実行中の flow と同じ版・同じ Node.js になります。
-
-質問待ちは `flow status <issue>` で確認し、`flow answer <issue> "回答"` で回答できます。`flow open <issue>` は agent のタブへ移動します。操作後は実行中の `flow run` がすぐ tick します。通知はテンプレートの `herdr notification show {title} --body {body} --sound {sound}` を利用でき、音は action・error が request、info が none です。
+> [!TIP]
+> 同梱の `flow-operator` スキルを使うと、メインのエージェントが `flow run` を横のペインで動かし、承認待ちや質問をまとめて伝えてくれます。並列で進めても、1 つの会話を見ていれば済みます。
 
 ## コマンド
 
-| コマンド                          | 操作                                 |
-| --------------------------------- | ------------------------------------ |
-| `mise run flow status`            | Issue の状態と承認待ちを表示         |
-| `mise run flow status 123`        | Issue 123 の詳細を表示               |
-| `mise run flow tick`              | tick を一度実行                      |
-| `mise run flow run`               | tick を定期実行                      |
-| `mise run flow approve 123`       | 現在の gate を承認                   |
-| `mise run flow reject 123`        | 対象外として停止                     |
-| `mise run flow retry 123`         | 試行回数を戻して再開                 |
-| `mise run flow stop 123`          | flow が所有するエージェントを停止    |
-| `mise run flow answer 123 "回答"` | agent の質問に回答                   |
-| `mise run flow open 123`          | agent のタブへ移動                   |
-| `mise run flow watch`             | 承認待ち・エラーを待って JSON で表示 |
-| `mise run flow issue dir 123`     | Issue 123 のディレクトリを表示       |
-| `mise run flow wt list`           | worktree の一覧を表示                |
-| `mise run flow logs`              | イベントログを表示                   |
-| `mise run flow logs --follow`     | 新しいログを追跡                     |
-| `mise run flow lock list`         | ロックの状態を表示                   |
+### 見る
 
-`mise run flow --help` で全コマンド、`mise run flow approve --help` などで各コマンドの引数と選択肢を確認できます。JSON が必要な場合は `mise run flow status --json` を使います。
+| コマンド                 | 内容                                                          |
+| ------------------------ | ------------------------------------------------------------- |
+| `flow status [issue]`    | 状態と承認待ちの一覧。Issue を指定すると詳細（`--json` も可） |
+| `flow logs [issue] [-f]` | イベントログ                                                  |
+| `flow watch`             | 承認待ち・エラーを待ち、JSON で返す（運用スキル向け）         |
+| `flow open <issue>`      | agent のタブへ移動                                            |
 
-承認時に選択が必要な gate もあります。例えば、base の変更を確認した後、固定済みの base を維持するには次のように指定します。
+### 進める
+
+| コマンド                      | 内容                                                        |
+| ----------------------------- | ----------------------------------------------------------- |
+| `flow run` / `flow tick`      | tick を繰り返す／1 回だけ実行する（`--dry-run` で予定だけ） |
+| `flow approve <issue> [gate]` | gate を承認（`--choice` で選択肢を指定）                    |
+| `flow answer <issue> "回答"`  | agent の質問に回答                                          |
+| `flow reject <issue> [gate]`  | 対象外にして止める                                          |
+| `flow retry <issue>`          | 試行回数を戻して再開                                        |
+| `flow stop <issue>`           | flow が所有するエージェントを止める                         |
+
+### 準備・補助
+
+| コマンド                                                         | 内容                                 |
+| ---------------------------------------------------------------- | ------------------------------------ |
+| `flow init`                                                      | テンプレートとスキルを置く           |
+| `flow validate`                                                  | `WORKFLOW.md` を検証                 |
+| `flow issue <dir\|mark\|push\|status>`                           | Issue ごとのディレクトリと段階を扱う |
+| `flow wt <create\|list\|ports\|sync\|remove\|stop\|agent\|hook>` | Herdr の worktree を扱う             |
+| `flow lock <acquire\|release\|list>`                             | 資源のロック                         |
+
+すべてのコマンドに `--help` があり、引数・選択肢・関わる gate を確かめられます。
 
 ```sh
-mise run flow approve 123 base_changed --choice keep
+flow approve 123 base_changed --choice keep   # base の変更を確認し、固定した base を維持する
 ```
-
-エージェントからの質問（`agent_question`）には `flow answer` で回答します。権限の確認などの選択式の画面は、`flow open` でペインへ移動して回答します。`approve` が回答を代行することはありません。
 
 ## 設定
 
-対象プロジェクトに `.flow/WORKFLOW.md` を作成します。YAML front matter に tracker、stage store、worktree、エージェント、承認、step などを設定し、本文に `## prompt: <step>` を記述します。`vars.main` は対象プロジェクトの絶対パスに設定してください。
+手順はすべて対象プロジェクトの `.flow/WORKFLOW.md` に書きます。YAML front matter に段階・step・gate を、本文に step ごとのプロンプトを書きます。
 
-[WORKFLOW.md テンプレート](templates/WORKFLOW.md)と [mise 設定例](templates/mise.toml)、[Git 除外設定例](templates/gitignore)、[worktree 設定例](templates/worktree.json)を用意しています。WORKFLOW の `REPLACE` を含む値と未設定のコマンド（`base.resolve` など）、プロンプトを利用先に合わせて変更してください。テンプレートの未設定コマンドはエラーで終了します。`validate` は構文のみを検証し、設定漏れや外部コマンドの動作は確認しません。
+```yaml
+---
+gates:
+  start: manual        # 着手は人が決める
+  verify_start: auto   # PR ができたら自動で動作確認
+steps:
+  repro:
+    when_stage: 未着手
+    gate_before: start
+    workspace: { from_base: "origin/{base}", branch: "flow/repro-{issue}" }
+    agent: { kind: claude, name: "flow-repro-{issue}" }
+    done_when: { files: [repro.md, scripts/repro.sh, evidence/before/checks.tsv] }
+    gate_after: repro_result
+    on_ok: { set_stage: 再現済 }
+---
 
-設定形式と各項目は [仕様書](SPEC.md) を参照してください。[テスト用の WORKFLOW.md](test/fixtures/WORKFLOW.md) は特定プロジェクトのタスクやスキルを前提にしたフィクスチャです。
+## prompt: repro
 
-flow 本体は GitHub・Herdr との連携や状態管理を提供します。Issue ディレクトリと worktree は同梱のコマンドを使えます（別の方法で管理するなら `WORKFLOW.md` のコマンドを差し替えます）。DB などの操作コマンドと作業手順は利用先で用意し、`WORKFLOW.md` に指定します。設定の置き場所、必須コマンド、一元化の進め方は [導入時の設定](docs/integration.md) にまとめています。
+`.claude/skills/flow-repro/SKILL.md` に従い、Issue #{issue.number} を再現してください。
+```
 
-## 状態とログ
+- 全体の例は [templates/WORKFLOW.md](templates/WORKFLOW.md)、各項目は [仕様書](SPEC.md) にあります
+- Issue のディレクトリと worktree は同梱の `flow issue` / `flow wt` で扱います。別の方法で管理するなら、`WORKFLOW.md` のコマンドを差し替えます
+- worktree の設定 `.herdr/worktree.json` は flow 以外のツールとも共有できます（[templates/worktree.json](templates/worktree.json)）
 
-| 場所                         | 内容                                                 | 取り扱い                                  |
-| ---------------------------- | ---------------------------------------------------- | ----------------------------------------- |
-| `.flow/WORKFLOW.md`          | プロジェクト固有の設定                               | プロジェクトに合わせて管理                |
-| `.flow/state/`               | 所有記録、ロック台帳、Issue 一覧、正常だった設定など | 永続データ。削除しない                    |
-| `.flow/run/`                 | 実行中の PID・ロック、dry-run の一時データなど       | flow の停止中に不要な一時データを整理可能 |
-| `.flow/logs/`                | 日付ごとのイベントログ                               | 必要に応じて古いログを整理可能            |
-| `<Issue ディレクトリ>/flow/` | Issue ごとの状態とエージェントの結果                 | 永続データ。削除しない                    |
+<details>
+<summary><b>状態とログの置き場所</b></summary>
 
-`state/`、`run/`、`logs/` は利用先プロジェクトの Git 管理から除外してください。`WORKFLOW.md` はプロジェクトの運用に合わせて管理してください。
+| 場所                         | 内容                                                   | 扱い                   |
+| ---------------------------- | ------------------------------------------------------ | ---------------------- |
+| `.flow/WORKFLOW.md`          | プロジェクトの設定                                     | リポジトリで管理       |
+| `.flow/state/`               | 所有記録、ロック台帳、Issue 一覧、最後に正常だった設定 | 消さない               |
+| `.flow/run/`                 | 実行中の PID・ロック、dry-run の一時データ             | 停止中なら整理してよい |
+| `.flow/logs/`                | 日付ごとのイベントログ                                 | 古いものは整理してよい |
+| `<Issue ディレクトリ>/flow/` | Issue ごとの状態とエージェントの結果                   | 消さない               |
 
-flow は自分が所有すると記録した worktree・エージェントだけを操作します。承認や復旧の操作を行う際は、表示された対象と現在の Herdr・GitHub の状態を確認してください。
+flow は、自分が所有すると記録した worktree・エージェントだけを操作します。
 
-## 更新
+</details>
 
-1. `flow run` を停止し、実行中の tick が終了するのを待ちます。
-2. `.flow/state/` と Issue ごとの `flow/` を保持し、更新先バージョンの状態互換性を確認します。
-3. 利用先の `mise.toml` でバージョンを更新し、`mise install` を実行します。
-4. `mise run flow validate` と `mise run flow tick --dry-run` で設定と予定を確認してから再開します。
+<details>
+<summary><b>更新するとき</b></summary>
 
-旧版と新版の flow を同時に起動しないでください。
+1. `flow run` を止め、実行中の tick が終わるのを待ちます
+2. `.flow/state/` と Issue ごとの `flow/` は残したまま、`mise.toml` の `version` を上げて `mise install` します
+3. `flow validate` と `flow tick --dry-run` で確かめてから再開します
+
+旧版と新版を同時に動かさないでください。
+
+</details>
 
 ## ドキュメント
 
-- [仕様書](SPEC.md)：設定形式と動作の詳細
-- [導入時の設定](docs/integration.md)：必須項目と既存環境の使用例
-- [ガイド](GUIDE.md)：特定プロジェクトのタスクやスキルを使った運用例
+|                                     |                                        |
+| ----------------------------------- | -------------------------------------- |
+| [仕様書](SPEC.md)                   | 設定の形式と動作の詳細                 |
+| [導入時の設定](docs/integration.md) | 必須の項目と、設定の置き場所の考え方   |
+| [ガイド](GUIDE.md)                  | Issue のアサインからマージまでの運用例 |
 
 ## 開発
 
-このリポジトリの開発には、`.node-version` に指定された Node.js と `package.json` の `packageManager` に指定された pnpm を使用します。
+<details>
+<summary>ビルド・テスト・リリース</summary>
+
+`.node-version` の Node.js と、`package.json` の `packageManager` の pnpm を使います。
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm build
-pnpm check
-pnpm typecheck
-pnpm test
+pnpm check && pnpm typecheck
+pnpm test   # CLI とテスト用フィクスチャをビルドしてから実行
 ```
 
-`pnpm test` はテスト前に CLI とテスト用フィクスチャをビルドします。`pnpm exec vp test` を直接実行すると事前ビルドが省略されるため、通常は `pnpm test` を使用してください。
+リリースは、`package.json` のバージョンに一致する `v` 付きのタグを push します。GitHub Actions がテストとアーカイブの動作確認をしてから、Release に `flow-universal.tar.gz` を添付します。ローカルでは `pnpm build && ./scripts/package-release.sh` でアーカイブを作れます。
 
-Release 作成時は `package.json` のバージョンに一致する `v` 付きタグを push します。GitHub Actions がチェック・テストとアーカイブの動作確認を行い、GitHub Release に成果物を添付します。ローカルでは `pnpm build` と `./scripts/package-release.sh` でアーカイブを生成できます。
+</details>
 
 ## ライセンス
 
-[MIT License](LICENSE)
+[MIT](LICENSE)
