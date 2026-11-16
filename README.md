@@ -163,3 +163,7 @@ pnpm test
 `pnpm test` はテスト前に CLI とテスト用フィクスチャをビルドします。`pnpm exec vp test` を直接実行すると事前ビルドが省略されるため、通常は `pnpm test` を使用してください。
 
 Release 作成時は `package.json` のバージョンに一致する `v` 付きタグを push します。GitHub Actions がチェック・テストとアーカイブの動作確認を行い、GitHub Release に成果物を添付します。ローカルでは `pnpm build` と `./scripts/package-release.sh` でアーカイブを生成できます。
+
+## ライセンス
+
+[MIT License](LICENSE)

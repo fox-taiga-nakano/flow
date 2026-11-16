@@ -47,7 +47,7 @@ Issue ディレクトリと worktree のコマンドは flow に同梱してい�
 
 ## 共通の前提
 
-- flow の実行環境には Node.js 24 以上と Bash が必要です。GitHub Release から mise で導入する場合は、プライベートリポジトリの Release を読み取れる認証も必要です。
+- flow の実行環境には Node.js 24 以上と Bash が必要です。
 - GitHub CLI (`gh`) は対象リポジトリにアクセスできる状態にします。Issue の取得だけでなく、設定に応じて Copilot のアサインや PR の操作にも使います。
 - Herdr を使う step では、対象プロジェクトの Herdr セッション、設定されたエージェント、および実行する作業に必要な権限・スキルを用意します。
 - `WORKFLOW.md` に指定するコマンドは利用先の環境で実行できる必要があります。flow が同梱するのは Issue ディレクトリと worktree のコマンドだけで、プロジェクト固有の mise タスク（DB・ブラウザなど）は提供しません。

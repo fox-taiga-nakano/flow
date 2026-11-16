@@ -5,10 +5,6 @@ test/.build/
 *.tsbuildinfo
 coverage/
 
-# pnpm のストア (.npmrc の store-dir。Codex のサンドボックスで作ったもの)
-.pnpm-store/
-.pnpm-home/
-
 # テストの一時ディレクトリ
 test/.tmp/
 
@@ -23,10 +19,6 @@ dev/
 *.swp
 .vscode/
 .idea/
-
-# 新しいリポジトリに移すときに外すもの (このプロジェクト固有・作業用のファイル)
-#   WORKFLOW.md                 特定プロジェクト固有の設定。プラグインのリポジトリでは templates/WORKFLOW.md にひな形を置く
-#   TASK.md / IMPLEMENTATION_REPORT.md   Codex への依頼と報告
 
 # Test runtime and project-local state
 .flow/
