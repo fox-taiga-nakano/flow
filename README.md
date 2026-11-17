@@ -5,14 +5,13 @@
 **アサインされた Issue を、AI エージェントがマージまで運ぶ。人は承認するだけ。**
 
 再現 → Issue の整理 → 実装（Copilot）→ 動作確認 → PR の仕上げ → 後片付け。<br>
-各段階を [Herdr](https://herdr.dev/) のエージェントに並列で進めさせ、要所だけを人の承認で止めるオーケストレーター CLI です。
+各段階を [Herdr](https://herdr.dev/) 上のエージェントに任せて複数の Issue を並列に進め、要所だけ人の承認を待つオーケストレーター CLI です。
 
 [![Release](https://img.shields.io/github/v/release/fox-taiga-nakano/flow?style=flat-square)](https://github.com/fox-taiga-nakano/flow/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D24-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 
 [特徴](#特徴) · [しくみ](#しくみ) · [インストール](#インストール) · [クイックスタート](#クイックスタート) · [コマンド](#コマンド) · [設定](#設定) · [ドキュメント](#ドキュメント)
-
 </div>
 
 ---
@@ -31,20 +30,30 @@ $ flow run
 
 ## 特徴
 
-- **段階ごとに専任のエージェント** — Issue の段階に応じて、Herdr のペインで step ごとのエージェントを起動します。Issue ごと・worktree ごとに分かれるので、複数の Issue を並列に進められます
-- **人は要所で承認するだけ** — 開始・Issue の公開・Copilot のアサイン・PR 本文の更新などは gate で止まり、`flow approve` を待ちます。どの gate を自動にするかは設定で選べます
-- **修正前と修正後を同じ手順で比べる** — repro で作った再現スクリプトを、verify で PR のブランチに対して実行し直します。エビデンスとチェックの結果がそのまま PR に載ります
-- **止まっても安全に再開** — 状態・所有記録・ロックを `.flow/` に保存します。再試行・復旧・停止は flow が所有するものだけに行い、人の作業には触れません
-- **手順はプロジェクトのもの** — 段階・step・gate・プロンプトは `.flow/WORKFLOW.md` に書きます。flow 本体にはプロジェクト固有の名前を持ちません
-- **始めるのは一瞬** — `flow init` が設定のテンプレートと各 step のスキルを置きます。`flow run --dry-run` で、実際に動かす前に予定を確かめられます
+- **段階ごとに専任のエージェント** — Issue の段階に応じて、Herdr のペインで step ごとのエージェントを起動します。作業場所は Issue ごとの worktree に分かれるので、複数の Issue を並列に進められます
+- **人は要所で承認するだけ** — 着手・Issue の更新・Copilot のアサイン・PR 本文の更新などは gate で止まり、`flow approve` を待ちます。どの gate を自動にするかは設定で選べます
+- **修正前と修正後を同じ手順で比べる** — repro で作った再現スクリプトを、verify で PR のブランチに対して実行し直します。エビデンスとチェックの結果は、そのまま PR に載ります
+- **止まっても安全に再開** — 状態・所有記録・ロックを `.flow/` に保存します。再試行・復旧・停止の対象は flow が所有するものだけで、人の作業には触れません
+- **手順はプロジェクトのもの** — 段階・step・gate・プロンプトは `.flow/WORKFLOW.md` に書きます。flow 本体は、プロジェクト固有の名前や手順を持ちません
+- **すぐに始められる** — `flow init` が設定のテンプレートと各 step のスキルを置きます。`flow run --dry-run` で、実際に動かす前に予定を確かめられます
 
 ## しくみ
+
+![flow を使った開発環境の構成例：システム構成と Issue 解決の流れ](<assets/システム構成と Issue 解決の流れ@2x.png>)
+
+図の上半分は構成の一例、下半分は 1 件の Issue がたどる流れです。
+
+- **メイン** — あなたはメインの Claude Code に依頼と承認を伝えます。メインの Claude Code が `flow` を動かし、`flow` は GitHub の Issue・PR を読んで段階を進めます
+- **worktree** — `flow` は Issue・PR ごとに worktree を作り、step を担当するエージェントを起動します。slot ごとに dev サーバーのポートが分かれるので、複数の Issue が並行して動きます
+- **道具は差し替えられる** — Codex・playwright-cli・Google Drive は、各 step のスキルが使う道具の例です。プロジェクトに合わせてスキルを書き換えます
+
+流れを step と gate（承認のポイント）で表すと、次のようになります。図の 1〜6 は、repro から cleanup までの step に順に対応します。
 
 ```mermaid
 flowchart LR
     A([Issue がアサインされる]) -- start --> R[repro<br>再現]
     R -- repro_result --> F[refine<br>Issue の整理]
-    F -- issue_push --> I[implement<br>Copilot が実装]
+    F -- issue_push・assign --> I[implement<br>Copilot が実装]
     I -- verify_start --> V[verify<br>動作確認]
     V -- NG: ng_action --> I
     V -- OK: finish_start --> P[finish<br>PR 本文の仕上げ]
@@ -52,14 +61,14 @@ flowchart LR
     M -- cleanup --> C[cleanup<br>worktree の削除]
 ```
 
-矢印のラベルは gate（承認のポイント）です。`flow` は tick ごとに GitHub と各 Issue の状態を読み、次に進める step を決めます。gate が `manual` なら承認を待ち、`auto` ならそのまま進めます。
+矢印のラベルは gate です。`flow` は tick ごとに GitHub と各 Issue の状態を読み、次に進める step を決めます。gate が `manual` なら承認を待ち、`auto` ならそのまま進みます。テンプレートの初期値では、上の gate のうち `verify_start`・`finish_start`・`cleanup` が `auto`、ほかは `manual` です。
 
 | step      | 動く場所                 | エージェント         | 作るもの                                           |
 | --------- | ------------------------ | -------------------- | -------------------------------------------------- |
 | repro     | base から作る worktree   | `flow-repro` スキル  | `repro.md`・`scripts/repro.sh`・修正前のエビデンス |
 | refine    | メインのチェックアウト   | `flow-refine` スキル | `issue.md`（承認後に Issue の本文へ）              |
 | implement | GitHub                   | Copilot              | PR                                                 |
-| verify    | PR のブランチの worktree | `flow-verify` スキル | 修正後のエビデンス、検証済か検証NG                 |
+| verify    | PR のブランチの worktree | `flow-verify` スキル | 修正後のエビデンス、検証済か検証 NG の判定         |
 | finish    | PR のブランチの worktree | `flow-finish` スキル | `pr-body.md`（承認後に PR の本文へ）               |
 | cleanup   | —                        | —                    | worktree の削除                                    |
 
@@ -124,7 +133,7 @@ flow run             # tick を繰り返す（Ctrl+C で、実行中の tick を
 ```
 
 > [!TIP]
-> 同梱の `flow-operator` スキルを使うと、メインのエージェントが `flow run` を横のペインで動かし、承認待ちや質問をまとめて伝えてくれます。並列で進めても、1 つの会話を見ていれば済みます。
+> 同梱の `flow-operator` スキルを使うと、メインのエージェント（[しくみ](#しくみ)の図の「Claude Code メイン」）が `flow run` を横のペインで動かし、承認待ちや質問をまとめて伝えます。複数の Issue を並列に進めていても、見るのは 1 つの会話だけで済みます。
 
 ## コマンド
 
