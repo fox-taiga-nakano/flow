@@ -47,21 +47,55 @@ $ flow run
 - **worktree** — `flow` は Issue・PR ごとに worktree を作り、step を担当するエージェントを起動します。slot ごとに dev サーバーのポートが分かれるので、複数の Issue が並行して動きます
 - **道具は差し替えられる** — Codex・playwright-cli・Google Drive は、各 step のスキルが使う道具の例です。プロジェクトに合わせてスキルを書き換えます
 
-流れを step と gate（承認のポイント）で表すと、次のようになります。図の 1〜6 は、repro から cleanup までの step に順に対応します。
+流れを step と gate（承認のポイント）で表すと、次のようになります。番号は図の 1〜6 に対応します。
 
 ```mermaid
-flowchart LR
-    A([Issue がアサインされる]) -- start --> R[repro<br>再現]
-    R -- repro_result --> F[refine<br>Issue の整理]
-    F -- issue_push・assign --> I[implement<br>Copilot が実装]
-    I -- verify_start --> V[verify<br>動作確認]
-    V -- NG: ng_action --> I
-    V -- OK: finish_start --> P[finish<br>PR 本文の仕上げ]
-    P -- pr_body --> M([PR のマージ])
-    M -- cleanup --> C[cleanup<br>worktree の削除]
+sequenceDiagram
+    actor U as あなた
+    participant F as flow
+    participant A as step のエージェント
+    participant G as GitHub・Copilot
+
+    F->>G: アサインされた Issue を読む
+    U->>F: approve（start）
+
+    Note over F,A: 1. repro（再現）
+    F->>A: base から worktree を作って起動
+    A-->>F: 再現スクリプト・修正前のエビデンス
+    U->>F: approve（repro_result）
+
+    Note over F,A: 2. refine（Issue の整理）
+    F->>A: メインのチェックアウトで起動
+    A-->>F: issue.md
+    U->>F: approve（issue_push）
+    F->>G: Issue の本文を更新
+
+    Note over F,G: 3. implement（Copilot が実装）
+    U->>F: approve（assign）
+    F->>G: Copilot をアサイン
+    G-->>F: PR
+
+    Note over F,A: 4. verify（動作確認）
+    F->>A: PR のブランチの worktree で起動
+    A-->>F: 修正後のエビデンス・判定
+    opt 判定が検証 NG のとき
+        U->>F: approve（ng_action）で対応を選ぶ
+        F->>G: 差し戻すなら PR にコメント
+        Note over F,G: 修正を待って 4 をやり直す
+    end
+
+    Note over F,A: 5. finish（PR の仕上げ）
+    F->>A: PR のブランチの worktree で起動
+    A-->>F: pr-body.md
+    U->>F: approve（pr_body）
+    A->>G: PR の本文を更新
+
+    Note over F,G: 6. cleanup（後片付け）
+    U->>G: PR をマージ
+    F->>F: worktree を削除
 ```
 
-矢印のラベルは gate です。`flow` は tick ごとに GitHub と各 Issue の状態を読み、次に進める step を決めます。gate が `manual` なら承認を待ち、`auto` ならそのまま進みます。テンプレートの初期値では、上の gate のうち `verify_start`・`finish_start`・`cleanup` が `auto`、ほかは `manual` です。
+`approve（…）` が gate です。`flow` は tick ごとに GitHub と各 Issue の状態を読み、次に進める step を決めます。gate が `manual` なら承認を待ち、`auto` ならそのまま進みます。verify・finish・cleanup の前にも gate（`verify_start`・`finish_start`・`cleanup`）がありますが、テンプレートの初期値が `auto` なので図では省いています。ほかの gate の初期値は `manual` です。
 
 | step      | 動く場所                 | エージェント         | 作るもの                                           |
 | --------- | ------------------------ | -------------------- | -------------------------------------------------- |
