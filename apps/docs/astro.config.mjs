@@ -1,0 +1,31 @@
+import cloudflare from "@astrojs/cloudflare";
+import starlight from "@astrojs/starlight";
+// @ts-check
+import { defineConfig } from "astro/config";
+
+// https://astro.build/config
+export default defineConfig({
+  site: "https://flow.tagiadoc.workers.dev",
+
+  integrations: [
+    starlight({
+      title: "My Docs",
+      social: [{ icon: "github", label: "GitHub", href: "https://github.com/fox-taiga-nakano/flow/" }],
+      sidebar: [
+        {
+          label: "Guides",
+          items: [
+            // Each item here is one entry in the navigation menu.
+            { label: "Example Guide", slug: "guides/example" },
+          ],
+        },
+        {
+          label: "Reference",
+          items: [{ autogenerate: { directory: "reference" } }],
+        },
+      ],
+    }),
+  ],
+
+  adapter: cloudflare({ prerenderEnvironment: "node" }),
+});
