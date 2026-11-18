@@ -17,7 +17,6 @@ dev/
 # エディタ・OS
 .DS_Store
 *.swp
-.vscode/
 .idea/
 
 # Test runtime and project-local state
@@ -30,3 +29,5 @@ tasks/
 
 # Serena (エディタ連携ツール) のローカル設定・キャッシュ
 .serena/
+
+.turbo

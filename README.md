@@ -279,10 +279,12 @@ flow は、自分が所有すると記録した worktree・エージェントだ
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm build
+pnpm build  # CLI と docs をビルド
 pnpm check && pnpm typecheck
 pnpm test   # CLI とテスト用フィクスチャをビルドしてから実行
 ```
+
+CLI のみをビルドする場合は `pnpm build:cli` を使います。
 
 リリースは、`package.json` のバージョンに一致する `v` 付きのタグを push します。GitHub Actions がテストとアーカイブの動作確認をしてから、Release に `flow-universal.tar.gz` を添付します。ローカルでは `pnpm build && ./scripts/package-release.sh` でアーカイブを作れます。
 

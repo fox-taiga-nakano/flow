@@ -17,12 +17,14 @@
   ],
   "type": "module",
   "scripts": {
-    "build": "vp pack",
+    "dev": "turbo dev",
+    "build": "pnpm build:cli && turbo run build",
+    "build:cli": "vp pack",
     "build:test-fixtures": "vp pack --no-config test/fixtures/epipe-cli.mjs src/core/locks.ts --out-dir test/.build && cp test/fixtures/WORKFLOW.md test/.build/test/fixtures/WORKFLOW.md",
     "check": "vp check",
     "format": "vp fmt",
     "format:check": "vp fmt --check",
-    "pretest": "pnpm build && pnpm build:test-fixtures",
+    "pretest": "pnpm build:cli && pnpm build:test-fixtures",
     "test": "vp test run",
     "typecheck": "tsc --noEmit",
     "lint": "vp lint"
@@ -36,6 +38,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.18.0",
+    "turbo": "^2.11.11",
     "typescript": "^5.9.2",
     "vite-plus": "^1.4.0"
   },
