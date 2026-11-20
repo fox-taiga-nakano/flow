@@ -47,68 +47,68 @@ flow（CLI / 常駐）
 
 ```ts
 interface Tracker {
-  listCandidates(): Promise<TrackerIssue[]>; // WORKFLOW.md の tracker.query の条件（例：自分にアサイン・open）
-  getIssue(n: number): Promise<TrackerIssue | null>; // 突き合わせ用。null は見つからない
-  findPullRequests(issue: number): Promise<TrackerPR[]>; // その Issue を閉じる PR（open / merged / closed）
+  listCandidates(): Promise<TrackerIssue[]> // WORKFLOW.md の tracker.query の条件（例：自分にアサイン・open）
+  getIssue(n: number): Promise<TrackerIssue | null> // 突き合わせ用。null は見つからない
+  findPullRequests(issue: number): Promise<TrackerPR[]> // その Issue を閉じる PR（open / merged / closed）
 }
 type TrackerIssue = {
-  number: number;
-  title: string;
-  state: "open" | "closed";
-  assignees: string[];
-  labels: string[];
-  createdAt: string;
-  url: string;
-};
+  number: number
+  title: string
+  state: 'open' | 'closed'
+  assignees: string[]
+  labels: string[]
+  createdAt: string
+  url: string
+}
 type TrackerPR = {
-  number: number;
-  branch: string;
-  base: string;
-  state: "open" | "merged" | "closed";
-  isDraft: boolean;
-  author: string;
-  url: string;
-};
+  number: number
+  branch: string
+  base: string
+  state: 'open' | 'merged' | 'closed'
+  isDraft: boolean
+  author: string
+  url: string
+}
 
 interface StageStore {
   // 段階（人が見る状態）の読み書き
-  get(issue: number): Promise<string | null>; // 例：'未着手'。ディレクトリが無ければ null
-  set(issue: number, stage: string): Promise<void>;
-  ensure(issue: number): Promise<string>; // 無ければ初期状態で作り、Issue のディレクトリの絶対パスを返す
-  dir(issue: number): Promise<string>; // Issue のディレクトリの絶対パス
+  get(issue: number): Promise<string | null> // 例：'未着手'。ディレクトリが無ければ null
+  set(issue: number, stage: string): Promise<void>
+  ensure(issue: number): Promise<string> // 無ければ初期状態で作り、Issue のディレクトリの絶対パスを返す
+  dir(issue: number): Promise<string> // Issue のディレクトリの絶対パス
 }
 
 interface Workspace {
-  ensure(spec: { key: string; branch: string; base?: string }): Promise<WorkspaceInfo>; // 既にあれば再利用する
-  sync(ws: WorkspaceInfo): Promise<void>;
-  remove(ws: WorkspaceInfo): Promise<void>;
-  list(): Promise<WorkspaceInfo[]>;
+  ensure(spec: { key: string; branch: string; base?: string }): Promise<WorkspaceInfo> // 既にあれば再利用する
+  sync(ws: WorkspaceInfo): Promise<void>
+  remove(ws: WorkspaceInfo): Promise<void>
+  list(): Promise<WorkspaceInfo[]>
 }
 type WorkspaceInfo = {
-  key: string;
-  path: string;
-  workspaceId: string | null;
-  branch: string;
-  slot: number | null;
-};
+  key: string
+  path: string
+  workspaceId: string | null
+  branch: string
+  slot: number | null
+}
 
 interface Runner {
-  start(spec: { name: string; ws: WorkspaceInfo; kind: "claude" | "codex"; prompt: string }): Promise<AgentHandle>;
-  status(h: AgentHandle): Promise<"working" | "idle" | "blocked" | "done" | "gone">;
-  prompt(h: AgentHandle, text: string): Promise<void>; // 承認後の続きの指示など
-  tail(h: AgentHandle, lines: number): Promise<string>; // ログ用
-  stop(h: AgentHandle): Promise<void>; // 人の指示（flow stop）か、Issue が対象外になったときだけ
+  start(spec: { name: string; ws: WorkspaceInfo; kind: 'claude' | 'codex'; prompt: string }): Promise<AgentHandle>
+  status(h: AgentHandle): Promise<'working' | 'idle' | 'blocked' | 'done' | 'gone'>
+  prompt(h: AgentHandle, text: string): Promise<void> // 承認後の続きの指示など
+  tail(h: AgentHandle, lines: number): Promise<string> // ログ用
+  stop(h: AgentHandle): Promise<void> // 人の指示（flow stop）か、Issue が対象外になったときだけ
 }
-type AgentHandle = { runner: string; name: string; paneId?: string };
+type AgentHandle = { runner: string; name: string; paneId?: string }
 
 interface RemoteAgent {
   // 手元で動かないエージェント（Copilot など）
-  request(issue: number): Promise<void>; // 例：Copilot をアサイン
-  poll(issue: number): Promise<"pending" | "working" | "done" | "failed">;
+  request(issue: number): Promise<void> // 例：Copilot をアサイン
+  poll(issue: number): Promise<'pending' | 'working' | 'done' | 'failed'>
 }
 
 interface Notifier {
-  notify(msg: { issue: number; title: string; body: string; level: "info" | "action" | "error" }): Promise<void>;
+  notify(msg: { issue: number; title: string; body: string; level: 'info' | 'action' | 'error' }): Promise<void>
 }
 ```
 
@@ -170,7 +170,7 @@ YAML front matter（設定）と、段階ごとのプロンプト（本文の `#
 version: 1
 tracker:
   kind: github
-  query: { assignee: "@me", state: open } # gh issue list に渡す条件
+  query: { assignee: '@me', state: open } # gh issue list に渡す条件
   exclude_labels: []
   hold_labels: [保留] # このラベルの Issue は今の step の終了後に held へ（8 章）
 stage_store:
@@ -179,21 +179,21 @@ stage_store:
   rejected: 対象外 # flow reject で却下した Issue の段階（8 章）
   held: 保留 # hold_labels で止めた Issue の段階。hold_labels とセットで指定する
   commands: # プロジェクト固有のコマンド。{issue} {stage} を置き換える
-    dir: "mise issue:dir {issue}"
-    ensure: "mise issue:dir --create {issue}"
-    set: "mise issue:mark {issue} {stage}"
+    dir: 'mise issue:dir {issue}'
+    ensure: 'mise issue:dir --create {issue}'
+    set: 'mise issue:mark {issue} {stage}'
 workspace:
   kind: herdr
   commands:
-    create_for_branch: "mise wt:create {branch}" # 最終行 worktree=<path> workspace=<id> pane=<id>
-    create_from_base: "herdr worktree create --cwd {main} --branch {branch} --base {base} --no-focus"
-    sync: "mise wt:sync {path}"
-    remove: "mise run --yes wt:remove {workspace}"
+    create_for_branch: 'mise wt:create {branch}' # 最終行 worktree=<path> workspace=<id> pane=<id>
+    create_from_base: 'herdr worktree create --cwd {main} --branch {branch} --base {base} --no-focus'
+    sync: 'mise wt:sync {path}'
+    remove: 'mise run --yes wt:remove {workspace}'
 runner:
   kind: herdr # メインは Issue タブ、worktree は agent タブで起動する（10.2）
 notifier:
   kind: command
-  command: "herdr notification show {title} --body {body} --sound {sound}" # action・error は request、info は none
+  command: 'herdr notification show {title} --body {body} --sound {sound}' # action・error は request、info は none
 concurrency:
   global: 9
   per_step: { repro: 3, refine: 3, verify: 3, finish: 3 }
@@ -220,53 +220,53 @@ steps: # 段階（stage）ごとに、次に行う step を決める
   repro:
     when_stage: 未着手
     gate_before: start
-    workspace: { from_base: "origin/{base}", branch: "flow/repro-{issue}" } # {base} は 9.1 で求めた今の base
-    agent: { kind: claude, name: "flow-repro-{issue}" }
+    workspace: { from_base: 'origin/{base}', branch: 'flow/repro-{issue}' } # {base} は 9.1 で求めた今の base
+    agent: { kind: claude, name: 'flow-repro-{issue}' }
     locks: [slot, db:shared]
-    done_when: { files: ["repro.md", "scripts/repro.sh", "evidence/before/checks.tsv"] }
+    done_when: { files: ['repro.md', 'scripts/repro.sh', 'evidence/before/checks.tsv'] }
     gate_after: repro_result
     on_ok: { set_stage: 再現済 }
     on_ng: { stop: true, notify: action } # 再現できなかった・仕様の確認が要る。stage は変えず stopped にして人に渡す
   refine:
     when_stage: 再現済
     workspace: none # メインのチェックアウトで動く
-    agent: { kind: claude, name: "flow-refine-{issue}" }
-    done_when: { files: ["issue.md"] }
+    agent: { kind: claude, name: 'flow-refine-{issue}' }
+    done_when: { files: ['issue.md'] }
     gate_after: issue_push
-    on_approve: { command: "mise issue:push {issue}" } # 承認されたらオーケストレーターが実行する。stage は issue:push が Issue更新済 にする
-    on_ok: { remove_workspaces: ["flow/repro-{issue}"] } # Issue 更新後に repro の worktree を削除して slot を解放する。拒否されたら通知して cleanup で再試行する
+    on_approve: { command: 'mise issue:push {issue}' } # 承認されたらオーケストレーターが実行する。stage は issue:push が Issue更新済 にする
+    on_ok: { remove_workspaces: ['flow/repro-{issue}'] } # Issue 更新後に repro の worktree を削除して slot を解放する。拒否されたら通知して cleanup で再試行する
   implement:
     when_stage: Issue更新済
     gate_before: assign
     remote:
       {
         kind: copilot,
-        assign: "gh api --method POST /repos/{owner}/{repo}/issues/{issue}/assignees --input {assign_body}",
+        assign: 'gh api --method POST /repos/{owner}/{repo}/issues/{issue}/assignees --input {assign_body}',
       } # 9.2
     on_done: { set_stage: 修正中 } # PR が見つかり、Copilot の作業が終わったら
   verify:
     when_stage: 修正中
     gate_before: verify_start
     workspace: { pr: true } # その Issue を閉じる open な PR のブランチ
-    agent: { kind: claude, name: "flow-verify-{issue}" } # 手で pr-verify を使うときの verify-<番号> と重ならない名前にする
+    agent: { kind: claude, name: 'flow-verify-{issue}' } # 手で pr-verify を使うときの verify-<番号> と重ならない名前にする
     locks: [slot, db:shared]
-    done_when: { files: ["evidence/after/checks.tsv"], stage_in: [検証済, 検証NG] }
+    done_when: { files: ['evidence/after/checks.tsv'], stage_in: [検証済, 検証NG] }
     on_ng: { gate: ng_action }
   finish:
     when_stage: 検証済
     gate_before: finish_start # 着手前にも承認を得る（PR 本文をすでに更新した Issue などを人が除けるように）
     workspace: { pr: true }
-    agent: { kind: claude, name: "flow-finish-{issue}" }
-    done_when: { files: ["pr-body.md"] }
+    agent: { kind: claude, name: 'flow-finish-{issue}' }
+    done_when: { files: ['pr-body.md'] }
     gate_after: pr_body
     on_approve:
       {
-        prompt: "pr_body が承認されました。pr-finish スキルの A の「了承を得て更新する」を実行し、{flow_dir}/result-finish-{attempt}.json を書き直してください。",
+        prompt: 'pr_body が承認されました。pr-finish スキルの A の「了承を得て更新する」を実行し、{flow_dir}/result-finish-{attempt}.json を書き直してください。',
       }
   cleanup:
     when_pr_merged: true
     gate_before: cleanup
-    action: { remove_workspaces: true, command: "mise issue:status --update" }
+    action: { remove_workspaces: true, command: 'mise issue:status --update' }
 base:
   resolve: "git -C {main} ls-remote --heads origin 'delivery/*' | sed 's#.*refs/heads/##' | sort | tail -1" # 9.1
 vars:

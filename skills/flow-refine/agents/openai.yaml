@@ -1,4 +1,4 @@
 interface:
-  display_name: "Flow Refine"
-  short_description: "再現の結果とコードの調査から、Issueの本文の下書きを作る"
-  default_prompt: "$flow-refine を使って、Issue #<番号> の refine step を進めてください。"
+  display_name: 'Flow Refine'
+  short_description: '再現の結果とコードの調査から、Issueの本文の下書きを作る'
+  default_prompt: '$flow-refine を使って、Issue #<番号> の refine step を進めてください。'
