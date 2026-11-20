@@ -67,11 +67,6 @@ export default defineConfig({
                 files: ['**/*.{yml,yaml,css,md,mdx}'],
                 options: { tabWidth: 2 },
             },
-            {
-                // 設定の検証テストは YAML 内のダブルクォートを含む文字列を置換する。
-                files: ['test/fixtures/WORKFLOW.md'],
-                options: { tabWidth: 2, singleQuote: false },
-            },
         ],
         sortImports: {
             newlinesBetween: true,

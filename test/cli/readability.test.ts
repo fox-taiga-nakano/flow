@@ -12,8 +12,7 @@ import type { Event } from '../../src/core/events.js'
 import { atomic } from '../../src/core/files.js'
 import type { StatusRow } from '../../src/core/orchestrator.js'
 import { orderStages } from '../../src/core/stage-order.js'
-import { parseWorkflow } from '../../src/core/workflow.js'
-import { harness } from '../helpers.js'
+import { harness, workflowFixture } from '../helpers.js'
 
 const dirs: string[] = []
 afterEach(async () => {
@@ -222,28 +221,36 @@ describe('configured stage order', () => {
         )
     })
     it.each([
-        'order: []',
-        'order: [対象外, 対象外]',
-        "order: ['']",
-        "order: [' 未着手']",
-        'order: [123]',
-        'order: 対象外',
-        "order: [対象外, '../完了']",
-    ])('rejects invalid stage names/settings: %s', async (setting) => {
-        const source = await fs.readFile(path.join(import.meta.dirname, '../fixtures/WORKFLOW.md'), 'utf8')
-        expect(() => parseWorkflow(source.replace(/^  order:.*$/m, '  ' + setting))).toThrow('stage_store.order')
+        { order: [] },
+        { order: ['対象外', '対象外'] },
+        { order: [''] },
+        { order: [' 未着手'] },
+        { order: [123] },
+        { order: '対象外' },
+        { order: ['対象外', '../完了'] },
+    ])('rejects invalid stage names/settings: $order', async ({ order }) => {
+        const workflow = await workflowFixture()
+        expect(() =>
+            workflow((raw) => {
+                raw.stage_store.order = order
+            })
+        ).toThrow('stage_store.order')
     })
     it('keeps order optional for older workflows, and supports a different valid order', async () => {
-        const source = await fs.readFile(path.join(import.meta.dirname, '../fixtures/WORKFLOW.md'), 'utf8')
-        expect(parseWorkflow(source.replace(/^  order:.*\n/m, '')).stage_store.order).toBeUndefined()
-        expect(parseWorkflow(source.replace(/^  order:.*$/m, '  order: [対象外, 完了]')).stage_store.order).toEqual([
-            '対象外',
-            '完了',
-        ])
-        const reordered = source.replace(
-            /^  order:.*$/m,
-            '  order: [未着手, 再現済, Issue更新済, 修正中, 検証NG, 検証済, 完了, 対象外]'
-        )
-        expect(parseWorkflow(reordered).stage_store.order?.[0]).toBe('未着手')
+        const workflow = await workflowFixture()
+        expect(
+            workflow((raw) => {
+                delete raw.stage_store.order
+            }).stage_store.order
+        ).toBeUndefined()
+        expect(
+            workflow((raw) => {
+                raw.stage_store.order = ['対象外', '完了']
+            }).stage_store.order
+        ).toEqual(['対象外', '完了'])
+        const reordered = workflow((raw) => {
+            raw.stage_store.order = ['未着手', '再現済', 'Issue更新済', '修正中', '検証NG', '検証済', '完了', '対象外']
+        })
+        expect(reordered.stage_store.order?.[0]).toBe('未着手')
     })
 })

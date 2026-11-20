@@ -1,5 +1,4 @@
 import { promises as fs } from 'node:fs'
-import path from 'node:path'
 import { stripVTControlCharacters } from 'node:util'
 import pc from 'picocolors'
 import stringWidth from 'string-width'
@@ -14,8 +13,8 @@ import { atomic } from '../../src/core/files.js'
 import { gateAnswer, type Orchestrator, type StatusRow } from '../../src/core/orchestrator.js'
 import { FlowPaths } from '../../src/core/paths.js'
 import { initialState } from '../../src/core/state.js'
-import { issueLink, parseWorkflow } from '../../src/core/workflow.js'
-import { config, harness, temp } from '../helpers.js'
+import { issueLink } from '../../src/core/workflow.js'
+import { config, harness, temp, workflowFixture } from '../helpers.js'
 
 const dirs: string[] = []
 afterEach(async () => {
@@ -271,10 +270,18 @@ describe('shared tables and colors', () => {
         )
     })
     it('validates the workflow display timezone', async () => {
-        const source = await fs.readFile(path.join(import.meta.dirname, '../fixtures/WORKFLOW.md'), 'utf8')
-        expect(parseWorkflow(source).timezone).toBe('Asia/Tokyo')
-        expect(() => parseWorkflow(source.replace('timezone: Asia/Tokyo', 'timezone: wrong-zone'))).toThrow('timezone')
-        expect(parseWorkflow(source.replace('timezone: Asia/Tokyo\n', '')).timezone).toBeUndefined()
+        const workflow = await workflowFixture()
+        expect((await config()).timezone).toBe('Asia/Tokyo')
+        expect(() =>
+            workflow((raw) => {
+                raw.timezone = 'wrong-zone'
+            })
+        ).toThrow('timezone')
+        expect(
+            workflow((raw) => {
+                delete raw.timezone
+            }).timezone
+        ).toBeUndefined()
     })
 })
 

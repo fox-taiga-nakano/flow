@@ -9,7 +9,7 @@ import { Locks } from '../../src/core/locks.js'
 import { checkState, initialState } from '../../src/core/state.js'
 import { render } from '../../src/core/template.js'
 import { parseWorkflow, WorkflowLoader } from '../../src/core/workflow.js'
-import { config, temp } from '../helpers.js'
+import { config, temp, workflowFixture, workflowSource } from '../helpers.js'
 
 const dirs: string[] = []
 afterEach(async () => {
@@ -33,20 +33,30 @@ describe('workflow and file boundaries', () => {
     it('rejects bad config and caches last valid config across processes', async () => {
         const dir = await tmp()
         const file = path.join(dir, 'WORKFLOW.md')
-        const source = await fs.readFile(path.join(import.meta.dirname, '../fixtures/WORKFLOW.md'), 'utf8')
+        const source = await workflowSource()
+        const workflow = await workflowFixture(source)
         await fs.writeFile(file, source)
         const loader = new WorkflowLoader(file, dir)
         await loader.load()
         await fs.writeFile(file, 'bad')
         expect((await new WorkflowLoader(file, dir).load()).warning).toBeTruthy()
         await expect(loader.load(false)).rejects.toThrow('front matter')
-        expect(() => parseWorkflow(source.replace('global: 9', 'global: 0'))).toThrow('concurrency')
+        expect(() =>
+            workflow((raw) => {
+                raw.concurrency.global = 0
+            })
+        ).toThrow('concurrency')
         expect(() => parseWorkflow(source.replace('{last_failure}', '{undefined_value}'))).toThrow('未定義')
-        const runner = '  close_on_complete: true\n'
-        expect(parseWorkflow(source.replace(runner, `${runner}  commands: {}\n`)).runner).not.toHaveProperty('commands')
+        expect(
+            workflow((raw) => {
+                raw.runner.commands = {}
+            }).runner
+        ).not.toHaveProperty('commands')
         for (const key of ['start', 'start_main']) {
             expect(() =>
-                parseWorkflow(source.replace(runner, `${runner}  commands: { ${key}: "mise wt:agent {name}" }\n`))
+                workflow((raw) => {
+                    raw.runner.commands = { [key]: 'mise wt:agent {name}' }
+                })
             ).toThrow('廃止')
         }
     })
@@ -142,8 +152,12 @@ describe('resource locks', () => {
 })
 
 it('validates explicit NG auto choices and preserves shell parameter expressions', async () => {
-    const source = await fs.readFile(path.join(import.meta.dirname, '../fixtures/WORKFLOW.md'), 'utf8')
-    expect(() => parseWorkflow(source.replace('ng_action: manual', 'ng_action: auto'))).toThrow('choice')
+    const workflow = await workflowFixture()
+    expect(() =>
+        workflow((raw) => {
+            raw.gates.ng_action = 'auto'
+        })
+    ).toThrow('choice')
     expect(render('${SHELL_VAR} {attempt}', { attempt: 2 })).toBe('${SHELL_VAR} 2')
 })
 it('restores a suspended shared lock after an aborted upgrade', async () => {

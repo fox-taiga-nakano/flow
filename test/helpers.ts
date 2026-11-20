@@ -1,6 +1,7 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { vi } from 'vite-plus/test'
+import { parse, stringify } from 'yaml'
 
 import { RestAssignment } from '../src/adapters/assignment.js'
 import { atomic } from '../src/core/files.js'
@@ -42,8 +43,38 @@ export async function temp(): Promise<string> {
     return fs.mkdtemp(path.join(actual, 'case-'))
 }
 export async function config(): Promise<Workflow> {
-    return parseWorkflow(await fs.readFile(path.resolve(import.meta.dirname, '../test/fixtures/WORKFLOW.md'), 'utf8'))
+    return parseWorkflow(await workflowSource())
 }
+
+export function workflowSource(): Promise<string> {
+    return fs.readFile(new URL('./fixtures/WORKFLOW.md', import.meta.url), 'utf8')
+}
+
+type WorkflowFixture = Record<
+    'concurrency' | 'database' | 'gates' | 'runner' | 'stage_store' | 'tracker',
+    Record<string, unknown>
+> & {
+    timezone?: unknown
+    steps: {
+        repro: Record<string, unknown>
+        verify: { agent: Record<string, unknown> }
+    }
+}
+
+export async function workflowFixture(source?: string) {
+    const match = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)([\s\S]*)$/.exec(source ?? (await workflowSource()))
+    if (!match) {
+        throw new Error('The workflow fixture is missing YAML front matter')
+    }
+    const [, frontMatter, body] = match
+    const raw = parse(frontMatter!) as WorkflowFixture
+    return (edit: (raw: WorkflowFixture) => void) => {
+        const edited = structuredClone(raw)
+        edit(edited)
+        return parseWorkflow(`---\n${stringify(edited)}---\n${body}`)
+    }
+}
+
 export async function harness(options: { dryRun?: boolean; stage?: string; count?: number } = {}) {
     const dir = await temp()
     const workflow = await config()

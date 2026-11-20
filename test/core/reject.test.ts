@@ -5,8 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import { DirsStageStore } from '../../src/adapters/dirs.js'
 import { initialState } from '../../src/core/state.js'
 import type { ExecRequest, Status } from '../../src/core/types.js'
-import { parseWorkflow } from '../../src/core/workflow.js'
-import { harness, pr } from '../helpers.js'
+import { harness, pr, workflowFixture } from '../helpers.js'
 
 const dirs: string[] = []
 async function setup(options: Parameters<typeof harness>[0] = {}) {
@@ -129,10 +128,22 @@ it('uses the configured rejected stage rather than a hard-coded label', async ()
     expect(h.a.runner.start).not.toHaveBeenCalled()
 })
 it('validates the rejected stage and forbids assigning it to a step', async () => {
-    const source = await fs.readFile(path.resolve(import.meta.dirname, '../fixtures/WORKFLOW.md'), 'utf8')
-    expect(() => parseWorkflow(source.replace('  rejected: 対象外\n', ''))).toThrow('rejected')
-    expect(() => parseWorkflow(source.replace('rejected: 対象外', 'rejected: 未着手'))).toThrow('rejected')
-    expect(() => parseWorkflow(source.replace('when_stage: 未着手', 'when_stage: 対象外'))).toThrow('when_stage')
+    const workflow = await workflowFixture()
+    expect(() =>
+        workflow((raw) => {
+            delete raw.stage_store.rejected
+        })
+    ).toThrow('rejected')
+    expect(() =>
+        workflow((raw) => {
+            raw.stage_store.rejected = '未着手'
+        })
+    ).toThrow('rejected')
+    expect(() =>
+        workflow((raw) => {
+            raw.steps.repro.when_stage = '対象外'
+        })
+    ).toThrow('when_stage')
 })
 it('preserves the recorded stage if a mark fails and the user repeats reject', async () => {
     const h = await setup()

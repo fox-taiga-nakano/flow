@@ -1,9 +1,7 @@
 import { promises as fs } from 'node:fs'
-import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 
-import { parseWorkflow } from '../../src/core/workflow.js'
-import { harness, pr, starts } from '../helpers.js'
+import { harness, pr, starts, workflowFixture } from '../helpers.js'
 
 const dirs: string[] = []
 async function setup(options: Parameters<typeof harness>[0] = {}) {
@@ -108,10 +106,16 @@ describe('initial prompt readiness and pane completion', () => {
         expect(h.a.runner.close).not.toHaveBeenCalled()
     })
     it('defaults close_on_complete to true and validates its type', async () => {
-        const source = await fs.readFile(path.resolve(import.meta.dirname, '../fixtures/WORKFLOW.md'), 'utf8')
-        expect(parseWorkflow(source.replace('  close_on_complete: true\n', '')).runner.close_on_complete).toBe(true)
-        expect(() => parseWorkflow(source.replace('close_on_complete: true', 'close_on_complete: nope'))).toThrow(
-            'close_on_complete'
-        )
+        const workflow = await workflowFixture()
+        expect(
+            workflow((raw) => {
+                delete raw.runner.close_on_complete
+            }).runner.close_on_complete
+        ).toBe(true)
+        expect(() =>
+            workflow((raw) => {
+                raw.runner.close_on_complete = 'nope'
+            })
+        ).toThrow('close_on_complete')
     })
 })

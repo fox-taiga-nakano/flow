@@ -5,8 +5,7 @@ import { GitHubTracker, type RawIssue, type RawPR } from '../../src/adapters/git
 import { CommandError } from '../../src/core/command-error.js'
 import { initialState } from '../../src/core/state.js'
 import type { ExecRequest } from '../../src/core/types.js'
-import { parseWorkflow } from '../../src/core/workflow.js'
-import { config, harness, issue } from '../helpers.js'
+import { config, harness, issue, workflowFixture } from '../helpers.js'
 
 const rawIssue = (n: number): RawIssue => ({
     ...issue(n),
@@ -264,10 +263,12 @@ describe('GitHub snapshots', () => {
     })
 
     it.each([0, -1, 1.5, '100'])('rejects invalid tracker.pr_limit %s', async (limit) => {
-        const source = await fs.readFile(new URL('../fixtures/WORKFLOW.md', import.meta.url), 'utf8')
-        expect(() => parseWorkflow(source.replace('pr_limit: 100', `pr_limit: ${JSON.stringify(limit)}`))).toThrow(
-            'pr_limit'
-        )
+        const workflow = await workflowFixture()
+        expect(() =>
+            workflow((raw) => {
+                raw.tracker.pr_limit = limit
+            })
+        ).toThrow('pr_limit')
     })
 })
 

@@ -1,12 +1,10 @@
 import { promises as fs } from 'node:fs'
-import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 
 import { atomic } from '../../src/core/files.js'
 import { FlowPaths } from '../../src/core/paths.js'
 import type { DbResetRequest } from '../../src/core/types.js'
-import { parseWorkflow } from '../../src/core/workflow.js'
-import { harness, pr } from '../helpers.js'
+import { harness, pr, workflowFixture } from '../helpers.js'
 
 const dirs: string[] = []
 afterEach(async () => {
@@ -311,13 +309,34 @@ describe('flow-owned DB reset', () => {
 })
 
 describe('DB reset configuration', () => {
-    it.each([
-        ['    db_reset: true', '    db_reset: invalid'],
-        ['  stop: "mise wt:stop"', '  stop: ""'],
-        ['locks: [slot, "db:shared"]', 'locks: [slot]'],
-        ['  db_reset: auto', ''],
-    ])('rejects invalid configuration (%s)', async (oldValue, newValue) => {
-        const source = await fs.readFile(path.resolve(import.meta.dirname, '../fixtures/WORKFLOW.md'), 'utf8')
-        expect(() => parseWorkflow(source.replace(oldValue, newValue))).toThrow(/db_reset|database/)
+    type Edit = Parameters<Awaited<ReturnType<typeof workflowFixture>>>[0]
+    it.each<[string, Edit]>([
+        [
+            'non-boolean db_reset',
+            (raw) => {
+                raw.steps.repro.db_reset = 'invalid'
+            },
+        ],
+        [
+            'empty database.stop',
+            (raw) => {
+                raw.database.stop = ''
+            },
+        ],
+        [
+            'missing shared lock',
+            (raw) => {
+                raw.steps.repro.locks = ['slot']
+            },
+        ],
+        [
+            'missing db_reset gate',
+            (raw) => {
+                delete raw.gates.db_reset
+            },
+        ],
+    ])('rejects invalid configuration (%s)', async (_label, edit) => {
+        const workflow = await workflowFixture()
+        expect(() => workflow(edit)).toThrow(/db_reset|database/)
     })
 })

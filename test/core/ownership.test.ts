@@ -7,8 +7,7 @@ import { atomic } from '../../src/core/files.js'
 import { Ownership } from '../../src/core/ownership.js'
 import { initialState } from '../../src/core/state.js'
 import type { ExecRequest, WorkspaceInfo } from '../../src/core/types.js'
-import { parseWorkflow } from '../../src/core/workflow.js'
-import { config, harness, pr, starts, temp } from '../helpers.js'
+import { config, harness, pr, starts, temp, workflowFixture } from '../helpers.js'
 
 const dirs: string[] = []
 afterEach(async () => {
@@ -368,9 +367,11 @@ describe('adapter enforcement at mutation boundaries', () => {
 })
 
 it('validates the flow- agent prefix in WORKFLOW.md', async () => {
-    const source = await fs.readFile(path.join(import.meta.dirname, '../fixtures/WORKFLOW.md'), 'utf8')
+    const workflow = await workflowFixture()
     expect(() =>
-        parseWorkflow(source.replace(/name: ['"]flow-verify-\{issue\}['"]/, 'name: "verify-{issue}"'))
+        workflow((raw) => {
+            raw.steps.verify.agent.name = 'verify-{issue}'
+        })
     ).toThrow('agent')
 })
 

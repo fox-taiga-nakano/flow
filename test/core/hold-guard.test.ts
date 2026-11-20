@@ -2,8 +2,7 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 
-import { parseWorkflow } from '../../src/core/workflow.js'
-import { harness, starts } from '../helpers.js'
+import { harness, starts, workflowFixture } from '../helpers.js'
 
 const dirs: string[] = []
 afterEach(async () => {
@@ -128,16 +127,25 @@ describe('guard system prompt', () => {
 })
 
 describe('hold configuration', () => {
-    const workflow = async (edit: (s: string) => string) =>
-        edit(await fs.readFile(path.resolve(import.meta.dirname, '../fixtures/WORKFLOW.md'), 'utf8'))
     it('requires hold_labels and held together', async () => {
-        const text = await workflow((s) => s.replace('  held: 保留\n', ''))
-        expect(() => parseWorkflow(text)).toThrow('セットで指定')
+        const workflow = await workflowFixture()
+        expect(() =>
+            workflow((raw) => {
+                delete raw.stage_store.held
+            })
+        ).toThrow('セットで指定')
     })
     it('rejects a held stage equal to rejected or used as when_stage', async () => {
-        const rejected = await workflow((s) => s.replace('held: 保留', 'held: 対象外'))
-        expect(() => parseWorkflow(rejected)).toThrow('stage_store.held は initial・rejected と異なる')
-        const step = await workflow((s) => s.replace('held: 保留', 'held: 再現済'))
-        expect(() => parseWorkflow(step)).toThrow('stage_store.held を when_stage に指定できません')
+        const workflow = await workflowFixture()
+        expect(() =>
+            workflow((raw) => {
+                raw.stage_store.held = '対象外'
+            })
+        ).toThrow('stage_store.held は initial・rejected と異なる')
+        expect(() =>
+            workflow((raw) => {
+                raw.stage_store.held = '再現済'
+            })
+        ).toThrow('stage_store.held を when_stage に指定できません')
     })
 })
