@@ -58,5 +58,6 @@ export default defineConfig({
             ],
         }),
     ],
+    session: false,
     adapter: cloudflare({ prerenderEnvironment: 'node' }),
 })
