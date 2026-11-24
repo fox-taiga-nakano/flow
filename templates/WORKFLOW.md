@@ -5,7 +5,7 @@ version: 1
 timezone: Asia/Tokyo
 tracker:
   kind: github
-  query: { assignee: "@me", state: open }
+  query: { assignee: '@me', state: open }
   exclude_labels: []
 stage_store:
   kind: dirs
@@ -18,25 +18,25 @@ stage_store:
     # flow 同梱の flow issue を使います。Issue のディレクトリは環境変数 ISSUE_DIR（メインのチェックアウトからの相対パス）の下です。
     # 段階の並び（ディレクトリ名の番号）は環境変数 ISSUE_STATUSES（空白区切り）で変えられます。
     # dir は tick ごとに何度も呼ぶので、Node を起動しない形でも書けます: 'usage_number={issue} "$FLOW_TOOLS/issue/dir"'
-    dir: "flow issue dir {issue}"
-    ensure: "flow issue dir --create {issue}"
-    set: "flow issue mark {issue} {stage}"
+    dir: 'flow issue dir {issue}'
+    ensure: 'flow issue dir --create {issue}'
+    set: 'flow issue mark {issue} {stage}'
 workspace:
   kind: herdr
   commands:
     # flow 同梱の flow wt を使います。設定はメインのチェックアウトの .herdr/worktree.json です。
-    list: "flow wt list"
-    create_for_branch: "flow wt create {branch}"
-    create_from_base: "herdr worktree create --cwd {main} --branch {branch} --base {base} --no-focus"
-    assign_slot: "flow wt ports {path} --slot {slot}"
-    sync: "flow wt sync {path}"
-    remove: "flow wt remove {workspace}"
+    list: 'flow wt list'
+    create_for_branch: 'flow wt create {branch}'
+    create_from_base: 'herdr worktree create --cwd {main} --branch {branch} --base {base} --no-focus'
+    assign_slot: 'flow wt ports {path} --slot {slot}'
+    sync: 'flow wt sync {path}'
+    remove: 'flow wt remove {workspace}'
 runner:
   kind: herdr
   close_on_complete: true
 notifier:
   kind: command
-  command: "herdr notification show {title} --body {body} --sound {sound}"
+  command: 'herdr notification show {title} --body {body} --sound {sound}'
 concurrency:
   global: 3
   per_step: { repro: 1, refine: 1, verify: 1, finish: 1 }
@@ -73,14 +73,14 @@ remote:
   authors: [Copilot, copilot-swe-agent]
   done_when: review_requested
   ng_action:
-    command: "gh pr comment {pr.number} --body-file {issue_dir}/ng-comment.md"
+    command: 'gh pr comment {pr.number} --body-file {issue_dir}/ng-comment.md'
     set_stage: 修正中
 steps:
   repro:
     when_stage: 未着手
     gate_before: start
-    workspace: { from_base: "origin/{base}", branch: "flow/repro-{issue}" }
-    agent: { kind: claude, name: "flow-repro-{issue}" }
+    workspace: { from_base: 'origin/{base}', branch: 'flow/repro-{issue}' }
+    agent: { kind: claude, name: 'flow-repro-{issue}' }
     done_when: { files: [repro.md, scripts/repro.sh, evidence/before/checks.tsv] }
     gate_after: repro_result
     on_ok: { set_stage: 再現済 }
@@ -88,28 +88,28 @@ steps:
   refine:
     when_stage: 再現済
     workspace: none
-    agent: { kind: claude, name: "flow-refine-{issue}" }
+    agent: { kind: claude, name: 'flow-refine-{issue}' }
     done_when: { files: [issue.md] }
     gate_after: issue_push
-    on_approve: { command: "flow issue push {issue}" }
-    on_ok: { remove_workspaces: ["flow/repro-{issue}"] }
+    on_approve: { command: 'flow issue push {issue}' }
+    on_ok: { remove_workspaces: ['flow/repro-{issue}'] }
   implement:
     when_stage: Issue更新済
     gate_before: assign
     remote:
       kind: copilot
       transport: rest
-      login: "copilot-swe-agent[bot]"
-      assign: "gh api --method POST /repos/{owner}/{repo}/issues/{issue}/assignees --input {assign_body}"
+      login: 'copilot-swe-agent[bot]'
+      assign: 'gh api --method POST /repos/{owner}/{repo}/issues/{issue}/assignees --input {assign_body}'
       agent_assignment:
-        target_repo: "{owner}/{repo}"
-        base_branch: "{base}"
+        target_repo: '{owner}/{repo}'
+        base_branch: '{base}'
     on_done: { set_stage: 修正中 }
   verify:
     when_stage: 修正中
     gate_before: verify_start
     workspace: { pr: true }
-    agent: { kind: claude, name: "flow-verify-{issue}" }
+    agent: { kind: claude, name: 'flow-verify-{issue}' }
     done_when: { files: [evidence/after/checks.tsv], stage_in: [検証済, 検証NG] }
     on_ng: { gate: ng_action }
   finish:
@@ -118,15 +118,15 @@ steps:
     # PR 本文を flow の外で更新済みなら、finish_start を manual にして `flow approve <番号> finish_start --choice skip` で飛ばせます。
     skippable: true
     workspace: { pr: true }
-    agent: { kind: claude, name: "flow-finish-{issue}" }
+    agent: { kind: claude, name: 'flow-finish-{issue}' }
     done_when: { files: [pr-body.md] }
     gate_after: pr_body
     on_approve:
-      prompt: "pr_body が承認されました。flow-finish スキルの「B. 承認の後に更新する」を実行し、{flow_dir}/result-finish-{attempt}.json を書き直してください。"
+      prompt: 'pr_body が承認されました。flow-finish スキルの「B. 承認の後に更新する」を実行し、{flow_dir}/result-finish-{attempt}.json を書き直してください。'
   cleanup:
     when_pr_merged: true
     gate_before: cleanup
-    action: { remove_workspaces: true, command: "flow issue status --update" }
+    action: { remove_workspaces: true, command: 'flow issue status --update' }
 ---
 
 ## prompt: repro

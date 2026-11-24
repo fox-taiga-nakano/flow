@@ -1,0 +1,24 @@
+---
+title: Tick・エージェント・排他制御
+description: Step の開始から完了、資源予約と永続化まで
+---
+
+import Diagram from '../../../components/diagrams/Diagram.astro'
+
+## Tick
+
+`flow tick` は1周期、`flow run` は繰り返し実行です。周期ごとに設定、GitHub の候補・PR、Herdr の workspace・ペイン、保存状態を読み、終わった処理を反映して新しい Step を選びます。承認、却下、回答、停止、再試行を実行すると、稼働する run は残りの待機を切り上げられます。
+
+## エージェントと結果
+
+<Diagram name="lifecycle" />
+
+ローカルエージェントは設定された種類（Claude Code または Codex）を Herdr の専用ペインで起動します。flow は所有記録と一致するエージェントにだけプロンプトを送り、状態を読み取り、必要に応じて終了します。終了結果は Issue 配下の `flow/result-<step>-<attempt>.json` と `done_when` の成果物・段階条件を照合します。停滞は `stall_ms` などの条件で検知し、回復可能な失敗は `retry.backoff_ms` に従います。
+
+## 排他と永続化
+
+run、tick、所有・ロック台帳の更新はそれぞれ PID ベースの排他制御を使います。worktree の slot はその環境を保持する間予約します。共有資源には `shared`、排他処理には `exclusive` を設定でき、待機中の排他取得が新しい共有取得を抑制します。
+
+<Diagram name="concurrency" />
+
+永続台帳と作業ディレクトリを使って再起動後の状態を照合します。途中で結果が不明な外部操作は復旧 Gate に出る場合があります。[停止・復旧](/guides/recovery/)の手順で確認します。

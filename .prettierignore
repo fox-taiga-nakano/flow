@@ -1,0 +1,5 @@
+# Recreated and byte-checked by pnpm docs:generate and pnpm docs:check.
+apps/docs/src/generated/
+apps/docs/src/content/docs/reference/cli/
+apps/docs/src/content/docs/reference/workflow-schema.md
+apps/docs/src/content/docs/reference/worktree-schema.md

@@ -1,0 +1,28 @@
+---
+title: 停止・再開・復旧
+description: 監視だけを止める場合、エージェントを止める場合、実行結果が不明な場合の手順
+---
+
+import TerminalDemo from '../../../components/terminal/TerminalDemo.astro'
+
+## 監視を止める
+
+`flow run` の端末で Ctrl+C を押すと、進行中の tick が終わってから最後の表と停止表示を残します。作業ペインのエージェントは継続します。同じプロジェクトで `flow run` を起動すると、次の tick で保存状態と現在の作業を照合します。
+
+<TerminalDemo initial="stopped" scenes={['stopped', 'initial', 'ticking', 'error', 'logs', 'status']} />
+
+## Issue を止めて再開する
+
+```sh
+flow stop 123 --reason "設定を確認"
+flow status 123
+flow logs 123 --days 2
+```
+
+停止操作は所有するローカルエージェントや資源を対象にします。remote 側の作業は GitHub で状態を確認します。原因を修正し、エージェントがまだ動いていないことを確認して `flow retry 123` を実行します。再開待ちになり、開始 Gate は改めて判定されます。
+
+## 外部操作の結果が不明な場合
+
+ペイン起動、指示送信、コマンドの結果が不明だと復旧 Gate が表示されます。`flow status 123` の Gate 名と `flow logs 123` の操作内容を照合し、ペイン、Issue または PR で実際に反映済みか確認します。実行済みなら `--choice applied`、未実行で安全にやり直せる場合は `--choice retry` と、表示された Gate 名を [flow approve](/reference/cli/approve/) に渡します。
+
+所有不一致や資源の競合が出た場合は、[トラブルシューティング](/troubleshooting/)を確認します。永続台帳と Issue 配下の状態を保持したまま復旧します。

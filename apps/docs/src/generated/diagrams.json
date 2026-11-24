@@ -1,0 +1,2510 @@
+{
+  "architecture": {
+    "title": "システム構成",
+    "description": "flow を使った開発環境の構成例です。メイン側の操作と、Issue ごとの作業環境を Herdr で管理します。",
+    "direction": "RIGHT",
+    "presentation": "architecture",
+    "nodes": [
+      {
+        "id": "user",
+        "label": "あなた",
+        "kind": "service",
+        "detail": "端末から運用を依頼し、提示された Gate を判断します。",
+        "tone": "human",
+        "subtitle": "作業者",
+        "href": "/guides/approval/",
+        "x": 20,
+        "y": 186,
+        "width": 148,
+        "height": 68
+      },
+      {
+        "id": "herdr",
+        "label": "herdr：ペインと worktree を束ねるターミナル",
+        "kind": "group",
+        "detail": "メインと worktree の workspace を管理。",
+        "x": 228,
+        "y": 18,
+        "width": 646,
+        "height": 452
+      },
+      {
+        "id": "main",
+        "label": "メイン（リポジトリ本体）",
+        "kind": "group",
+        "detail": "プロジェクトのメインチェックアウト。",
+        "parent": "herdr",
+        "x": 18,
+        "y": 50,
+        "width": 184,
+        "height": 381
+      },
+      {
+        "id": "skills",
+        "label": "skills",
+        "kind": "service",
+        "detail": "同梱またはプロジェクトが定義したスキルを Claude Code に渡します。",
+        "parent": "main",
+        "icon": "file",
+        "subtitle": "Claude が読む手順書",
+        "x": 16,
+        "y": 42,
+        "width": 152,
+        "height": 56
+      },
+      {
+        "id": "main-agent",
+        "label": "Claude Code",
+        "kind": "agent",
+        "detail": "同梱の flow-operator スキルを使う場合、メイン側のエージェントが run・watch を使って運用を補助します。",
+        "parent": "main",
+        "tone": "claude",
+        "icon": "claude",
+        "subtitle": "メイン：指示・監視・報告",
+        "x": 16,
+        "y": 118,
+        "width": 152,
+        "height": 68
+      },
+      {
+        "id": "flow",
+        "label": "flow",
+        "kind": "process",
+        "detail": "各 tick で候補を取得し、段階・Gate・所有情報を照合します。",
+        "parent": "main",
+        "icon": "terminal",
+        "subtitle": "Issue の段階を進める",
+        "href": "/reference/cli/",
+        "x": 16,
+        "y": 280,
+        "width": 152,
+        "height": 64
+      },
+      {
+        "id": "worktree",
+        "label": "worktree（Issue・PR ごとの作業場所）",
+        "kind": "group",
+        "detail": "専用 workspace にエージェント用のタブとペインを用意します。",
+        "parent": "herdr",
+        "subtitle": "slot ごとに dev のポートを分け、複数の Issue を並行で処理できます。",
+        "x": 262,
+        "y": 50,
+        "width": 365,
+        "height": 381
+      },
+      {
+        "id": "dev",
+        "label": "dev サーバー",
+        "kind": "service",
+        "detail": "プロジェクトの作業手順に従って起動します。",
+        "parent": "worktree",
+        "icon": "server",
+        "subtitle": "プロジェクトの開発環境",
+        "href": "/reference/worktree/",
+        "x": 17,
+        "y": 118,
+        "width": 147,
+        "height": 68
+      },
+      {
+        "id": "tools",
+        "label": "外部ツール",
+        "kind": "service",
+        "detail": "スキルやプロンプトで指定するツール。開発環境に応じて選択します。",
+        "parent": "worktree",
+        "icon": "terminal",
+        "subtitle": "画面操作やテスト",
+        "x": 201,
+        "y": 118,
+        "width": 147,
+        "height": 68
+      },
+      {
+        "id": "claude",
+        "label": "Claude Code",
+        "kind": "agent",
+        "detail": "同梱テンプレートのローカルエージェント。Step のプロンプトを受け取ります。",
+        "parent": "worktree",
+        "tone": "claude",
+        "icon": "claude",
+        "subtitle": "Step：再現・検証・仕上げ",
+        "x": 17,
+        "y": 280,
+        "width": 147,
+        "height": 64
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+        "kind": "agent",
+        "detail": "agent.kind を codex にした Step で起動できるローカルエージェント。",
+        "parent": "worktree",
+        "tone": "remote",
+        "icon": "codex",
+        "subtitle": "設定で選べるエージェント",
+        "x": 201,
+        "y": 280,
+        "width": 147,
+        "height": 64
+      },
+      {
+        "id": "github",
+        "label": "GitHub",
+        "kind": "service",
+        "detail": "gh から Issue・PR を取得し、設定に従って変更します。",
+        "icon": "github",
+        "subtitle": "Issue・PR",
+        "x": 20,
+        "y": 348,
+        "width": 148,
+        "height": 64
+      },
+      {
+        "id": "copilot",
+        "label": "GitHub Copilot",
+        "kind": "agent",
+        "detail": "remote Step を受け取り、GitHub 側で関連 PR を作業します。",
+        "tone": "remote",
+        "icon": "copilot",
+        "subtitle": "修正して PR を作成",
+        "x": 20,
+        "y": 449,
+        "width": 148,
+        "height": 62
+      },
+      {
+        "id": "data",
+        "label": "ローカルの記録",
+        "kind": "service",
+        "detail": "共有台帳は .flow、Issue ごとの状態は Issue ディレクトリに保存します。",
+        "icon": "disk",
+        "subtitle": "状態・ログ・ロック",
+        "href": "/reference/runtime/",
+        "x": 925,
+        "y": 348,
+        "width": 155,
+        "height": 64
+      }
+    ],
+    "edges": [
+      {
+        "from": "user",
+        "to": "main-agent",
+        "label": "依頼・承認",
+        "id": "user:main-agent",
+        "points": [
+          [
+            {
+              "x": 168,
+              "y": 207
+            },
+            {
+              "x": 262,
+              "y": 207
+            }
+          ]
+        ],
+        "caption": {
+          "x": 216,
+          "y": 192
+        }
+      },
+      {
+        "from": "main-agent",
+        "to": "user",
+        "label": "報告",
+        "id": "main-agent:user",
+        "points": [
+          [
+            {
+              "x": 262,
+              "y": 232
+            },
+            {
+              "x": 168,
+              "y": 232
+            }
+          ]
+        ],
+        "caption": {
+          "x": 216,
+          "y": 247
+        }
+      },
+      {
+        "from": "main-agent",
+        "to": "flow",
+        "label": "run・watch・approve",
+        "id": "main-agent:flow",
+        "points": [
+          [
+            {
+              "x": 338,
+              "y": 254
+            },
+            {
+              "x": 338,
+              "y": 348
+            }
+          ]
+        ],
+        "caption": {
+          "x": 408,
+          "y": 301
+        }
+      },
+      {
+        "from": "flow",
+        "to": "github",
+        "label": "取得・割当",
+        "id": "flow:github",
+        "points": [
+          [
+            {
+              "x": 262,
+              "y": 380
+            },
+            {
+              "x": 168,
+              "y": 380
+            }
+          ]
+        ],
+        "caption": {
+          "x": 215,
+          "y": 365
+        }
+      },
+      {
+        "from": "github",
+        "to": "copilot",
+        "label": "修正を依頼",
+        "id": "github:copilot",
+        "points": [
+          [
+            {
+              "x": 94,
+              "y": 412
+            },
+            {
+              "x": 94,
+              "y": 449
+            }
+          ]
+        ],
+        "caption": {
+          "x": 136,
+          "y": 430
+        }
+      },
+      {
+        "from": "flow",
+        "to": "claude",
+        "label": "作成・起動",
+        "id": "flow:claude",
+        "points": [
+          [
+            {
+              "x": 414,
+              "y": 380
+            },
+            {
+              "x": 507,
+              "y": 380
+            }
+          ]
+        ],
+        "caption": {
+          "x": 461,
+          "y": 365
+        }
+      },
+      {
+        "from": "flow",
+        "to": "codex",
+        "label": "設定で起動",
+        "id": "flow:codex",
+        "points": [
+          [
+            {
+              "x": 384,
+              "y": 412
+            },
+            {
+              "x": 384,
+              "y": 429
+            },
+            {
+              "x": 765,
+              "y": 429
+            },
+            {
+              "x": 765,
+              "y": 412
+            }
+          ]
+        ],
+        "caption": {
+          "x": 582,
+          "y": 430
+        }
+      },
+      {
+        "from": "claude",
+        "to": "dev",
+        "label": "起動",
+        "id": "claude:dev",
+        "points": [
+          [
+            {
+              "x": 581,
+              "y": 348
+            },
+            {
+              "x": 581,
+              "y": 254
+            }
+          ]
+        ],
+        "caption": {
+          "x": 600,
+          "y": 300
+        }
+      },
+      {
+        "from": "codex",
+        "to": "tools",
+        "label": "必要に応じ利用",
+        "id": "codex:tools",
+        "points": [
+          [
+            {
+              "x": 765,
+              "y": 348
+            },
+            {
+              "x": 765,
+              "y": 254
+            }
+          ]
+        ],
+        "caption": {
+          "x": 817,
+          "y": 300
+        }
+      },
+      {
+        "from": "flow",
+        "to": "data",
+        "label": "保存・参照",
+        "id": "flow:data",
+        "points": [
+          [
+            {
+              "x": 338,
+              "y": 412
+            },
+            {
+              "x": 338,
+              "y": 487
+            },
+            {
+              "x": 1003,
+              "y": 487
+            },
+            {
+              "x": 1003,
+              "y": 412
+            }
+          ]
+        ],
+        "caption": {
+          "x": 916,
+          "y": 473
+        }
+      }
+    ]
+  },
+  "workflow": {
+    "title": "Issue から完了まで",
+    "description": "上から順にたどれます。「要承認」の箇所では人の判断を待ちます。",
+    "presentation": "sequence",
+    "direction": "DOWN",
+    "nodes": [
+      {
+        "id": "detect",
+        "label": "Issue の検出",
+        "kind": "process",
+        "detail": "GitHub の検索条件に一致する Issue を取得します。",
+        "icon": "github",
+        "x": 24,
+        "y": 24,
+        "width": 228,
+        "height": 40
+      },
+      {
+        "id": "step:repro",
+        "label": "再現",
+        "kind": "agent",
+        "detail": "段階 未着手 で開始。 claude を worktree で起動。",
+        "stepCode": "repro",
+        "badges": [
+          {
+            "phase": "開始",
+            "label": "要承認",
+            "gate": "start",
+            "tone": "manual"
+          },
+          {
+            "phase": "結果",
+            "label": "要承認",
+            "gate": "repro_result",
+            "tone": "manual"
+          },
+          {
+            "phase": "NG 時",
+            "label": "停止",
+            "tone": "ng"
+          }
+        ],
+        "tone": "claude",
+        "icon": "claude",
+        "href": "/guides/approval/",
+        "x": 24,
+        "y": 88,
+        "width": 228,
+        "height": 56
+      },
+      {
+        "id": "step:refine",
+        "label": "Issue 更新",
+        "kind": "agent",
+        "detail": "段階 再現済 で開始。 claude を メイン で起動。",
+        "stepCode": "refine",
+        "badges": [
+          {
+            "phase": "結果",
+            "label": "要承認",
+            "gate": "issue_push",
+            "tone": "manual"
+          }
+        ],
+        "tone": "claude",
+        "icon": "claude",
+        "href": "/guides/approval/",
+        "x": 24,
+        "y": 168,
+        "width": 228,
+        "height": 56
+      },
+      {
+        "id": "step:implement",
+        "label": "修正",
+        "kind": "agent",
+        "detail": "段階 Issue更新済 で開始。 GitHub 側の作業完了を監視。",
+        "stepCode": "implement",
+        "badges": [
+          {
+            "phase": "開始",
+            "label": "要承認",
+            "gate": "assign",
+            "tone": "manual"
+          }
+        ],
+        "tone": "remote",
+        "icon": "copilot",
+        "href": "/guides/approval/",
+        "x": 24,
+        "y": 248,
+        "width": 228,
+        "height": 56
+      },
+      {
+        "id": "step:verify",
+        "label": "動作確認",
+        "kind": "agent",
+        "detail": "段階 修正中 で開始。 claude を worktree で起動。",
+        "stepCode": "verify",
+        "badges": [
+          {
+            "phase": "開始",
+            "label": "自動",
+            "gate": "verify_start",
+            "tone": "auto"
+          },
+          {
+            "phase": "NG 時",
+            "label": "対応を選択",
+            "gate": "ng_action",
+            "tone": "ng"
+          }
+        ],
+        "tone": "claude",
+        "icon": "claude",
+        "href": "/concepts/workflow/",
+        "x": 24,
+        "y": 328,
+        "width": 228,
+        "height": 40
+      },
+      {
+        "id": "step:finish",
+        "label": "仕上げ",
+        "kind": "agent",
+        "detail": "段階 検証済 で開始。 claude を worktree で起動。",
+        "stepCode": "finish",
+        "badges": [
+          {
+            "phase": "開始",
+            "label": "自動",
+            "gate": "finish_start",
+            "tone": "auto"
+          },
+          {
+            "phase": "結果",
+            "label": "要承認",
+            "gate": "pr_body",
+            "tone": "manual"
+          }
+        ],
+        "tone": "claude",
+        "icon": "claude",
+        "href": "/guides/approval/",
+        "x": 24,
+        "y": 392,
+        "width": 228,
+        "height": 56
+      },
+      {
+        "id": "merge",
+        "label": "PR がマージ済み",
+        "kind": "service",
+        "detail": "関連 PR のマージを GitHub から検出します。",
+        "icon": "github",
+        "x": 24,
+        "y": 472,
+        "width": 228,
+        "height": 40
+      },
+      {
+        "id": "step:cleanup",
+        "label": "片付け",
+        "kind": "process",
+        "detail": "PR マージ後に開始。 設定された片付け操作を実行。",
+        "stepCode": "cleanup",
+        "badges": [
+          {
+            "phase": "開始",
+            "label": "自動",
+            "gate": "cleanup",
+            "tone": "auto"
+          }
+        ],
+        "tone": "neutral",
+        "href": "/concepts/workflow/",
+        "x": 24,
+        "y": 536,
+        "width": 228,
+        "height": 40
+      },
+      {
+        "id": "end",
+        "label": "完了",
+        "kind": "process",
+        "detail": "テンプレートの片付けが終了した状態です。",
+        "x": 24,
+        "y": 600,
+        "width": 228,
+        "height": 40
+      }
+    ],
+    "edges": [
+      {
+        "from": "step:repro",
+        "to": "step:refine",
+        "id": "edge-0",
+        "points": [
+          [
+            {
+              "x": 138,
+              "y": 144
+            },
+            {
+              "x": 138,
+              "y": 168
+            }
+          ]
+        ]
+      },
+      {
+        "from": "step:refine",
+        "to": "step:implement",
+        "id": "edge-1",
+        "points": [
+          [
+            {
+              "x": 138,
+              "y": 224
+            },
+            {
+              "x": 138,
+              "y": 248
+            }
+          ]
+        ]
+      },
+      {
+        "from": "step:implement",
+        "to": "step:verify",
+        "id": "edge-2",
+        "points": [
+          [
+            {
+              "x": 138,
+              "y": 304
+            },
+            {
+              "x": 138,
+              "y": 328
+            }
+          ]
+        ]
+      },
+      {
+        "from": "step:verify",
+        "to": "step:finish",
+        "id": "edge-3",
+        "points": [
+          [
+            {
+              "x": 138,
+              "y": 368
+            },
+            {
+              "x": 138,
+              "y": 392
+            }
+          ]
+        ]
+      },
+      {
+        "from": "step:finish",
+        "to": "merge",
+        "id": "edge-4",
+        "points": [
+          [
+            {
+              "x": 138,
+              "y": 448
+            },
+            {
+              "x": 138,
+              "y": 472
+            }
+          ]
+        ]
+      },
+      {
+        "from": "merge",
+        "to": "step:cleanup",
+        "id": "edge-5",
+        "points": [
+          [
+            {
+              "x": 138,
+              "y": 512
+            },
+            {
+              "x": 138,
+              "y": 536
+            }
+          ]
+        ]
+      },
+      {
+        "from": "step:cleanup",
+        "to": "end",
+        "id": "edge-6",
+        "points": [
+          [
+            {
+              "x": 138,
+              "y": 576
+            },
+            {
+              "x": 138,
+              "y": 600
+            }
+          ]
+        ]
+      },
+      {
+        "from": "detect",
+        "to": "step:repro",
+        "id": "edge-7",
+        "points": [
+          [
+            {
+              "x": 138,
+              "y": 64
+            },
+            {
+              "x": 138,
+              "y": 88
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "workflowDetail": {
+    "title": "Gate と分岐の詳細",
+    "description": "同梱テンプレートの起動条件、Gate、検証結果による分岐。",
+    "direction": "DOWN",
+    "nodes": [
+      {
+        "id": "detect",
+        "label": "Issue の検出",
+        "kind": "process",
+        "detail": "GitHub の検索条件に一致する Issue を取得します。",
+        "icon": "github",
+        "x": 188,
+        "y": 24,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "merge",
+        "label": "PR がマージ済み",
+        "kind": "service",
+        "detail": "関連 PR のマージを GitHub から検出します。",
+        "icon": "github",
+        "x": 287,
+        "y": 1911,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "end",
+        "label": "完了",
+        "kind": "process",
+        "detail": "テンプレートの片付けが終了した状態です。",
+        "x": 287,
+        "y": 2310,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "failure",
+        "label": "エラー・停止",
+        "kind": "process",
+        "detail": "原因と残存する作業を確認。再試行可能な失敗は backoff を適用します。",
+        "href": "/troubleshooting/",
+        "x": 24,
+        "y": 1625,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "step:repro",
+        "label": "再現 · repro",
+        "kind": "agent",
+        "detail": "段階 未着手 で開始。 claude を worktree で起動。",
+        "tone": "claude",
+        "icon": "claude",
+        "href": "/concepts/workflow/",
+        "x": 188,
+        "y": 280,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "before:repro",
+        "label": "start · manual",
+        "kind": "gate",
+        "detail": "承認を待ってから Step を起動。",
+        "href": "/guides/approval/",
+        "x": 188,
+        "y": 137,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "after:repro",
+        "label": "repro_result · manual",
+        "kind": "gate",
+        "detail": "成果物を確認し、設定された承認後処理へ進みます。",
+        "href": "/guides/approval/",
+        "x": 221,
+        "y": 430,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "step:refine",
+        "label": "Issue 更新 · refine",
+        "kind": "agent",
+        "detail": "段階 再現済 で開始。 claude を メイン で起動。",
+        "tone": "claude",
+        "icon": "claude",
+        "href": "/concepts/workflow/",
+        "x": 221,
+        "y": 573,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "after:refine",
+        "label": "issue_push · manual",
+        "kind": "gate",
+        "detail": "成果物を確認し、設定された承認後処理へ進みます。",
+        "href": "/guides/approval/",
+        "x": 221,
+        "y": 716,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "step:implement",
+        "label": "修正 · implement",
+        "kind": "agent",
+        "detail": "段階 Issue更新済 で開始。 GitHub 側の作業完了を監視。",
+        "tone": "remote",
+        "icon": "copilot",
+        "href": "/concepts/workflow/",
+        "x": 221,
+        "y": 1002,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "before:implement",
+        "label": "assign · manual",
+        "kind": "gate",
+        "detail": "承認を待ってから Step を起動。",
+        "href": "/guides/approval/",
+        "x": 221,
+        "y": 859,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "step:verify",
+        "label": "動作確認 · verify",
+        "kind": "agent",
+        "detail": "段階 修正中 で開始。 claude を worktree で起動。",
+        "tone": "claude",
+        "icon": "claude",
+        "href": "/concepts/workflow/",
+        "x": 254,
+        "y": 1295,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "before:verify",
+        "label": "verify_start · auto",
+        "kind": "gate",
+        "detail": "条件成立後に自動で進行。",
+        "href": "/guides/approval/",
+        "x": 254,
+        "y": 1152,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "ng:verify",
+        "label": "ng_action · manual",
+        "kind": "gate",
+        "detail": "NG 結果への対応を決めます。",
+        "href": "/guides/approval/",
+        "x": 57,
+        "y": 1475,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "step:finish",
+        "label": "仕上げ · finish",
+        "kind": "agent",
+        "detail": "段階 検証済 で開始。 claude を worktree で起動。",
+        "tone": "claude",
+        "icon": "claude",
+        "href": "/concepts/workflow/",
+        "x": 287,
+        "y": 1625,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "before:finish",
+        "label": "finish_start · auto",
+        "kind": "gate",
+        "detail": "条件成立後に自動で進行。",
+        "href": "/guides/approval/",
+        "x": 287,
+        "y": 1475,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "after:finish",
+        "label": "pr_body · manual",
+        "kind": "gate",
+        "detail": "成果物を確認し、設定された承認後処理へ進みます。",
+        "href": "/guides/approval/",
+        "x": 287,
+        "y": 1768,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "step:cleanup",
+        "label": "片付け · cleanup",
+        "kind": "process",
+        "detail": "PR マージ後に開始。 設定された片付け操作を実行。",
+        "tone": "neutral",
+        "href": "/concepts/workflow/",
+        "x": 287,
+        "y": 2167,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "before:cleanup",
+        "label": "cleanup · auto",
+        "kind": "gate",
+        "detail": "条件成立後に自動で進行。",
+        "href": "/guides/approval/",
+        "x": 287,
+        "y": 2024,
+        "width": 198,
+        "height": 68
+      }
+    ],
+    "edges": [
+      {
+        "from": "before:repro",
+        "to": "step:repro",
+        "label": "承認",
+        "id": "edge-0",
+        "points": [
+          [
+            {
+              "x": 287,
+              "y": 205
+            },
+            {
+              "x": 287,
+              "y": 280
+            }
+          ]
+        ],
+        "caption": {
+          "x": 317,
+          "y": 224
+        }
+      },
+      {
+        "from": "step:repro",
+        "to": "after:repro",
+        "label": "結果 OK",
+        "id": "edge-1",
+        "points": [
+          [
+            {
+              "x": 320,
+              "y": 348
+            },
+            {
+              "x": 320,
+              "y": 430
+            }
+          ]
+        ],
+        "caption": {
+          "x": 369.5,
+          "y": 367
+        }
+      },
+      {
+        "from": "after:repro",
+        "to": "step:refine",
+        "label": "再現済",
+        "id": "edge-2",
+        "points": [
+          [
+            {
+              "x": 320,
+              "y": 498
+            },
+            {
+              "x": 320,
+              "y": 573
+            }
+          ]
+        ],
+        "caption": {
+          "x": 356.5,
+          "y": 517
+        }
+      },
+      {
+        "from": "step:repro",
+        "to": "failure",
+        "label": "NG",
+        "id": "edge-3",
+        "points": [
+          [
+            {
+              "x": 254,
+              "y": 348
+            },
+            {
+              "x": 254,
+              "y": 404
+            },
+            {
+              "x": 32,
+              "y": 404
+            },
+            {
+              "x": 32,
+              "y": 1599
+            },
+            {
+              "x": 90,
+              "y": 1599
+            },
+            {
+              "x": 90,
+              "y": 1625
+            }
+          ]
+        ],
+        "caption": {
+          "x": 284,
+          "y": 367
+        }
+      },
+      {
+        "from": "step:refine",
+        "to": "after:refine",
+        "label": "結果 OK",
+        "id": "edge-4",
+        "points": [
+          [
+            {
+              "x": 320,
+              "y": 641
+            },
+            {
+              "x": 320,
+              "y": 716
+            }
+          ]
+        ],
+        "caption": {
+          "x": 369.5,
+          "y": 660
+        }
+      },
+      {
+        "from": "after:refine",
+        "to": "before:implement",
+        "label": "Issue更新済",
+        "id": "edge-5",
+        "points": [
+          [
+            {
+              "x": 320,
+              "y": 784
+            },
+            {
+              "x": 320,
+              "y": 859
+            }
+          ]
+        ],
+        "caption": {
+          "x": 389,
+          "y": 803
+        }
+      },
+      {
+        "from": "before:implement",
+        "to": "step:implement",
+        "label": "承認",
+        "id": "edge-6",
+        "points": [
+          [
+            {
+              "x": 320,
+              "y": 927
+            },
+            {
+              "x": 320,
+              "y": 1002
+            }
+          ]
+        ],
+        "caption": {
+          "x": 350,
+          "y": 946
+        }
+      },
+      {
+        "from": "step:implement",
+        "to": "before:verify",
+        "label": "修正中",
+        "id": "edge-7",
+        "points": [
+          [
+            {
+              "x": 353,
+              "y": 1070
+            },
+            {
+              "x": 353,
+              "y": 1152
+            }
+          ]
+        ],
+        "caption": {
+          "x": 389.5,
+          "y": 1089
+        }
+      },
+      {
+        "from": "before:verify",
+        "to": "step:verify",
+        "label": "自動",
+        "id": "edge-8",
+        "points": [
+          [
+            {
+              "x": 353,
+              "y": 1220
+            },
+            {
+              "x": 353,
+              "y": 1295
+            }
+          ]
+        ],
+        "caption": {
+          "x": 383,
+          "y": 1239
+        }
+      },
+      {
+        "from": "step:verify",
+        "to": "before:finish",
+        "label": "段階更新",
+        "id": "edge-9",
+        "points": [
+          [
+            {
+              "x": 386,
+              "y": 1363
+            },
+            {
+              "x": 386,
+              "y": 1475
+            }
+          ]
+        ],
+        "caption": {
+          "x": 429,
+          "y": 1382
+        }
+      },
+      {
+        "from": "step:verify",
+        "to": "ng:verify",
+        "label": "NG",
+        "id": "edge-10",
+        "points": [
+          [
+            {
+              "x": 320,
+              "y": 1363
+            },
+            {
+              "x": 320,
+              "y": 1419
+            },
+            {
+              "x": 189,
+              "y": 1419
+            },
+            {
+              "x": 189,
+              "y": 1475
+            }
+          ]
+        ],
+        "caption": {
+          "x": 350,
+          "y": 1382
+        }
+      },
+      {
+        "from": "ng:verify",
+        "to": "failure",
+        "label": "停止",
+        "id": "edge-11",
+        "points": [
+          [
+            {
+              "x": 156,
+              "y": 1543
+            },
+            {
+              "x": 156,
+              "y": 1625
+            }
+          ]
+        ],
+        "caption": {
+          "x": 186,
+          "y": 1562
+        }
+      },
+      {
+        "from": "ng:verify",
+        "to": "step:implement",
+        "label": "修正依頼",
+        "id": "edge-12",
+        "points": [
+          [
+            {
+              "x": 123,
+              "y": 1475
+            },
+            {
+              "x": 123,
+              "y": 1126
+            },
+            {
+              "x": 287,
+              "y": 1126
+            },
+            {
+              "x": 287,
+              "y": 1070
+            }
+          ]
+        ],
+        "caption": {
+          "x": 166,
+          "y": 1456
+        }
+      },
+      {
+        "from": "before:finish",
+        "to": "step:finish",
+        "label": "自動",
+        "id": "edge-13",
+        "points": [
+          [
+            {
+              "x": 386,
+              "y": 1543
+            },
+            {
+              "x": 386,
+              "y": 1625
+            }
+          ]
+        ],
+        "caption": {
+          "x": 416,
+          "y": 1562
+        }
+      },
+      {
+        "from": "step:finish",
+        "to": "after:finish",
+        "label": "結果 OK",
+        "id": "edge-14",
+        "points": [
+          [
+            {
+              "x": 386,
+              "y": 1693
+            },
+            {
+              "x": 386,
+              "y": 1768
+            }
+          ]
+        ],
+        "caption": {
+          "x": 435.5,
+          "y": 1712
+        }
+      },
+      {
+        "from": "after:finish",
+        "to": "merge",
+        "label": "マージ待ち",
+        "id": "edge-15",
+        "points": [
+          [
+            {
+              "x": 386,
+              "y": 1836
+            },
+            {
+              "x": 386,
+              "y": 1911
+            }
+          ]
+        ],
+        "caption": {
+          "x": 435.5,
+          "y": 1855
+        }
+      },
+      {
+        "from": "before:cleanup",
+        "to": "step:cleanup",
+        "label": "自動",
+        "id": "edge-16",
+        "points": [
+          [
+            {
+              "x": 386,
+              "y": 2092
+            },
+            {
+              "x": 386,
+              "y": 2167
+            }
+          ]
+        ],
+        "caption": {
+          "x": 416,
+          "y": 2111
+        }
+      },
+      {
+        "from": "merge",
+        "to": "before:cleanup",
+        "id": "edge-17",
+        "points": [
+          [
+            {
+              "x": 386,
+              "y": 1979
+            },
+            {
+              "x": 386,
+              "y": 2024
+            }
+          ]
+        ]
+      },
+      {
+        "from": "step:cleanup",
+        "to": "end",
+        "label": "片付け成功",
+        "id": "edge-18",
+        "points": [
+          [
+            {
+              "x": 386,
+              "y": 2235
+            },
+            {
+              "x": 386,
+              "y": 2310
+            }
+          ]
+        ],
+        "caption": {
+          "x": 435.5,
+          "y": 2254
+        }
+      },
+      {
+        "from": "detect",
+        "to": "before:repro",
+        "id": "edge-19",
+        "points": [
+          [
+            {
+              "x": 287,
+              "y": 92
+            },
+            {
+              "x": 287,
+              "y": 137
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "state": {
+    "title": "開始から完了までの実行状態",
+    "description": "Stage を読んでから、ローカル作業・リモート作業・Gate のいずれかへ進みます。完了後は次の tick で Stage を読み直します。",
+    "direction": "DOWN",
+    "nodes": [
+      {
+        "id": "stage",
+        "label": "Stage を読む",
+        "kind": "service",
+        "detail": "起動条件に合う Step を選びます。テンプレートの条件は 未着手 → repro（start: manual）、再現済 → refine、Issue更新済 → implement（assign: manual）、修正中 → verify（verify_start: auto）、検証済 → finish（finish_start: auto）、PR マージ後 → cleanup（cleanup: auto） です。",
+        "icon": "folder",
+        "x": 254,
+        "y": 24,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "idle",
+        "label": "idle",
+        "kind": "process",
+        "detail": "次の tick で開始・再開判定。",
+        "x": 254,
+        "y": 167,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "waiting_gate",
+        "label": "waiting_gate",
+        "kind": "gate",
+        "detail": "manual は人の判断待ち。auto は条件を満たすと進行します。",
+        "href": "/guides/approval/",
+        "x": 24,
+        "y": 339,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "running",
+        "label": "running",
+        "kind": "agent",
+        "detail": "ローカルのエージェントが作業中。",
+        "tone": "claude",
+        "x": 73.5,
+        "y": 519,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "waiting_remote",
+        "label": "waiting_remote",
+        "kind": "agent",
+        "detail": "Copilot の完了条件を PR から確認中。",
+        "tone": "remote",
+        "x": 303.5,
+        "y": 519,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "done",
+        "label": "done",
+        "kind": "process",
+        "detail": "Step が終了。次に処理可能な段階または完了を確認します。",
+        "x": 73.5,
+        "y": 669,
+        "width": 198,
+        "height": 68
+      }
+    ],
+    "edges": [
+      {
+        "from": "stage",
+        "to": "idle",
+        "label": "起動条件",
+        "id": "edge-0",
+        "points": [
+          [
+            {
+              "x": 353,
+              "y": 92
+            },
+            {
+              "x": 353,
+              "y": 167
+            }
+          ]
+        ],
+        "caption": {
+          "x": 396,
+          "y": 111
+        }
+      },
+      {
+        "from": "idle",
+        "to": "waiting_gate",
+        "label": "manual",
+        "id": "edge-1",
+        "points": [
+          [
+            {
+              "x": 303.5,
+              "y": 235
+            },
+            {
+              "x": 303.5,
+              "y": 313
+            },
+            {
+              "x": 123,
+              "y": 313
+            },
+            {
+              "x": 123,
+              "y": 339
+            }
+          ]
+        ],
+        "caption": {
+          "x": 359.5,
+          "y": 254
+        }
+      },
+      {
+        "from": "idle",
+        "to": "running",
+        "label": "auto / Gate なし",
+        "id": "edge-2",
+        "points": [
+          [
+            {
+              "x": 353,
+              "y": 235
+            },
+            {
+              "x": 353,
+              "y": 463
+            },
+            {
+              "x": 222,
+              "y": 463
+            },
+            {
+              "x": 222,
+              "y": 519
+            }
+          ]
+        ],
+        "caption": {
+          "x": 461,
+          "y": 276
+        }
+      },
+      {
+        "from": "waiting_gate",
+        "to": "running",
+        "label": "開始承認後",
+        "id": "edge-3",
+        "points": [
+          [
+            {
+              "x": 172.5,
+              "y": 407
+            },
+            {
+              "x": 172.5,
+              "y": 519
+            }
+          ]
+        ],
+        "caption": {
+          "x": 222,
+          "y": 426
+        }
+      },
+      {
+        "from": "idle",
+        "to": "waiting_remote",
+        "label": "割当後",
+        "id": "edge-4",
+        "points": [
+          [
+            {
+              "x": 402.5,
+              "y": 235
+            },
+            {
+              "x": 402.5,
+              "y": 519
+            }
+          ]
+        ],
+        "caption": {
+          "x": 439,
+          "y": 254
+        }
+      },
+      {
+        "from": "waiting_remote",
+        "to": "done",
+        "label": "PR が条件を満たす",
+        "id": "edge-5",
+        "points": [
+          [
+            {
+              "x": 402.5,
+              "y": 587
+            },
+            {
+              "x": 402.5,
+              "y": 643
+            },
+            {
+              "x": 222,
+              "y": 643
+            },
+            {
+              "x": 222,
+              "y": 669
+            }
+          ]
+        ],
+        "caption": {
+          "x": 484.5,
+          "y": 606
+        }
+      },
+      {
+        "from": "running",
+        "to": "waiting_gate",
+        "label": "結果・質問・復旧",
+        "id": "edge-6",
+        "points": [
+          [
+            {
+              "x": 123,
+              "y": 519
+            },
+            {
+              "x": 123,
+              "y": 407
+            }
+          ]
+        ],
+        "caption": {
+          "x": 192,
+          "y": 500
+        }
+      },
+      {
+        "from": "running",
+        "to": "done",
+        "label": "正常終了",
+        "id": "edge-7",
+        "points": [
+          [
+            {
+              "x": 172.5,
+              "y": 587
+            },
+            {
+              "x": 172.5,
+              "y": 669
+            }
+          ]
+        ],
+        "caption": {
+          "x": 215.5,
+          "y": 606
+        }
+      },
+      {
+        "from": "waiting_gate",
+        "to": "done",
+        "label": "結果承認後",
+        "id": "edge-8",
+        "points": [
+          [
+            {
+              "x": 73.5,
+              "y": 407
+            },
+            {
+              "x": 73.5,
+              "y": 463
+            },
+            {
+              "x": 48.5,
+              "y": 463
+            },
+            {
+              "x": 48.5,
+              "y": 643
+            },
+            {
+              "x": 123,
+              "y": 643
+            },
+            {
+              "x": 123,
+              "y": 669
+            }
+          ]
+        ],
+        "caption": {
+          "x": 123,
+          "y": 426
+        }
+      }
+    ]
+  },
+  "stateRecovery": {
+    "title": "停止と再試行",
+    "description": "停止や失敗から待機に戻る条件です。",
+    "direction": "DOWN",
+    "nodes": [
+      {
+        "id": "idle",
+        "label": "idle",
+        "kind": "process",
+        "detail": "次の tick で開始・再開判定。",
+        "x": 317,
+        "y": 324,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "waiting_gate",
+        "label": "waiting_gate",
+        "kind": "gate",
+        "detail": "manual は人の判断待ち。auto は条件を満たすと進行します。",
+        "href": "/guides/approval/",
+        "x": 24,
+        "y": 24,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "running",
+        "label": "running",
+        "kind": "agent",
+        "detail": "ローカルのエージェントが作業中。",
+        "tone": "claude",
+        "x": 317,
+        "y": 24,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "retry_wait",
+        "label": "retry_wait",
+        "kind": "process",
+        "detail": "バックオフ経過後に再試行。",
+        "x": 577,
+        "y": 174,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "failed",
+        "label": "failed",
+        "kind": "process",
+        "detail": "試行上限や継続できないエラー。",
+        "x": 317,
+        "y": 174,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "stopped",
+        "label": "stopped",
+        "kind": "process",
+        "detail": "手動停止・対象外・保留など。停止理由を確認して復旧します。",
+        "href": "/guides/recovery/",
+        "x": 57,
+        "y": 174,
+        "width": 198,
+        "height": 68
+      }
+    ],
+    "edges": [
+      {
+        "from": "running",
+        "to": "retry_wait",
+        "label": "再試行可能",
+        "id": "edge-0",
+        "points": [
+          [
+            {
+              "x": 465.5,
+              "y": 92
+            },
+            {
+              "x": 465.5,
+              "y": 148
+            },
+            {
+              "x": 676,
+              "y": 148
+            },
+            {
+              "x": 676,
+              "y": 174
+            }
+          ]
+        ],
+        "caption": {
+          "x": 515,
+          "y": 111
+        }
+      },
+      {
+        "from": "retry_wait",
+        "to": "idle",
+        "label": "待機後",
+        "id": "edge-1",
+        "points": [
+          [
+            {
+              "x": 676,
+              "y": 242
+            },
+            {
+              "x": 676,
+              "y": 298
+            },
+            {
+              "x": 465.5,
+              "y": 298
+            },
+            {
+              "x": 465.5,
+              "y": 324
+            }
+          ]
+        ],
+        "caption": {
+          "x": 712.5,
+          "y": 261
+        }
+      },
+      {
+        "from": "running",
+        "to": "failed",
+        "label": "失敗",
+        "id": "edge-2",
+        "points": [
+          [
+            {
+              "x": 416,
+              "y": 92
+            },
+            {
+              "x": 416,
+              "y": 174
+            }
+          ]
+        ],
+        "caption": {
+          "x": 446,
+          "y": 111
+        }
+      },
+      {
+        "from": "waiting_gate",
+        "to": "stopped",
+        "label": "停止・却下",
+        "id": "edge-3",
+        "points": [
+          [
+            {
+              "x": 123,
+              "y": 92
+            },
+            {
+              "x": 123,
+              "y": 174
+            }
+          ]
+        ],
+        "caption": {
+          "x": 172.5,
+          "y": 111
+        }
+      },
+      {
+        "from": "running",
+        "to": "stopped",
+        "label": "停止",
+        "id": "edge-4",
+        "points": [
+          [
+            {
+              "x": 366.5,
+              "y": 92
+            },
+            {
+              "x": 366.5,
+              "y": 148
+            },
+            {
+              "x": 189,
+              "y": 148
+            },
+            {
+              "x": 189,
+              "y": 174
+            }
+          ]
+        ],
+        "caption": {
+          "x": 396.5,
+          "y": 111
+        }
+      },
+      {
+        "from": "failed",
+        "to": "idle",
+        "label": "手動 retry",
+        "id": "edge-5",
+        "points": [
+          [
+            {
+              "x": 416,
+              "y": 242
+            },
+            {
+              "x": 416,
+              "y": 324
+            }
+          ]
+        ],
+        "caption": {
+          "x": 485,
+          "y": 261
+        }
+      },
+      {
+        "from": "stopped",
+        "to": "idle",
+        "label": "手動 retry",
+        "id": "edge-6",
+        "points": [
+          [
+            {
+              "x": 156,
+              "y": 242
+            },
+            {
+              "x": 156,
+              "y": 298
+            },
+            {
+              "x": 366.5,
+              "y": 298
+            },
+            {
+              "x": 366.5,
+              "y": 324
+            }
+          ]
+        ],
+        "caption": {
+          "x": 225,
+          "y": 261
+        }
+      }
+    ]
+  },
+  "concurrency": {
+    "title": "複数 Issue の実行",
+    "description": "Issue ごとに作業ブランチとエージェントを分離します。段階や Step によってはメインで作業し、worktree を使わない場合もあります。",
+    "direction": "RIGHT",
+    "nodes": [
+      {
+        "id": "tick",
+        "label": "flow tick",
+        "kind": "process",
+        "detail": "例の全体上限は 3。Step 別上限も適用します。",
+        "icon": "terminal",
+        "x": 24,
+        "y": 81.33333333333334,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "locks",
+        "label": "資源ロック",
+        "kind": "service",
+        "detail": "例の slot は 1・2・3。共有・排他ロックは locks.resources で設定します。",
+        "icon": "lock",
+        "href": "/reference/cli/lock/",
+        "x": 356,
+        "y": 81.33333333333334,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "wt:123",
+        "label": "Issue #123 の workspace",
+        "kind": "group",
+        "detail": "Herdr worktree の作業領域。",
+        "x": 726,
+        "y": 24,
+        "width": 547,
+        "height": 138
+      },
+      {
+        "id": "branch:123",
+        "label": "worktree · slot 1",
+        "kind": "service",
+        "detail": "Issue 別の作業ブランチと開発ポートを使います。",
+        "parent": "wt:123",
+        "icon": "folder",
+        "href": "/reference/worktree/",
+        "x": 24,
+        "y": 46,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "agent:123",
+        "label": "agent タブ",
+        "kind": "agent",
+        "detail": "専用ペインに所有エージェントを起動します。",
+        "parent": "wt:123",
+        "tone": "claude",
+        "icon": "terminal",
+        "x": 325,
+        "y": 46,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "wt:124",
+        "label": "Issue #124 の workspace",
+        "kind": "group",
+        "detail": "Herdr worktree の作業領域。",
+        "x": 726,
+        "y": 194,
+        "width": 547,
+        "height": 138
+      },
+      {
+        "id": "branch:124",
+        "label": "worktree · slot 2",
+        "kind": "service",
+        "detail": "Issue 別の作業ブランチと開発ポートを使います。",
+        "parent": "wt:124",
+        "icon": "folder",
+        "href": "/reference/worktree/",
+        "x": 24,
+        "y": 46,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "agent:124",
+        "label": "agent タブ",
+        "kind": "agent",
+        "detail": "専用ペインに所有エージェントを起動します。",
+        "parent": "wt:124",
+        "tone": "claude",
+        "icon": "terminal",
+        "x": 325,
+        "y": 46,
+        "width": 198,
+        "height": 68
+      }
+    ],
+    "edges": [
+      {
+        "from": "tick",
+        "to": "locks",
+        "label": "取得・解放",
+        "id": "edge-0",
+        "points": [
+          [
+            {
+              "x": 222,
+              "y": 115.33333333333334
+            },
+            {
+              "x": 356,
+              "y": 115.33333333333334
+            }
+          ]
+        ],
+        "caption": {
+          "x": 270.5,
+          "y": 135.33333333333334
+        }
+      },
+      {
+        "from": "locks",
+        "to": "branch:123",
+        "label": "slot 割当",
+        "id": "edge-1",
+        "points": [
+          [
+            {
+              "x": 554,
+              "y": 104
+            },
+            {
+              "x": 750,
+              "y": 104
+            }
+          ]
+        ],
+        "caption": {
+          "x": 615.5,
+          "y": 124
+        }
+      },
+      {
+        "from": "branch:123",
+        "to": "agent:123",
+        "label": "専用ペイン",
+        "id": "edge-2",
+        "points": [
+          [
+            {
+              "x": 948,
+              "y": 104
+            },
+            {
+              "x": 1051,
+              "y": 104
+            }
+          ]
+        ],
+        "caption": {
+          "x": 990.5,
+          "y": 118
+        }
+      },
+      {
+        "from": "locks",
+        "to": "branch:124",
+        "label": "slot 割当",
+        "id": "edge-3",
+        "points": [
+          [
+            {
+              "x": 554,
+              "y": 126.66666666666666
+            },
+            {
+              "x": 695,
+              "y": 126.66666666666666
+            },
+            {
+              "x": 695,
+              "y": 274
+            },
+            {
+              "x": 750,
+              "y": 274
+            }
+          ]
+        ],
+        "caption": {
+          "x": 615.5,
+          "y": 146.66666666666666
+        }
+      },
+      {
+        "from": "branch:124",
+        "to": "agent:124",
+        "label": "専用ペイン",
+        "id": "edge-4",
+        "points": [
+          [
+            {
+              "x": 948,
+              "y": 274
+            },
+            {
+              "x": 1051,
+              "y": 274
+            }
+          ]
+        ],
+        "caption": {
+          "x": 990.5,
+          "y": 288
+        }
+      }
+    ]
+  },
+  "lifecycle": {
+    "title": "ローカル Step の実行ライフサイクル",
+    "description": "エージェントを使う Step の代表経路。remote や action の Step では別の完了条件を使います。",
+    "direction": "DOWN",
+    "nodes": [
+      {
+        "id": "select",
+        "label": "起動条件と上限",
+        "kind": "process",
+        "detail": "Stage で Step を選び、同時実行数を確認。",
+        "x": 24,
+        "y": 24,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "before",
+        "label": "開始 Gate",
+        "kind": "gate",
+        "detail": "manual なら承認を待ちます。",
+        "x": 221,
+        "y": 144,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "prepare",
+        "label": "起動準備",
+        "kind": "process",
+        "detail": "必要な worktree と slot・資源ロックを確保。",
+        "x": 221,
+        "y": 287,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "agent",
+        "label": "起動・指示送信",
+        "kind": "agent",
+        "detail": "Herdr ペインを用意し、ガードと Step の指示を送信。",
+        "tone": "claude",
+        "icon": "terminal",
+        "x": 221,
+        "y": 400,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "result",
+        "label": "結果ファイル・成果物",
+        "kind": "process",
+        "detail": "試行番号に応じた結果と done_when の条件を照合。",
+        "x": 221,
+        "y": 513,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "after",
+        "label": "結果 Gate",
+        "kind": "gate",
+        "detail": "設定に従って承認を待ち、承認後コマンドや継続指示を適用。",
+        "x": 254,
+        "y": 663,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "next",
+        "label": "完了・次の Step",
+        "kind": "process",
+        "detail": "完了を保存し、次の tick で段階を確認。",
+        "x": 254,
+        "y": 806,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "retry",
+        "label": "失敗・再試行",
+        "kind": "process",
+        "detail": "エラーとペインを確認。回復できる場合は再試行へ。",
+        "href": "/guides/recovery/",
+        "x": 24,
+        "y": 693,
+        "width": 198,
+        "height": 68
+      }
+    ],
+    "edges": [
+      {
+        "from": "select",
+        "to": "before",
+        "id": "edge-0",
+        "points": [
+          [
+            {
+              "x": 156,
+              "y": 92
+            },
+            {
+              "x": 156,
+              "y": 118
+            },
+            {
+              "x": 320,
+              "y": 118
+            },
+            {
+              "x": 320,
+              "y": 144
+            }
+          ]
+        ]
+      },
+      {
+        "from": "before",
+        "to": "prepare",
+        "label": "開始可能",
+        "id": "edge-1",
+        "points": [
+          [
+            {
+              "x": 320,
+              "y": 212
+            },
+            {
+              "x": 320,
+              "y": 287
+            }
+          ]
+        ],
+        "caption": {
+          "x": 363,
+          "y": 231
+        }
+      },
+      {
+        "from": "prepare",
+        "to": "agent",
+        "id": "edge-2",
+        "points": [
+          [
+            {
+              "x": 320,
+              "y": 355
+            },
+            {
+              "x": 320,
+              "y": 400
+            }
+          ]
+        ]
+      },
+      {
+        "from": "agent",
+        "to": "result",
+        "id": "edge-3",
+        "points": [
+          [
+            {
+              "x": 320,
+              "y": 468
+            },
+            {
+              "x": 320,
+              "y": 513
+            }
+          ]
+        ]
+      },
+      {
+        "from": "result",
+        "to": "after",
+        "label": "OK",
+        "id": "edge-4",
+        "points": [
+          [
+            {
+              "x": 353,
+              "y": 581
+            },
+            {
+              "x": 353,
+              "y": 663
+            }
+          ]
+        ],
+        "caption": {
+          "x": 383,
+          "y": 600
+        }
+      },
+      {
+        "from": "after",
+        "to": "next",
+        "label": "完了条件成立",
+        "id": "edge-5",
+        "points": [
+          [
+            {
+              "x": 353,
+              "y": 731
+            },
+            {
+              "x": 353,
+              "y": 806
+            }
+          ]
+        ],
+        "caption": {
+          "x": 409,
+          "y": 750
+        }
+      },
+      {
+        "from": "result",
+        "to": "retry",
+        "label": "失敗",
+        "id": "edge-6",
+        "points": [
+          [
+            {
+              "x": 287,
+              "y": 581
+            },
+            {
+              "x": 287,
+              "y": 637
+            },
+            {
+              "x": 156,
+              "y": 637
+            },
+            {
+              "x": 156,
+              "y": 693
+            }
+          ]
+        ],
+        "caption": {
+          "x": 317,
+          "y": 600
+        }
+      },
+      {
+        "from": "retry",
+        "to": "select",
+        "label": "再試行",
+        "id": "edge-7",
+        "points": [
+          [
+            {
+              "x": 90,
+              "y": 693
+            },
+            {
+              "x": 90,
+              "y": 92
+            }
+          ]
+        ],
+        "caption": {
+          "x": 126.5,
+          "y": 674
+        }
+      }
+    ]
+  }
+}

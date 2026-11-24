@@ -1,0 +1,24 @@
+---
+title: Workflow・Step・Stage・Gate
+description: プロジェクトが決める段階と flow が制御する実行状態
+---
+
+import Diagram from '../../../components/diagrams/Diagram.astro'
+
+Workflow はプロジェクトごとの作業手順です。**Step** は起動から結果確定までの単位で、`agent`、`remote`、`action` のいずれかを持ちます。開始条件は `when_stage` または `when_pr_merged` です。
+
+**Stage** は利用先の Issue の段階です。例は `未着手`、`再現済`、`Issue更新済`、`修正中`、`検証済`、`検証NG`、`完了`、`保留`、`対象外`。同梱のディレクトリ管理では、段階変更でディレクトリ名が変わります。前の絶対パスを保存していた場合は解決し直します。
+
+**実行状態**は flow が Issue ごとに保存する値です。Stage が `検証済` でも、次の仕上げ Step が例えば `waiting_gate` になることがあります。状態の変化と Stage の変化を一緒に確認すると、何を待っているか特定できます。
+
+<Diagram name="state" />
+
+<Diagram name="stateRecovery" />
+
+## Gate
+
+`gate_before` は開始直前、`gate_after` は結果確定時に適用します。manual は明示的な承認待ち、auto は成立条件を満たせば進行です。失敗時の分岐は `on_ng` などの遷移設定と、失敗分類や試行回数で決まります。base 変更や実行結果不明、エージェントからの質問などは flow の専用 Gate で扱います。
+
+`stage_store.rejected` と設定済みの `stage_store.held` は Step の開始段階にできません。保留ラベルを設定した場合は実行中の作業境界まで待ち、ラベル解除後に元の段階へ戻して再判定します。
+
+[同梱テンプレートの流れ](/guides/issue-to-merge/)に具体例、[Workflow 設定](/reference/workflow/)に変更箇所があります。

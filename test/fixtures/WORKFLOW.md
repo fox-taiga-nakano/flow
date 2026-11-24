@@ -3,7 +3,7 @@ version: 1
 timezone: Asia/Tokyo
 tracker:
   kind: github
-  query: { assignee: "@me", state: open }
+  query: { assignee: '@me', state: open }
   exclude_labels: []
   # このラベルが付いた Issue は、今の step が終わってから「保留」にする。外すと元の段階から再開する。
   hold_labels: [保留]
@@ -18,17 +18,17 @@ stage_store:
   commands:
     # mise flow が読み込んだ環境を使い、読み取りごとの mise 起動を省く。
     dir: 'ISSUE_DIR="${ISSUE_DIR:-.dev/issues}" usage_number={issue} usage_create= "$HOME/.config/mise/tasks/issue/dir"'
-    ensure: "mise issue:dir --create {issue}"
-    set: "mise issue:mark {issue} {stage}"
+    ensure: 'mise issue:dir --create {issue}'
+    set: 'mise issue:mark {issue} {stage}'
 workspace:
   kind: herdr
   commands:
-    list: "mise wt:list"
-    create_for_branch: "mise wt:create {branch}"
-    create_from_base: "herdr worktree create --cwd {main} --branch {branch} --base {base} --no-focus"
-    assign_slot: "mise wt:ports {path} --slot {slot}"
-    sync: "mise wt:sync {path}"
-    remove: "mise run --yes wt:remove {workspace}"
+    list: 'mise wt:list'
+    create_for_branch: 'mise wt:create {branch}'
+    create_from_base: 'herdr worktree create --cwd {main} --branch {branch} --base {base} --no-focus'
+    assign_slot: 'mise wt:ports {path} --slot {slot}'
+    sync: 'mise wt:sync {path}'
+    remove: 'mise run --yes wt:remove {workspace}'
 runner:
   kind: herdr
   close_on_complete: true
@@ -59,7 +59,7 @@ gates:
   cleanup: manual
   db_reset: auto
 database:
-  stop: "mise wt:stop"
+  stop: 'mise wt:stop'
   reset:
     snapshot: 'PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION="開発用DBなのでリセットに同意します" mise db:reset --snapshot'
     seed: 'PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION="開発用DBなのでリセットに同意します" mise db:reset --seed'
@@ -67,16 +67,16 @@ remote:
   authors: [Copilot, copilot-swe-agent]
   done_when: review_requested
   ng_action:
-    command: "gh pr comment {pr.number} --body-file {issue_dir}/ng-comment.md"
+    command: 'gh pr comment {pr.number} --body-file {issue_dir}/ng-comment.md'
     set_stage: 修正中
 steps:
   repro:
     db_reset: true
     when_stage: 未着手
     gate_before: start
-    workspace: { from_base: "origin/{base}", branch: "flow/repro-{issue}" }
-    agent: { kind: claude, name: "flow-repro-{issue}" }
-    locks: [slot, "db:shared"]
+    workspace: { from_base: 'origin/{base}', branch: 'flow/repro-{issue}' }
+    agent: { kind: claude, name: 'flow-repro-{issue}' }
+    locks: [slot, 'db:shared']
     done_when: { files: [repro.md, scripts/repro.sh, evidence/before/checks.tsv] }
     gate_after: repro_result
     on_ok: { set_stage: 再現済 }
@@ -84,30 +84,30 @@ steps:
   refine:
     when_stage: 再現済
     workspace: none
-    agent: { kind: claude, name: "flow-refine-{issue}" }
+    agent: { kind: claude, name: 'flow-refine-{issue}' }
     done_when: { files: [issue.md] }
     gate_after: issue_push
-    on_approve: { command: "mise issue:push {issue}" }
-    on_ok: { remove_workspaces: ["flow/repro-{issue}"] }
+    on_approve: { command: 'mise issue:push {issue}' }
+    on_ok: { remove_workspaces: ['flow/repro-{issue}'] }
   implement:
     when_stage: Issue更新済
     gate_before: assign
     remote:
       kind: copilot
       transport: rest
-      login: "copilot-swe-agent[bot]"
-      assign: "gh api --method POST /repos/{owner}/{repo}/issues/{issue}/assignees --input {assign_body}"
+      login: 'copilot-swe-agent[bot]'
+      assign: 'gh api --method POST /repos/{owner}/{repo}/issues/{issue}/assignees --input {assign_body}'
       agent_assignment:
-        target_repo: "{owner}/{repo}"
-        base_branch: "{base}"
+        target_repo: '{owner}/{repo}'
+        base_branch: '{base}'
     on_done: { set_stage: 修正中 }
   verify:
     db_reset: true
     when_stage: 修正中
     gate_before: verify_start
     workspace: { pr: true }
-    agent: { kind: claude, name: "flow-verify-{issue}" }
-    locks: [slot, "db:shared"]
+    agent: { kind: claude, name: 'flow-verify-{issue}' }
+    locks: [slot, 'db:shared']
     done_when: { files: [evidence/after/checks.tsv], stage_in: [検証済, 検証NG] }
     on_ng: { gate: ng_action }
   finish:
@@ -116,15 +116,15 @@ steps:
     # PR 本文を flow の外で更新済みなら `flow approve <番号> finish_start --choice skip` で実行せずに完了にする
     skippable: true
     workspace: { pr: true }
-    agent: { kind: claude, name: "flow-finish-{issue}" }
+    agent: { kind: claude, name: 'flow-finish-{issue}' }
     done_when: { files: [pr-body.md] }
     gate_after: pr_body
     on_approve:
-      prompt: "pr_body が承認されました。pr-finish スキルの A の「了承を得て更新する」を実行し、{flow_dir}/result-finish-{attempt}.json を書き直してください。人に聞きたいことがあれば result: blocked にして needs に書いてください。"
+      prompt: 'pr_body が承認されました。pr-finish スキルの A の「了承を得て更新する」を実行し、{flow_dir}/result-finish-{attempt}.json を書き直してください。人に聞きたいことがあれば result: blocked にして needs に書いてください。'
   cleanup:
     when_pr_merged: true
     gate_before: cleanup
-    action: { remove_workspaces: true, command: "mise issue:status --update" }
+    action: { remove_workspaces: true, command: 'mise issue:status --update' }
 base:
   resolve: "git -C {main} ls-remote --heads origin 'delivery/*' | sed 's#.*refs/heads/##' | sort | tail -1"
 vars:

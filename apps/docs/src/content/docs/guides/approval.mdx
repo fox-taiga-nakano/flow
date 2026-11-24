@@ -1,0 +1,23 @@
+---
+title: 承認・却下・質問への回答
+description: Gate を確認し、適切なコマンドで作業を進める
+---
+
+import TerminalDemo from '../../../components/terminal/TerminalDemo.astro'
+
+`flow status 123` の Gate 名、成果物、表示されたコマンドを確認します。最初の開始を許可する例は次のとおりです。
+
+```sh
+flow approve 123 start
+```
+
+成功すると `✔ #123 の gate start を承認しました` と表示され、稼働中の `flow run` は次の tick に向けて起床します。承認の前に名前を明示すると、画面を読んだ後に別の Gate に変わっていた場合の誤操作を避けられます。
+
+<TerminalDemo scenes={['waiting', 'notice', 'approved', 'running', 'status']} />
+
+## 続行以外の判断
+
+- 検証 NG は [approve の --choice](/reference/cli/approve/#--choice-選択) にある Gate 別の選択肢を確認します。`flow approve 123 ng_action --choice self` は人で作業を引き取る停止です。
+- Issue を候補から外すには `flow reject 123 start --reason "要件確認中"`。段階を `stage_store.rejected` に変え、理由を記録します。段階を維持した停止は `flow stop 123`。
+- `agent_question` は `flow answer 123 "表示名は設定画面で変更できます"` を実行するか、`flow open 123` でペインを開いて回答します。次の tick が再開を確認します。
+- `base_changed` や復旧 Gate では、PR やペインの実態を調べてから選択してください。[停止・復旧](/guides/recovery/)を参照します。

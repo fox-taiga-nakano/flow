@@ -31,3 +31,6 @@ tasks/
 .serena/
 
 .turbo
+
+# Local browser audit output
+.playwright-cli/

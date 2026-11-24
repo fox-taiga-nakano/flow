@@ -1,11 +1,11 @@
 {
-  "sync": [".env"],
-  "slot_step": 10,
-  "services": {
-    "web": { "port": 3000 }
-  },
-  "env_files": [{ "file": ".env", "key": "PORT", "value": "{web}" }],
-  "hooks": {
-    "post_create": ["pnpm install --frozen-lockfile"]
-  }
+    "sync": [".env"],
+    "slot_step": 10,
+    "services": {
+        "web": { "port": 3000 }
+    },
+    "env_files": [{ "file": ".env", "key": "PORT", "value": "{web}" }],
+    "hooks": {
+        "post_create": ["pnpm install --frozen-lockfile"]
+    }
 }
