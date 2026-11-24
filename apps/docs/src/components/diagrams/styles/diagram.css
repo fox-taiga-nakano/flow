@@ -1,0 +1,538 @@
+/* Palette and spacing based on assets/システム構成と Issue 解決の流れ@2x.png. */
+.flow-diagram {
+  --diagram-bg: #f4f6f8;
+  --xy-background-color: var(--diagram-bg);
+  --diagram-group: #e2e7ef;
+  --diagram-card: #fff;
+  --diagram-border: #c5ceda;
+  --diagram-ink: #18212f;
+  --diagram-line: #48576b;
+  --diagram-human: #fff5cd;
+  --diagram-human-border: #d9b43f;
+  --diagram-claude: #fceee6;
+  --diagram-claude-border: #e8a58b;
+  --diagram-remote: #e6efff;
+  --diagram-remote-border: #9abcf5;
+  --diagram-radius: 10px;
+  --diagram-space: 12px;
+  --diagram-shadow: 0 1px 2px #18212f14;
+  overflow: hidden;
+  margin: 1.5rem 0;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: var(--diagram-radius);
+}
+[data-theme='dark'] .flow-diagram {
+  --diagram-bg: #151d29;
+  --diagram-group: #242f40;
+  --diagram-card: #1d2736;
+  --diagram-border: #536178;
+  --diagram-ink: #edf3fb;
+  --diagram-line: #abbcd0;
+  --diagram-human: #3c321c;
+  --diagram-human-border: #a98b41;
+  --diagram-claude: #412d2b;
+  --diagram-claude-border: #ae6e59;
+  --diagram-remote: #213658;
+  --diagram-remote-border: #6f97d4;
+}
+.flow-diagram figcaption,
+.diagram-detail,
+.diagram-alternative {
+  padding: 0.75rem 1rem;
+}
+.flow-diagram figcaption span {
+  display: block;
+  margin-top: 0.18rem;
+  color: var(--sl-color-gray-2);
+  font-size: 0.92rem;
+}
+.diagram-interactive {
+  position: relative;
+}
+.diagram-viewport {
+  color: var(--diagram-ink);
+  height: clamp(27rem, 60vh, 39rem);
+  background: var(--diagram-bg);
+  border-block: 1px solid var(--diagram-border);
+}
+.diagram-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+}
+.diagram-tools button {
+  color: var(--sl-color-white);
+  background: var(--sl-color-gray-6);
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 6px;
+  min-width: 2.3rem;
+  min-height: 2.25rem;
+  padding: 0.28rem 0.6rem;
+  font: inherit;
+  cursor: pointer;
+}
+.diagram-tools button:hover {
+  border-color: var(--sl-color-accent);
+}
+.diagram-detail {
+  min-height: 4rem;
+  font-size: 0.9rem;
+}
+.diagram-detail p {
+  margin: 0;
+}
+.diagram-alternative {
+  border-top: 1px solid var(--sl-color-gray-5);
+  font-size: 0.9rem;
+}
+.diagram-alternative summary {
+  cursor: pointer;
+}
+.diagram-card,
+.diagram-group {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: var(--diagram-radius);
+  border: 1px solid var(--diagram-border);
+  color: var(--diagram-ink);
+  font-weight: 650;
+  line-height: 1.3;
+  cursor: pointer;
+}
+.diagram-card {
+  padding: var(--diagram-space);
+  display: flex;
+  align-items: center;
+  gap: var(--diagram-space);
+  font-size: 16px;
+  background: var(--diagram-card);
+  box-shadow: var(--diagram-shadow);
+}
+.diagram-group {
+  background: var(--diagram-group);
+  padding: var(--diagram-space) 16px;
+  font-size: 15px;
+}
+.react-flow__node-group .react-flow__node-group {
+  background: transparent;
+}
+.react-flow__node-group:has(.diagram-group) {
+  background: transparent;
+  border: 0;
+}
+.diagram-tone--human,
+.diagram-card--gate {
+  background: var(--diagram-human);
+  border-color: var(--diagram-human-border);
+}
+.diagram-tone--claude {
+  background: var(--diagram-claude);
+  border-color: var(--diagram-claude-border);
+}
+.diagram-tone--remote {
+  background: var(--diagram-remote);
+  border-color: var(--diagram-remote-border);
+}
+.diagram-card[data-selected='true'],
+.diagram-group[data-selected='true'],
+.diagram-viewport .react-flow__node:focus-visible > div {
+  outline: 3px solid var(--sl-color-accent);
+  outline-offset: 2px;
+}
+.diagram-viewport .react-flow__handle {
+  opacity: 0;
+  pointer-events: none;
+}
+.diagram-icon,
+.diagram-brand {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+.diagram-brand img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.diagram-brand--copilot {
+  width: 129px;
+}
+.diagram-brand-dark,
+[data-theme='dark'] .diagram-brand-light {
+  display: none;
+}
+[data-theme='dark'] .diagram-brand-dark {
+  display: block;
+}
+.diagram-edge-label {
+  pointer-events: none;
+  position: absolute;
+  white-space: nowrap;
+  border-radius: 4px;
+  padding: 1px 4px;
+  color: var(--diagram-ink);
+  background-color: var(--diagram-bg);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.diagram-group {
+  text-align: start;
+}
+.diagram-group--inner {
+  background: color-mix(in srgb, var(--diagram-group) 45%, var(--diagram-card));
+}
+.diagram-viewport .react-flow__edgelabel-renderer {
+  z-index: 4;
+}
+.diagram-viewport--right {
+  height: clamp(22rem, 42vh, 29rem);
+}
+.diagram-viewport:focus-visible {
+  outline: 2px solid var(--sl-color-accent);
+  outline-offset: -2px;
+}
+[data-theme='dark'] .diagram-icon--codex {
+  filter: invert(1);
+}
+
+.diagram-copilot-label {
+  display: none;
+}
+
+.flow-diagram--plain {
+  --diagram-bg: var(--diagram-card);
+  --plain-ink: #454b56;
+  --plain-line: #737a85;
+  --plain-selected: #eef3f9;
+  border-radius: 4px;
+}
+[data-theme='dark'] .flow-diagram--plain {
+  --plain-ink: #bbc5d1;
+  --plain-line: #9aa8ba;
+  --plain-selected: #2c3c51;
+}
+.flow-diagram--plain .diagram-card {
+  justify-content: center;
+  padding: 6px 12px;
+  border: 1px solid var(--plain-line);
+  border-radius: 0;
+  background: var(--diagram-card);
+  box-shadow: none;
+  font-weight: 550;
+  text-align: center;
+}
+.flow-diagram--plain .react-flow__node:is([data-id='detect'], [data-id='end']) .diagram-card {
+  border-radius: 22px;
+}
+.flow-diagram--plain .diagram-card[data-selected='true'] {
+  background: var(--plain-selected);
+  outline: none;
+}
+.flow-diagram--plain .react-flow__node:focus-visible > .diagram-card {
+  outline: 2px solid var(--sl-color-accent);
+  outline-offset: 3px;
+}
+.flow-diagram--plain :is(.diagram-icon, .diagram-brand) {
+  display: none;
+}
+.flow-diagram--plain .diagram-copilot-label {
+  display: inline;
+}
+
+.flow-diagram--sequence {
+  container-type: inline-size;
+  overflow: clip;
+}
+.flow-diagram--sequence .diagram-interactive {
+  border-block-start: 1px solid var(--diagram-border);
+}
+.flow-diagram--sequence .diagram-viewport {
+  border: 0;
+}
+.flow-diagram--sequence .react-flow__pane {
+  touch-action: pan-y;
+}
+.flow-diagram--sequence .diagram-detail {
+  border-block-start: 1px solid var(--diagram-border);
+  min-height: 0;
+}
+.flow-diagram--sequence .diagram-detail ul {
+  padding-inline-start: 1.2em;
+  margin-block: 0.6em;
+}
+.flow-diagram--sequence .diagram-detail .diagram-detail-code {
+  margin-inline-start: 0.75em;
+  font-size: 0.85em;
+}
+.flow-diagram--sequence .diagram-detail p {
+  margin-top: 0.3em;
+}
+@container (min-width: 600px) {
+  .flow-diagram--sequence .diagram-interactive {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .flow-diagram--sequence .diagram-detail {
+    position: sticky;
+    top: calc(var(--sl-nav-height) + 1rem);
+    align-self: start;
+    margin-block: 1.25rem;
+    margin-inline-end: 1rem;
+    border-block-start: 0;
+    border-inline-start: 1px solid var(--diagram-border);
+  }
+}
+.flow-diagram--sequence .diagram-step {
+  display: grid;
+  place-content: center;
+  gap: 2px;
+}
+.diagram-step strong {
+  font-weight: 600;
+}
+.diagram-step small {
+  color: var(--plain-ink);
+  font-size: 12px;
+  font-weight: 450;
+}
+
+/* Color samples from the README's system architecture illustration. */
+.flow-diagram--architecture {
+  --diagram-bg: #f6f7f9;
+  --diagram-group: #e3e8f0;
+  --diagram-card: #ffffff;
+  --diagram-ink: #18212f;
+  --diagram-human: #fff6cc;
+  --diagram-claude: #fdf0e8;
+  --diagram-remote: #e8f1ff;
+  --architecture-inner: #f8f9fc;
+  --architecture-muted: #49566a;
+  --architecture-main-agent: #1f2937;
+  --architecture-main-subtitle: #eff3fa;
+  container-type: inline-size;
+  border-radius: 12px;
+  background: var(--diagram-bg);
+}
+[data-theme='dark'] .flow-diagram--architecture {
+  --diagram-bg: #141b26;
+  --diagram-group: #213248;
+  --diagram-card: #1d2736;
+  --diagram-ink: #edf3fb;
+  --diagram-human: #3c321c;
+  --diagram-claude: #412d2b;
+  --diagram-remote: #213658;
+  --architecture-inner: #192636;
+  --architecture-muted: #b4c3d7;
+  --architecture-main-agent: #202d41;
+  --architecture-main-subtitle: #dce9f9;
+}
+.flow-diagram--architecture figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  align-items: start;
+}
+.flow-diagram--architecture figcaption > div {
+  flex: 1 1 20rem;
+}
+.architecture-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.75rem;
+}
+.architecture-legend li {
+  margin: 0;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--diagram-border);
+  border-radius: 999px;
+  color: var(--diagram-ink);
+}
+.architecture-legend li:last-child {
+  background: var(--diagram-card);
+}
+.flow-diagram--architecture .diagram-viewport {
+  height: clamp(22.75rem, 50cqw, 34rem);
+}
+.architecture-shortcuts {
+  display: none;
+}
+@media (max-width: 40rem) {
+  .architecture-shortcuts {
+    display: flex;
+    padding-top: 0;
+  }
+  .flow-diagram--architecture .diagram-viewport {
+    height: 25rem;
+  }
+}
+.flow-diagram--architecture .diagram-group {
+  padding: 14px 15px;
+  font-size: 14px;
+  font-weight: 700;
+  border: 0;
+  border-radius: 16px;
+  background: var(--diagram-group);
+}
+.flow-diagram--architecture .diagram-group--inner {
+  padding: 10px 12px;
+  font-size: 12px;
+  border: 1px solid var(--diagram-border);
+  border-radius: 12px;
+  background: var(--architecture-inner);
+}
+.flow-diagram--architecture .react-flow__node[data-id='main'] .diagram-group {
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+.flow-diagram--architecture .diagram-group small {
+  display: block;
+  margin: 16px 3px 0;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--architecture-muted);
+}
+.flow-diagram--architecture .diagram-edge-label {
+  background: var(--diagram-bg);
+  color: var(--architecture-muted);
+  font-size: 11.5px;
+}
+.flow-diagram--architecture .architecture-card {
+  padding: 8px 11px;
+  gap: 9px;
+  border-radius: 10px;
+  font-size: 14px;
+  box-shadow: var(--diagram-shadow);
+}
+.architecture-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 22px;
+  color: var(--diagram-ink);
+}
+.architecture-icon :is(.diagram-icon, .diagram-brand) {
+  width: 22px;
+  height: 22px;
+}
+.architecture-node-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.architecture-node-copy strong {
+  font-weight: 700;
+}
+.architecture-node-copy small {
+  color: var(--architecture-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+.flow-diagram--architecture .react-flow__node[data-id='main-agent'] .architecture-card {
+  color: white;
+  background: var(--architecture-main-agent);
+  border-color: var(--architecture-main-agent);
+  box-shadow: 0 2px 5px #18212f24;
+}
+.flow-diagram--architecture .react-flow__node[data-id='main-agent'] .architecture-node-copy small {
+  color: var(--architecture-main-subtitle);
+}
+.architecture-card--copilot {
+  justify-content: start;
+}
+.architecture-card--copilot .diagram-brand--copilot {
+  width: 117px;
+  height: 19px;
+}
+
+flow-diagram-view {
+  display: block;
+}
+.diagram-modes:not([hidden]) {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem 0.75rem;
+}
+.diagram-tools button,
+.diagram-modes button {
+  min-height: 2.75rem;
+}
+.diagram-modes button {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--flow-border);
+  border-radius: 7px;
+  color: var(--sl-color-white);
+  background: var(--flow-surface);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.diagram-modes button:hover,
+.diagram-modes button[aria-pressed='true'] {
+  color: var(--sl-color-accent-high);
+  border-color: var(--sl-color-accent);
+  background: var(--sl-color-accent-low);
+}
+.diagram-outline {
+  padding-block: 0.6rem 0.25rem;
+}
+.diagram-connections,
+.diagram-connections ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.diagram-connections > li {
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--flow-border);
+}
+.diagram-connections ul > li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.4rem;
+  padding-inline-start: 0.4rem;
+  margin-top: 0.15rem;
+}
+.diagram-connection-label {
+  color: var(--sl-color-gray-2);
+  font-size: 0.85rem;
+}
+.diagram-node-details {
+  margin-top: 0.75rem;
+}
+.diagram-node-details dt {
+  font-weight: 650;
+}
+.diagram-node-details dd {
+  margin: 0.1rem 0 0.7rem;
+  color: var(--sl-color-gray-2);
+}
+.diagram-viewport[data-proportional] {
+  width: 100%;
+  height: auto;
+  min-height: 18rem;
+  max-height: 44rem;
+}
+@media (max-width: 42rem) {
+  .flow-diagram[data-responsive]:not([data-view='canvas']) .diagram-interactive,
+  .flow-diagram[data-view='canvas'] .diagram-alternative,
+  .flow-diagram[data-view='outline'] .diagram-alternative > summary {
+    display: none;
+  }
+  .flow-diagram[data-view='outline'] .diagram-alternative {
+    padding-top: 0.2rem;
+  }
+  .diagram-viewport[data-proportional] {
+    min-height: 22rem;
+    max-height: 30rem;
+  }
+}

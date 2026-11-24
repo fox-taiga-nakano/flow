@@ -1,0 +1,19 @@
+---
+import { ansiSpans } from './ansi'
+import { terminalCells } from './cells'
+interface Props { command: string; ansi: string }
+const { command, ansi } = Astro.props
+---
+<pre class="terminal-frame"><span class="terminal-prompt">$ {command}</span>{'\n\n'}{ansiSpans(ansi).map(({ text, classes }) =>
+    text.includes('次回まで ') ? <span class:list={classes} data-countdown>{text}</span> : (
+        <span class:list={classes}>{terminalCells(text).map(({ text, width, border }) =>
+            border ? (
+                <span class="terminal-cells terminal-border" style={`--cells:${width}`}>
+                    {text}<svg viewBox={`0 0 ${width * 10} 10`} preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                        <path d={border} vector-effect="non-scaling-stroke" />
+                    </svg>
+                </span>
+            ) : width ? <span class="terminal-cells" style={`--cells:${width}`}>{text}</span> : text
+        )}</span>
+    )
+)}</pre>

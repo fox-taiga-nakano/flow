@@ -1,0 +1,35 @@
+---
+title: 実行画面と状態確認
+description: flow run の一覧、承認待ち、前回の tick、診断ログを読む
+---
+
+import TerminalDemo from '../../../components/terminal/TerminalDemo.astro'
+
+```sh
+flow run --interval 30
+```
+
+最初の tick がすぐに始まり、その後は tick 完了からおよそ30秒後に次の周期へ進みます。TTY では同じ画面を描画し直します。出力をリダイレクトすると tick ごとの表が残ります。Ctrl+C は進行中の tick の終了を待ちます。
+
+<TerminalDemo scenes={['initial', 'ticking', 'running', 'waiting', 'approved', 'complete', 'status', 'dry']} />
+
+| 列・表示    | 意味                                                                           |
+| ----------- | ------------------------------------------------------------------------------ |
+| Issue、段階 | Issue 番号とディレクトリ側の Stage。                                           |
+| いま、gate  | 現在の作業・待機理由と Gate 名。Gate 名は承認先の確認に使います。              |
+| agent、slot | エージェントと作業環境の slot。該当しない欄は `-`。                            |
+| 経過、補足  | Step の経過と、エラーや dry-run の `[予定]`。                                  |
+| 承認待ち    | 待機中の各 Issue と次の端末操作。                                              |
+| 最終 tick   | 最後に表を更新した tick の時刻。実行中は末尾に `tick 実行中…` が表示されます。 |
+
+色付きの端末では、黄は承認・再試行待ち、青は進行中、緑は完了、赤は失敗、灰は対象外・停止です。段階・Step・状態・Gate が前回から変わると該当セルが強調されます。
+
+## 別のペインから調べる
+
+```sh
+flow status 123
+flow status 123 --json
+flow logs 123 --follow
+```
+
+`status 123` は詳細や最近のログを表示します。JSON は `rows`、`details`、`dir` を返します。Issue を省略した JSON は行の配列です。ログ追跡は Ctrl+C で終了します。[run](/reference/cli/run/)、[status](/reference/cli/status/)、[logs](/reference/cli/logs/) のリファレンスにも出力例があります。

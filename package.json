@@ -27,7 +27,11 @@
         "pretest": "pnpm build:cli && pnpm build:test-fixtures",
         "test": "vp test run",
         "typecheck": "tsc --noEmit",
-        "lint": "vp lint"
+        "lint": "vp lint",
+        "docs:dev": "pnpm --filter @flow/docs dev --background",
+        "docs:generate": "node --disable-warning=ExperimentalWarning --experimental-transform-types --import ./scripts/docs/source-loader.mjs ./scripts/docs/generate.mjs",
+        "docs:check": "node --disable-warning=ExperimentalWarning --experimental-transform-types --import ./scripts/docs/source-loader.mjs ./scripts/docs/generate.mjs --check",
+        "docs:build": "pnpm --filter @flow/docs build && node scripts/docs/links.mjs"
     },
     "dependencies": {
         "cli-table3": "0.6.5",

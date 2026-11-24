@@ -1,39 +1,45 @@
 ---
-title: Welcome to Starlight
-description: Get started building your docs site with Starlight.
-template: splash # Remove or comment out this line to display the site sidebar on this page.
+title: flow
+description: GitHub Issue の検出から PR の仕上げ、マージ後の片付けまで管理する CLI
+template: splash
 hero:
-  tagline: Congrats on setting up a new Starlight project!
-  image:
-    file: ../../assets/houston.webp
+  title: '<span class="flow-hero-line">Issue の進行と承認を、</span><span class="flow-hero-line">ひとつの端末で。</span>'
+  tagline: GitHub Issue の検出から PR の仕上げまで。Herdr でエージェントを動かし、承認が必要な操作を端末で確認できます。
   actions:
-    - text: Example Guide
-      link: /guides/example/
-      icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
-      icon: external
-      variant: minimal
+    - text: クイックスタート
+      link: /getting-started/quickstart/
+    - text: コマンド一覧
+      link: /reference/cli/
+      variant: secondary
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components'
+import TerminalDemo from '../../components/terminal/TerminalDemo.astro'
+import Diagram from '../../components/diagrams/Diagram.astro'
+import release from '../../generated/version.json'
 
-## Next steps
+<TerminalDemo />
 
-<CardGrid stagger>
-  <Card title="Update content" icon="pencil">
-    Edit `src/content/docs/index.mdx` to see this page change.
-  </Card>
-  <Card title="Change page layout" icon="document">
-    Delete `template: splash` in `src/content/docs/index.mdx` to display a sidebar on this page.
-  </Card>
-  <Card title="Add new content" icon="add-document">
-    Add Markdown or MDX files to `src/content/docs` to create new pages.
-  </Card>
-  <Card title="Configure your site" icon="setting">
-    Edit your `sidebar` and other config in `astro.config.mjs`.
-  </Card>
-  <Card title="Read the docs" icon="open-book">
-    Learn more in [the Starlight Docs](https://starlight.astro.build/).
-  </Card>
-</CardGrid>
+## 目的から探す
+
+<nav class="flow-home-links not-content" aria-label="目的から探す">
+  <a href="/getting-started/install/">
+    <strong>導入する</strong>
+    <span>GitHub と Herdr の準備から初回実行へ</span>
+  </a>
+  <a href="/guides/issue-to-merge/">
+    <strong>Issue を進める</strong>
+    <span>再現、作業、承認、PR のマージ後まで</span>
+  </a>
+  <a href="/troubleshooting/">
+    <strong>問題を解決する</strong>
+    <span>検出、起動、承認、ロックの確認手順</span>
+  </a>
+</nav>
+
+## flow のしくみ
+
+flow は定期的に GitHub とローカルの状態を照合します。プロジェクトの `WORKFLOW.md` に書かれた条件から Step を選び、必要に応じて worktree と専用のペインを用意します。人が判断する箇所は Gate として設定します。
+
+<Diagram name="architecture" />
+
+このサイトは main の開発版を説明しています。ソースのパッケージバージョンは **{release.version}** です。配布版の入手先と変更内容は [GitHub Releases](https://github.com/fox-taiga-nakano/flow/releases) を参照してください。

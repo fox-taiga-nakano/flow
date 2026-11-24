@@ -1,0 +1,16 @@
+---
+title: アーキテクチャ
+description: flow、GitHub、Herdr とローカル状態の関係
+---
+
+import Diagram from '../../../components/diagrams/Diagram.astro'
+
+<Diagram name="architecture" />
+
+**flow 本体**は、GitHub と Herdr の状態を照合し、Step の起動、承認待ち、所有の検証、結果判定、保存とログを担当します。Herdr のセッション内でメインと worktree の両方を使えます。メインでは Issue 専用タブ、worktree ではその workspace の agent タブを使います。作業場所は Step の設定から決まります。
+
+**プロジェクト設定**は、検索条件、Stage 名、Step、承認モード、エージェント種別、コマンド、プロンプト、並列数やリトライ方針を定義します。プロジェクトのタスクやスキルが、開発サーバー、ブラウザ、テスト等のツールを必要に応じて呼び出します。
+
+**GitHub**の Issue と関連 PR が入力です。remote Step の場合は Copilot アサインを行い、設定した完了条件を PR やタイムラインから確認します。関連 PR の base は固定し、変更を検知したら Gate で処理します。人によるレビューやマージは GitHub で行います。
+
+**保存先**は `.flow/state/` の台帳、Issue ディレクトリ内の実行情報、`.flow/logs/` のイベントです。[実行時ファイル](/reference/runtime/)を参照してください。

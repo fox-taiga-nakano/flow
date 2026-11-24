@@ -1,0 +1,28 @@
+---
+title: 並列実行と worktree の管理
+description: Issue ごとの workspace、エージェント、ポートとロックを確認する
+---
+
+import Diagram from '../../../components/diagrams/Diagram.astro'
+
+<Diagram name="concurrency" />
+
+## 同時実行数とポート
+
+同梱テンプレートは `concurrency.global: 3`、ローカルの代表 Step は各1件、slot は `[1, 2, 3]` です。これらはプロジェクトで調整できます。slot の値は同梱の `flow wt ports` を使う場合は1〜9とし、開発サービスのポートは `port + slot × slot_step` で計算します。稼働中のプロジェクトで値を変えるときは、既存 worktree とロックの対応を確認します。
+
+```sh
+flow status
+flow wt list
+flow lock list
+```
+
+一覧にある workspace ID とブランチを照合してください。メインで動く Step は `flow-<Issue番号>` タブを使います。worktree 上の Step と手動の `flow wt agent` は worktree 側の `agent` タブを共有します。所有記録に合うペインを開くには `flow open 123` を使います。
+
+## worktree を引き継ぐ
+
+既存の worktree が該当する場合は、`adopt_workspace` の設定と、ブランチ・パス・workspace ID が一致することを確認します。テンプレートは auto です。人が作った worktree の引き継ぎを都度判断したい場合は manual に設定します。別のエージェントが使っている環境は空くまで待ちます。
+
+## 成果物を確認してやり直す
+
+`flow issue dir 123` で最新の作業ディレクトリを調べ、判定ファイルとペインを確認します。履歴が必要な結果はコピーで保存してください。失敗・停止後は原因を直し、[flow retry](/reference/cli/retry/) で再開します。未保存の変更がある worktree を削除すると失われるため、[worktree コマンド](/reference/cli/wt/) の副作用を確認してください。

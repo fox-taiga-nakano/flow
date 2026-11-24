@@ -1,0 +1,221 @@
+:root {
+  --sl-color-accent-low: #162747;
+  --sl-color-accent: #80aef7;
+  --sl-color-accent-high: #c1d8ff;
+  --sl-content-width: 52rem;
+  --sl-sidebar-width: 16.75rem;
+  --sl-font-system: 'Noto Sans CJK JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', system-ui, sans-serif;
+  --flow-surface: #1a2231;
+  --flow-border: #344254;
+}
+:root[data-theme='light'] {
+  --sl-color-accent-low: #e3edff;
+  --sl-color-accent: #22589a;
+  --sl-color-accent-high: #153b6b;
+  --flow-surface: #f4f7fb;
+  --flow-border: #d5dfeb;
+}
+
+:where(main) :is(h1, h2, h3) {
+  text-wrap: pretty;
+}
+h1[id='_top'] {
+  font-size: clamp(1.8rem, 3.8vw, 2.7rem);
+  line-height: 1.25;
+  letter-spacing: -0.018em;
+}
+h1[id='_top'] {
+  text-wrap: pretty;
+}
+.sl-markdown-content {
+  line-height: 1.78;
+}
+.sl-markdown-content :is(h2, h3, h4) {
+  line-height: 1.34;
+}
+.sl-markdown-content h2 {
+  font-size: clamp(1.4rem, 2.6vw, 1.95rem);
+}
+.sl-markdown-content h3 {
+  font-size: clamp(1.13rem, 2vw, 1.45rem);
+}
+.sl-markdown-content .sl-heading-wrapper.level-h2:not(:first-child) {
+  margin-top: 2.25rem;
+}
+.sl-markdown-content :not(pre) > code:not(:where(.not-content *)) {
+  padding: 0.12em 0.34em;
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+.sl-markdown-content .sl-heading-wrapper.level-h3:has(> h3 > code) + p {
+  color: var(--sl-color-gray-2);
+}
+.sl-markdown-content :where(a):not(:where(.not-content *)),
+.not-content a {
+  text-underline-offset: 0.2em;
+}
+.not-content a {
+  color: var(--sl-color-text-accent);
+}
+:where(a, button, summary, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--sl-color-text-accent);
+  outline-offset: 3px;
+}
+:where(button, summary, select) {
+  touch-action: manipulation;
+}
+.sidebar-content {
+  background: var(--sl-color-bg-sidebar);
+}
+.sidebar-content a[aria-current='page'] {
+  color: var(--sl-color-accent-high);
+  background: var(--sl-color-accent-low);
+  border-inline-start: 2px solid var(--sl-color-text-accent);
+}
+.sidebar-content :is(a, summary):hover {
+  background: var(--flow-surface);
+}
+.sl-markdown-content .expressive-code {
+  --ec-brdRad: 8px;
+}
+.sl-markdown-content details:not(.not-content, .not-content *) {
+  background: var(--flow-surface);
+  border-radius: 8px;
+}
+.sl-markdown-content details:not(.not-content, .not-content *) > summary {
+  min-height: 2.5rem;
+  align-content: center;
+  cursor: pointer;
+}
+.sl-markdown-content table:not(:where(.not-content *)) {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  border: 1px solid var(--flow-border);
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+.sl-markdown-content table:not(:where(.not-content *)) :is(th, td) {
+  padding: 0.65rem 0.75rem;
+  border-color: var(--flow-border);
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+.sl-markdown-content table:not(:where(.not-content *)) th {
+  background: var(--flow-surface);
+  font-weight: 650;
+}
+.sl-markdown-content table:not(:where(.not-content *)) tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--flow-surface) 50%, transparent);
+}
+.sl-markdown-content table:has(thead th:nth-child(2):last-child) th:first-child {
+  width: 32%;
+}
+.sl-markdown-content table:has(thead th:nth-child(3):last-child) th:first-child {
+  width: 33%;
+}
+.sl-markdown-content table:has(thead th:nth-child(3):last-child) th:nth-child(2) {
+  width: 29%;
+}
+.sl-markdown-content table:not(:where(.not-content *)) code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-decoration-break: clone;
+}
+.sl-markdown-content table:not(:where(.not-content *)) td :is(pre, code) {
+  max-inline-size: 100%;
+}
+.hero {
+  padding-block: clamp(1.4rem, 4vw, 2.6rem) 0.5rem !important;
+}
+.hero:not(:has(> :is(img, .hero-html))) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.hero h1[data-page-title] {
+  max-width: 21ch;
+  font-size: clamp(1.85rem, 5.2vw, 3.35rem);
+  letter-spacing: -0.035em;
+  line-height: 1.21;
+  text-wrap: balance;
+}
+.flow-hero-line {
+  display: block;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.hero .tagline {
+  max-width: 54ch;
+  font-size: clamp(1rem, 1.7vw, 1.22rem);
+  line-height: 1.65;
+}
+.hero .actions {
+  gap: 0.65rem;
+}
+.hero .actions a {
+  min-height: 2.75rem;
+  border-radius: 8px;
+}
+.flow-home-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 0.75rem;
+}
+.flow-home-links a {
+  display: grid;
+  gap: 0.2rem;
+  padding: 1rem;
+  border: 1px solid var(--flow-border);
+  border-radius: 10px;
+  background: var(--flow-surface);
+  text-decoration: none;
+}
+.flow-home-links a:hover {
+  border-color: var(--sl-color-text-accent);
+}
+.flow-home-links span {
+  color: var(--sl-color-gray-2);
+  font-size: 0.9rem;
+}
+@media (min-width: 64rem) {
+  .hero .stack {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.25rem;
+    align-items: end;
+  }
+}
+@media (max-width: 36rem) {
+  h1[id='_top'] {
+    font-size: clamp(1.55rem, 6.5vw, 1.85rem);
+  }
+  .hero h1[data-page-title] {
+    font-size: clamp(1.62rem, 7.45vw, 2.1rem);
+  }
+  .content-panel:has(> .sl-container > h1[id='_top']) {
+    padding-block: 1.2rem;
+  }
+  .hero .stack,
+  .hero .copy {
+    align-items: start;
+    text-align: start;
+  }
+  .hero .actions {
+    justify-content: start;
+  }
+  .sidebar-content :is(a, summary) {
+    min-height: 2.5rem;
+    align-content: center;
+  }
+  .sl-markdown-content table:not(:where(.not-content *)) {
+    font-size: 0.87rem;
+  }
+  .sl-markdown-content table:not(:where(.not-content *)) :is(th, td) {
+    padding: 0.5rem 0.4rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-content .caret {
+    transition: none;
+  }
+}

@@ -1,0 +1,263 @@
+---
+import data from '../../generated/terminal.json'
+import Frame from './Frame.astro'
+import { ansiSpans } from './ansi'
+
+interface Props { initial?: string; scenes?: string[] }
+const { initial = 'waiting', scenes } = Astro.props
+function scene(id: string) {
+    const sample = data.scenes.find((entry) => entry.id === id)
+    if (!sample) {
+        throw new Error(`デモのシナリオ ID が不明です: ${id}`)
+    }
+    return sample
+}
+const choices = scenes?.map(scene) ?? data.scenes
+const first = choices.find((entry) => entry.id === initial)
+if (!first) {
+    throw new Error(`初期シナリオが選択肢にありません: ${initial}`)
+}
+const tickFooter = ansiSpans(scene('ticking').ansi.split('\n').at(-1) ?? '').map(({ text }) => text).join('')
+const approvalEnabled = choices.some((scene) => scene.id === 'waiting') && choices.some((scene) => scene.id === 'approved')
+---
+
+<flow-terminal class="flow-terminal not-content" data-pagefind-ignore data-tick-footer={tickFooter}>
+    <figure>
+        <figcaption class="terminal-caption">
+            <strong>操作デモ</strong>
+            <span class="terminal-sample">サンプルデータ</span>
+        </figcaption>
+        <div data-controls class="terminal-controls" hidden>
+            <label class="terminal-select">
+                <span>表示する場面</span>
+                <select data-scenes>
+                    {choices.map((scene) => <option value={scene.id} selected={scene.id === first.id}>{scene.label}</option>)}
+                </select>
+            </label>
+            {approvalEnabled && <button class="terminal-approve" type="button" data-approve title={data.approval.command}>承認を実行</button>}
+            <button type="button" data-timer aria-pressed="false">カウントダウンを再生</button>
+        </div>
+        <div data-screen class="terminal-screen" role="region" tabindex="0" aria-label="端末の出力">
+            <Frame {...first} />
+        </div>
+        <p class="terminal-overflow" data-overflow hidden>右にスクロールすると続きが表示されます。</p>
+    </figure>
+    <p class="terminal-announcement" role="status" data-announcement></p>
+    {choices.map((scene) => (
+        <template data-scene={scene.id}>
+            {scene.id === 'approved' && approvalEnabled && <Frame {...data.approval} />}
+            <Frame {...scene} />
+        </template>
+    ))}
+</flow-terminal>
+
+<script>
+    class FlowTerminal extends HTMLElement {
+        private lifecycle?: AbortController
+        private timer?: number
+
+        connectedCallback() {
+            this.lifecycle = new AbortController()
+            const { signal } = this.lifecycle
+            const select = this.querySelector<HTMLSelectElement>('[data-scenes]')!
+            const screen = this.querySelector<HTMLElement>('[data-screen]')!
+            const controls = this.querySelector<HTMLElement>('[data-controls]')!
+            const overflow = this.querySelector<HTMLElement>('[data-overflow]')!
+            const measureWidth = () => { overflow.hidden = screen.scrollWidth <= screen.clientWidth + 1 }
+            const resize = new ResizeObserver(measureWidth)
+            resize.observe(screen)
+            signal.addEventListener('abort', () => resize.disconnect(), { once: true })
+            const approval = this.querySelector<HTMLButtonElement>('[data-approve]')
+            const timerButton = this.querySelector<HTMLButtonElement>('[data-timer]')!
+            const announcement = this.querySelector<HTMLElement>('[data-announcement]')!
+            const templates = new Map(Array.from(this.querySelectorAll<HTMLTemplateElement>('template[data-scene]'))
+                .map((template) => [template.dataset.scene, template]))
+            // Only the numeric countdown in the generated footer changes between demo frames.
+            const countdown = /次回まで (\d+) 秒/
+            const footer = () => screen.querySelector('[data-countdown]')
+            const canPlay = () => countdown.test(footer()?.textContent ?? '')
+            const stop = () => {
+                window.clearInterval(this.timer)
+                this.timer = undefined
+                timerButton.setAttribute('aria-pressed', 'false')
+                timerButton.textContent = 'カウントダウンを再生'
+            }
+            const controlsFor = () => {
+                if (approval) {approval.disabled = select.value !== 'waiting'}
+                timerButton.disabled = !canPlay()
+            }
+            const show = (id: string) => {
+                const template = templates.get(id)
+                if (!template) {return}
+                stop()
+                screen.replaceChildren(template.content.cloneNode(true))
+                screen.scrollTo(0, 0)
+                measureWidth()
+                select.value = id
+                controlsFor()
+                announcement.textContent = select.selectedOptions[0]?.textContent ?? ''
+            }
+            select.addEventListener('change', () => show(select.value), { signal })
+            approval?.addEventListener('click', () => {
+                show('approved')
+                select.focus()
+            }, { signal })
+            timerButton.addEventListener('click', () => {
+                if (this.timer !== undefined) { stop(); return }
+                if (!canPlay()) {return}
+                timerButton.setAttribute('aria-pressed', 'true')
+                timerButton.textContent = 'カウントダウンを一時停止'
+                this.timer = window.setInterval(() => {
+                    const line = footer()
+                    const text = line?.textContent ?? ''
+                    const match = text.match(countdown)
+                    if (!line || !match) { stop(); return }
+                    const remaining = Number(match[1]) - 1
+                    if (remaining <= 0 && templates.has('ticking')) {
+                        show('ticking')
+                        return
+                    }
+                    line.textContent = text.replace(countdown, `次回まで ${Math.max(0, remaining)} 秒`)
+                    if (remaining <= 0) {stop()}
+                }, 1000)
+            }, { signal })
+            controlsFor()
+            controls.hidden = false
+            measureWidth()
+        }
+
+        disconnectedCallback() {
+            this.lifecycle?.abort()
+            window.clearInterval(this.timer)
+            this.timer = undefined
+        }
+    }
+    if (!customElements.get('flow-terminal')) {customElements.define('flow-terminal', FlowTerminal)}
+</script>
+
+<style>
+.flow-terminal {
+    display: block;
+    max-width: 100%;
+    margin-block: 1.5rem;
+    color: #e4eaf3;
+    font-size: 0.875rem;
+}
+.flow-terminal figure {
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid #36465b;
+    border-radius: 12px;
+    background: #101722;
+    box-shadow: 0 6px 20px #10243e14;
+}
+.terminal-caption {
+    display: flex;
+    gap: .65rem;
+    align-items: center;
+    padding: .75rem 1rem;
+    background: #1b2636;
+    border-bottom: 1px solid #36465b;
+}
+.terminal-sample { margin-inline-start: auto; color: #acbbce; }
+.terminal-screen {
+    overflow: auto;
+    min-height: 14.5rem;
+    max-height: 27rem;
+    padding: 1rem;
+    scrollbar-color: #788ba4 #101722;
+    scrollbar-width: thin;
+    color-scheme: dark;
+}
+.terminal-screen :global(.terminal-frame) {
+    margin: 0;
+    min-width: max-content;
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+    color: #e4eaf3;
+    font: .82rem/1.4 'DejaVu Sans Mono', 'Cascadia Mono', 'Menlo', 'Noto Sans Mono CJK JP', monospace;
+    font-variant-ligatures: none;
+    white-space: pre;
+}
+.terminal-screen :global(.terminal-cells) {
+    display: inline-block;
+    position: relative;
+    width: calc(var(--cells) * 1ch);
+    height: 1lh;
+    vertical-align: top;
+}
+.terminal-screen :global(.terminal-border) { color: transparent; }
+.terminal-screen :global(.terminal-border svg) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: #8496ad;
+    stroke-width: 1px;
+    stroke-linecap: square;
+    pointer-events: none;
+}
+.terminal-screen :global(.terminal-frame + .terminal-frame) { margin-top: 1.05rem; }
+.terminal-screen :global(.terminal-prompt) { color: #95dec7; font-weight: 700; }
+.terminal-screen :global(.ansi-bold) { font-weight: 700; }
+.terminal-screen :global(.ansi-dim) { opacity: .78; }
+.terminal-screen :global(.ansi-underline) { text-decoration: underline; text-underline-offset: .14em; }
+.terminal-screen :global(.ansi-gray) { color: #adbacd; }
+.terminal-screen :global(.ansi-yellow) { color: #f8ce72; }
+.terminal-screen :global(.ansi-blue) { color: #89b9ff; }
+.terminal-screen :global(.ansi-red) { color: #ffa5a4; }
+.terminal-screen :global(.ansi-green) { color: #8ce5ab; }
+.terminal-controls:not([hidden]) {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: .55rem;
+    padding: .75rem 1rem;
+    border-bottom: 1px solid #36465b;
+    background: #1b2636;
+}
+.terminal-select { display: grid; gap: .23rem; min-width: 0; }
+.terminal-controls select,
+.terminal-controls button {
+    min-height: 2.75rem;
+    padding: .35rem .7rem;
+    color: inherit;
+    background: #23334a;
+    border: 1px solid #536b88;
+    border-radius: 6px;
+    font: inherit;
+    max-width: 100%;
+    cursor: pointer;
+}
+.terminal-controls :is(button, select):hover:not(:disabled) { border-color: #9cb8da; }
+.terminal-overflow:not([hidden]) {
+    margin: 0;
+    padding: 0.45rem 0.85rem;
+    border-top: 1px solid #36465b;
+    color: #acbbce;
+    background: #1b2636;
+    font-size: 0.8rem;
+}
+@media (max-width: 32rem) {
+    .terminal-controls:not([hidden]) { padding: 0.65rem 0.75rem; }
+    .terminal-select { flex: 1 0 100%; }
+    .terminal-screen { padding: 0.75rem; min-height: 12rem; }
+}
+.terminal-controls button:disabled { opacity: .52; cursor: default; }
+.terminal-controls .terminal-approve:not(:disabled) {
+    color: #12251f;
+    background: #a8e6d0;
+    border-color: #a8e6d0;
+    font-weight: 700;
+}
+.flow-terminal :is(button, select, [tabindex]):focus-visible { outline: 2px solid #99d8ff; outline-offset: 2px; }
+.terminal-announcement {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+}
+</style>

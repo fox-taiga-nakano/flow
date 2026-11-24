@@ -1,0 +1,1229 @@
+{
+  "fields": [
+    {
+      "path": "database",
+      "type": "オブジェクト",
+      "required": false,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "database.stop",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "database.reset",
+      "type": "オブジェクト",
+      "required": true,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "database.reset.snapshot",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "database.reset.seed",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "version",
+      "type": "1",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "timezone",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "tracker",
+      "type": "オブジェクト",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "tracker.kind",
+      "type": "'github'",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "tracker.query",
+      "type": "文字列 → string",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "tracker.exclude_labels",
+      "type": "string[]",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "tracker.hold_labels",
+      "type": "string[]",
+      "required": false,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "tracker.pr_limit",
+      "type": "number",
+      "required": false,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "stage_store",
+      "type": "オブジェクト",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "stage_store.kind",
+      "type": "'dirs'",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "stage_store.initial",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "stage_store.rejected",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "stage_store.held",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "stage_store.order",
+      "type": "string[]",
+      "required": false,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "stage_store.pattern",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "stage_store.commands",
+      "type": "オブジェクト",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "stage_store.commands.dir",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "stage_store.commands.ensure",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "stage_store.commands.set",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "stage_store.commands.get",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "workspace",
+      "type": "オブジェクト",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "workspace.kind",
+      "type": "'herdr'",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "workspace.commands",
+      "type": "オブジェクト",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "workspace.commands.list",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "workspace.commands.create_for_branch",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "workspace.commands.create_from_base",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "workspace.commands.sync",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "workspace.commands.remove",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "workspace.commands.assign_slot",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "runner",
+      "type": "オブジェクト",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "runner.kind",
+      "type": "'herdr'",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "runner.close_on_complete",
+      "type": "boolean",
+      "required": false,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "notifier",
+      "type": "オブジェクト",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "notifier.kind",
+      "type": "'command'",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "notifier.command",
+      "type": "string / null",
+      "required": false,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "concurrency",
+      "type": "オブジェクト",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "concurrency.global",
+      "type": "number",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "concurrency.per_step",
+      "type": "文字列 → number",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "locks",
+      "type": "オブジェクト",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "locks.slots",
+      "type": "number[]",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "locks.resources",
+      "type": "文字列 → オブジェクト",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "locks.resources.*.kind",
+      "type": "'rw'",
+      "required": true,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "retry",
+      "type": "オブジェクト",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "retry.max_attempts",
+      "type": "number",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "retry.backoff_ms",
+      "type": "number[]",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "stall_ms",
+      "type": "number",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "gates",
+      "type": "文字列 → 'manual' / 'auto'",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "steps",
+      "type": "文字列 → オブジェクト",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "steps.*.db_reset",
+      "type": "boolean",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.when_stage",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.when_pr_merged",
+      "type": "boolean",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.gate_before",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.gate_after",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.skippable",
+      "type": "boolean",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.workspace",
+      "type": "'none' / オブジェクト",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.workspace.from_base",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.workspace.branch",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.workspace.pr",
+      "type": "boolean",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.agent",
+      "type": "オブジェクト",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.agent.kind",
+      "type": "'claude' / 'codex'",
+      "required": true,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.agent.name",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.locks",
+      "type": "string[]",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.remote",
+      "type": "オブジェクト",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.remote.kind",
+      "type": "'copilot'",
+      "required": true,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.remote.assign",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.remote.transport",
+      "type": "'rest' / 'graphql'",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.remote.login",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.remote.agent_assignment",
+      "type": "文字列 → string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.remote.authors",
+      "type": "string[]",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.remote.done_when",
+      "type": "'timeline' / 'review_requested' / 'not_draft'",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.done_when",
+      "type": "オブジェクト",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.done_when.files",
+      "type": "string[]",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.done_when.stage_in",
+      "type": "string[]",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_ok",
+      "type": "オブジェクト",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_ok.remove_workspaces",
+      "type": "string[]",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_ok.set_stage",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_ok.stop",
+      "type": "boolean",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_ok.notify",
+      "type": "'info' / 'action' / 'error'",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_ok.gate",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_ng",
+      "type": "オブジェクト",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_ng.remove_workspaces",
+      "type": "string[]",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_ng.set_stage",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_ng.stop",
+      "type": "boolean",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_ng.notify",
+      "type": "'info' / 'action' / 'error'",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_ng.gate",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_done",
+      "type": "オブジェクト",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_done.remove_workspaces",
+      "type": "string[]",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_done.set_stage",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_done.stop",
+      "type": "boolean",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_done.notify",
+      "type": "'info' / 'action' / 'error'",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_done.gate",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_approve",
+      "type": "オブジェクト",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_approve.command",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.on_approve.prompt",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.action",
+      "type": "オブジェクト",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.action.remove_workspaces",
+      "type": "boolean",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "steps.*.action.command",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "base",
+      "type": "オブジェクト",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "base.resolve",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "vars",
+      "type": "文字列 → string / number",
+      "required": true,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "remote",
+      "type": "オブジェクト",
+      "required": false,
+      "ancestorsRequired": true
+    },
+    {
+      "path": "remote.authors",
+      "type": "string[]",
+      "required": true,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "remote.done_when",
+      "type": "'timeline' / 'review_requested' / 'not_draft'",
+      "required": true,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "remote.ng_action",
+      "type": "オブジェクト",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "remote.ng_action.command",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "remote.ng_action.set_stage",
+      "type": "string",
+      "required": true,
+      "ancestorsRequired": false
+    },
+    {
+      "path": "remote.ng_action.choice",
+      "type": "'copilot' / 'self' / 'stop'",
+      "required": false,
+      "ancestorsRequired": false
+    }
+  ],
+  "validation": [
+    [
+      "match",
+      "'YAML front matter がありません'"
+    ],
+    [
+      "object(raw)",
+      "'設定はオブジェクトです'"
+    ],
+    [
+      "!prompts[sections[i]!]",
+      "`プロンプト重複: ${sections[i]}`"
+    ],
+    [
+      "raw.version === 1",
+      "'version は 1'"
+    ],
+    [
+      "raw.timezone === undefined || typeof raw.timezone === 'string'",
+      "'timezone は IANA タイムゾーン名です'"
+    ],
+    [
+      "object(raw.tracker) && raw.tracker.kind === 'github' && object(raw.tracker.query)",
+      "'tracker が不正'"
+    ],
+    [
+      "Object.values(raw.tracker.query).every((x) => typeof x === 'string')",
+      "'tracker.query は文字列のマップ'"
+    ],
+    [
+      "strings(raw.tracker.exclude_labels)",
+      "'exclude_labels は配列'"
+    ],
+    [
+      "raw.tracker.pr_limit === undefined || positive(raw.tracker.pr_limit)",
+      "'tracker.pr_limit は正の整数です'"
+    ],
+    [
+      "raw.tracker.hold_labels === undefined || strings(raw.tracker.hold_labels)",
+      "'hold_labels は配列'"
+    ],
+    [
+      "object(raw.stage_store) && raw.stage_store.kind === 'dirs' && typeof raw.stage_store.initial === 'string' && object(raw.stage_store.commands)",
+      "'stage_store が不正'"
+    ],
+    [
+      "typeof raw.stage_store.rejected === 'string' && raw.stage_store.rejected.trim() && raw.stage_store.rejected !== raw.stage_store.initial",
+      "'stage_store.rejected は initial と異なる空でない段階名です'"
+    ],
+    [
+      "(raw.tracker.hold_labels === undefined) === (raw.stage_store.held === undefined)",
+      "'tracker.hold_labels と stage_store.held はセットで指定してください'"
+    ],
+    [
+      "typeof raw.stage_store.held === 'string' && raw.stage_store.held.trim() && ![raw.stage_store.initial, raw.stage_store.rejected].includes(raw.stage_store.held)",
+      "'stage_store.held は initial・rejected と異なる空でない段階名です'"
+    ],
+    [
+      "strings(raw.stage_store.order) && raw.stage_store.order.length > 0",
+      "'stage_store.order は段階名の空でない配列です'"
+    ],
+    [
+      "raw.stage_store.order.every((name) => name.trim() === name && !!name && !/[\\\\/\\r\\n\\t]/.test(name))",
+      "'stage_store.order の段階名は空白・改行・パスを含めず指定してください'"
+    ],
+    [
+      "new Set(raw.stage_store.order).size === raw.stage_store.order.length",
+      "'stage_store.order の段階名が重複しています'"
+    ],
+    [
+      "typeof raw.stage_store.commands[k] === 'string'",
+      "`stage_store.commands.${k}`"
+    ],
+    [
+      "object(raw.workspace) && raw.workspace.kind === 'herdr' && object(raw.workspace.commands)",
+      "'workspace が不正'"
+    ],
+    [
+      "typeof raw.workspace.commands[k] === 'string'",
+      "`workspace.commands.${k}`"
+    ],
+    [
+      "object(raw.runner) && raw.runner.kind === 'herdr'",
+      "'runner が不正'"
+    ],
+    [
+      "raw.runner.commands === undefined || (object(raw.runner.commands) && !Object.keys(raw.runner.commands).length)",
+      "'runner.commands（start / start_main）は廃止しました。agent は flow-<Issue番号> タブで起動します'"
+    ],
+    [
+      "raw.runner.close_on_complete === undefined || typeof raw.runner.close_on_complete === 'boolean'",
+      "'runner.close_on_complete は真偽値です'"
+    ],
+    [
+      "Object.values(commands).every((v) => typeof v === 'string' && v.trim().length > 0)",
+      "`${group}.commands は空でない文字列のマップです`"
+    ],
+    [
+      "object(raw.notifier) && raw.notifier.kind === 'command' && (raw.notifier.command == null || typeof raw.notifier.command === 'string')",
+      "'notifier が不正'"
+    ],
+    [
+      "object(raw.concurrency) && positive(raw.concurrency.global) && object(raw.concurrency.per_step) && Object.values(raw.concurrency.per_step).every(positive)",
+      "'concurrency は正の整数'"
+    ],
+    [
+      "object(raw.retry) && positive(raw.retry.max_attempts) && Array.isArray(raw.retry.backoff_ms) && raw.retry.backoff_ms.length && raw.retry.backoff_ms.every((x) => typeof x === 'number' && Number.isFinite(x) && x >= 0)",
+      "'retry が不正'"
+    ],
+    [
+      "positive(raw.stall_ms)",
+      "'stall_ms は正の整数'"
+    ],
+    [
+      "object(raw.locks) && Array.isArray(raw.locks.slots) && raw.locks.slots.every(positive) && new Set(raw.locks.slots).size === raw.locks.slots.length && object(raw.locks.resources)",
+      "'locks が不正'"
+    ],
+    [
+      "/^[\\w-]+$/.test(k) && object(v) && v.kind === 'rw'",
+      "`資源が不正: ${k}`"
+    ],
+    [
+      "object(raw.gates) && Object.values(raw.gates).every((x) => x === 'auto' || x === 'manual')",
+      "'gates が不正'"
+    ],
+    [
+      "object(raw.database) && typeof raw.database.stop === 'string' && !!raw.database.stop.trim() && object(raw.database.reset) && [raw.database.reset.snapshot, raw.database.reset.seed].every( (v) => typeof v === 'string' && !!v.trim() )",
+      "'database は stop と reset.snapshot / reset.seed のコマンドを指定してください'"
+    ],
+    [
+      "object(raw.vars) && Object.values(raw.vars).every((x) => typeof x === 'string' || typeof x === 'number') && typeof raw.vars.main === 'string' && path.isAbsolute(raw.vars.main)",
+      "'vars.main は絶対パス'"
+    ],
+    [
+      "object(raw.base) && typeof raw.base.resolve === 'string' && raw.base.resolve.trim()",
+      "'base.resolve が必要です'"
+    ],
+    [
+      "raw.gates.base_changed === 'manual'",
+      "'base_changed は選択肢が必要なため manual にしてください'"
+    ],
+    [
+      "object(raw.steps) && Object.keys(raw.steps).length",
+      "'steps がありません'"
+    ],
+    [
+      "/^[\\w-]+$/.test(name) && object(value)",
+      "`step が不正: ${name}`"
+    ],
+    [
+      "step.db_reset === undefined || typeof step.db_reset === 'boolean'",
+      "`${name}: db_reset は真偽値`"
+    ],
+    [
+      "raw.database !== undefined && !!step.agent && !!step.workspace && step.workspace !== 'none' && step.locks?.includes('db:shared') && 'db_reset' in raw.gates",
+      "`${name}: db_reset には database・worktree の agent・db:shared ロック・db_reset gate が必要です`"
+    ],
+    [
+      "typeof step.when_stage === 'string' || step.when_pr_merged === true",
+      "`${name}: 起動条件が必要`"
+    ],
+    [
+      "[step.agent, step.remote, step.action].filter(Boolean).length === 1",
+      "`${name}: agent/remote/action のいずれか1つ`"
+    ],
+    [
+      "step.when_stage !== raw.stage_store.rejected",
+      "`${name}: stage_store.rejected を when_stage に指定できません`"
+    ],
+    [
+      "raw.stage_store.held === undefined || step.when_stage !== raw.stage_store.held",
+      "`${name}: stage_store.held を when_stage に指定できません`"
+    ],
+    [
+      "['claude', 'codex'].includes(step.agent.kind) && typeof step.agent.name === 'string' && step.agent.name.startsWith('flow-') && !!prompts[name]",
+      "`${name}: agent または prompt が不正`"
+    ],
+    [
+      "object(step.workspace) && (step.workspace.pr === true || (typeof step.workspace.branch === 'string' && typeof step.workspace.from_base === 'string'))",
+      "`${name}: workspace が不正`"
+    ],
+    [
+      "gate in raw.gates",
+      "`gate 未定義: ${gate}`"
+    ],
+    [
+      "step.skippable === undefined || typeof step.skippable === 'boolean'",
+      "`${name}: skippable は真偽値`"
+    ],
+    [
+      "!!step.gate_before",
+      "`${name}: skippable には gate_before が必要`"
+    ],
+    [
+      "step.remote.kind === 'copilot' && typeof step.remote.assign === 'string'",
+      "`${name}: remote が不正`"
+    ],
+    [
+      "step.remote.transport === undefined || ['rest', 'graphql'].includes(step.remote.transport)",
+      "`${name}: remote.transport が不正`"
+    ],
+    [
+      "step.remote.login === undefined || (typeof step.remote.login === 'string' && !!step.remote.login.trim())",
+      "`${name}: remote.login が不正`"
+    ],
+    [
+      "step.remote.agent_assignment === undefined || (object(step.remote.agent_assignment) && Object.values(step.remote.agent_assignment).every((v) => typeof v === 'string'))",
+      "`${name}: agent_assignment は文字列のマップ`"
+    ],
+    [
+      "step.remote.assign.includes('{assign_body}')",
+      "`${name}: assign に {assign_body} が必要`"
+    ],
+    [
+      "['timeline', 'review_requested', 'not_draft'].includes(step.remote.done_when)",
+      "`${name}: remote.done_when が不正`"
+    ],
+    [
+      "strings(step.remote.authors)",
+      "`${name}: remote.authors が不正`"
+    ],
+    [
+      "object(step.action) && (step.action.remove_workspaces === true || typeof step.action.command === 'string') && (step.action.remove_workspaces === undefined || typeof step.action.remove_workspaces === 'boolean') && (step.action.command === undefined || typeof step.action.command === 'string')",
+      "`${name}: action が不正`"
+    ],
+    [
+      "object(step.done_when) && (!step.done_when.files || strings(step.done_when.files)) && (!step.done_when.stage_in || strings(step.done_when.stage_in))",
+      "`${name}: done_when が不正`"
+    ],
+    [
+      "file.length > 0 && !path.isAbsolute(file) && !file.split(/[\\\\/]/).includes('..')",
+      "`${name}: done_when.files は Issue 内の相対パスです`"
+    ],
+    [
+      "object(transition) && (!transition.set_stage || typeof transition.set_stage === 'string') && (transition.stop === undefined || typeof transition.stop === 'boolean') && (transition.remove_workspaces === undefined || (strings(transition.remove_workspaces) && transition.remove_workspaces.every((branch: string) => branch.length > 0)))",
+      "`${name}: 遷移が不正`"
+    ],
+    [
+      "strings(step.locks)",
+      "`${name}: locks が不正`"
+    ],
+    [
+      "lock === 'slot' || (/^([\\w-]+):(shared|exclusive)$/.test(lock) && lock.split(':')[0]! in raw.locks.resources)",
+      "`未知の lock: ${lock}`"
+    ],
+    [
+      "object(step.on_approve) && [step.on_approve.command, step.on_approve.prompt].filter((x) => typeof x === 'string').length === 1",
+      "`${name}: on_approve は command/prompt のいずれか`"
+    ],
+    [
+      "object(raw.remote) && strings(raw.remote.authors) && ['timeline', 'review_requested', 'not_draft'].includes(String(raw.remote.done_when))",
+      "'remote 設定が不正'"
+    ],
+    [
+      "object(raw.remote.ng_action) && typeof raw.remote.ng_action.command === 'string' && typeof raw.remote.ng_action.set_stage === 'string' && (raw.remote.ng_action.choice === undefined || (typeof raw.remote.ng_action.choice === 'string' && ['copilot', 'self', 'stop'].includes(raw.remote.ng_action.choice)))",
+      "'remote.ng_action が不正'"
+    ],
+    [
+      "object(raw.remote) && object(raw.remote.ng_action) && ['copilot', 'self', 'stop'].includes(String(raw.remote.ng_action.choice))",
+      "'ng_action:auto は remote.ng_action.choice が必要です'"
+    ],
+    [
+      "Object.values(raw.steps).every( (s) => !(s as Step).workspace || (s as Step).workspace === 'none' || 'adopt_workspace' in (raw.gates as Record<string, unknown>) )",
+      "'workspace を使う場合は adopt_workspace gate を定義してください'"
+    ],
+    [
+      "new Set(stages).size === stages.length",
+      "'when_stage が重複しています'"
+    ],
+    [
+      "Object.values(raw.steps).filter((s) => (s as Step).when_pr_merged).length <= 1",
+      "'when_pr_merged は1つまで'"
+    ],
+    [
+      "Object.keys(raw.tracker.query).every((k) => ['assignee', 'state', 'label', 'search', 'milestone', 'author'].includes(k) )",
+      "'tracker.query に未対応の条件があります'"
+    ],
+    [
+      "Object.hasOwn(known, root!) && (rest.length === 0 || (rest.length === 1 && known[root!]!.includes(rest[0]!)))",
+      "`未定義の変数: ${m[1]}`"
+    ]
+  ],
+  "worktreeValidation": "def fail($m): error($m);\n    def strings: type == \"array\" and all(.[]; type == \"string\");\n    if type != \"object\" then fail(\"トップレベルはオブジェクトにしてください\") else . end\n    | if has(\"sync\") and (.sync | strings | not) then fail(\"sync は文字列の配列にしてください\") else . end\n    | if has(\"services\") and (.services | type != \"object\") then fail(\"services はオブジェクトにしてください\") else . end\n    | (.services // {} | to_entries[]\n        | if (.key | test(\"^[A-Za-z0-9_-]+$\") | not) then fail(\"サービス名は英数字・_・- にしてください: \\(.key)\")\n          elif (.value.port | type != \"number\") then fail(\"services.\\(.key).port は数値にしてください\")\n          elif (.value | has(\"cmd\")) and (.value.cmd | type != \"string\") then fail(\"services.\\(.key).cmd は文字列にしてください\")\n          else . end) as $_\n    | if (.services // {} | length > 0) and (.slot_step | type != \"number\") then fail(\"services があるときは slot_step (数値) が必要です\") else . end\n    | if has(\"env_files\") and (.env_files | type == \"array\" and all(.[]; (.file | type == \"string\") and (.key | type == \"string\") and (.value | type == \"string\")) | not)\n      then fail(\"env_files は { file, key, value } (すべて文字列) の配列にしてください\") else . end\n    | if has(\"serve\") and (.serve | type != \"string\") then fail(\"serve は文字列にしてください\") else . end\n    | if has(\"hooks\") and (.hooks | type != \"object\") then fail(\"hooks はオブジェクトにしてください\") else . end\n    | (.hooks // {} | to_entries[]\n        | if ([.key] | inside($hooks | split(\" \")) | not) then fail(\"未知のフックです: \\(.key) (\\($hooks))\")\n          elif (.value | strings | not) then fail(\"hooks.\\(.key) は文字列の配列にしてください\")\n          else . end) as $_\n    | true",
+  "hooks": [
+    "post_create",
+    "post_sync",
+    "pre_serve",
+    "pre_remove"
+  ],
+  "worktreeExample": {
+    "sync": [
+      ".env"
+    ],
+    "slot_step": 10,
+    "services": {
+      "web": {
+        "port": 3000
+      }
+    },
+    "env_files": [
+      {
+        "file": ".env",
+        "key": "PORT",
+        "value": "{web}"
+      }
+    ],
+    "hooks": {
+      "post_create": [
+        "pnpm install --frozen-lockfile"
+      ]
+    }
+  },
+  "workflowExample": {
+    "version": 1,
+    "timezone": "Asia/Tokyo",
+    "tracker": {
+      "kind": "github",
+      "query": {
+        "assignee": "@me",
+        "state": "open"
+      },
+      "exclude_labels": []
+    },
+    "stage_store": {
+      "kind": "dirs",
+      "initial": "未着手",
+      "rejected": "対象外",
+      "order": [
+        "対象外",
+        "保留",
+        "完了",
+        "検証済",
+        "検証NG",
+        "修正中",
+        "Issue更新済",
+        "再現済",
+        "未着手"
+      ],
+      "pattern": "^\\d+-(.+)_\\d+$",
+      "commands": {
+        "dir": "flow issue dir {issue}",
+        "ensure": "flow issue dir --create {issue}",
+        "set": "flow issue mark {issue} {stage}"
+      }
+    },
+    "workspace": {
+      "kind": "herdr",
+      "commands": {
+        "list": "flow wt list",
+        "create_for_branch": "flow wt create {branch}",
+        "create_from_base": "herdr worktree create --cwd {main} --branch {branch} --base {base} --no-focus",
+        "assign_slot": "flow wt ports {path} --slot {slot}",
+        "sync": "flow wt sync {path}",
+        "remove": "flow wt remove {workspace}"
+      }
+    },
+    "runner": {
+      "kind": "herdr",
+      "close_on_complete": true
+    },
+    "notifier": {
+      "kind": "command",
+      "command": "herdr notification show {title} --body {body} --sound {sound}"
+    },
+    "concurrency": {
+      "global": 3,
+      "per_step": {
+        "repro": 1,
+        "refine": 1,
+        "verify": 1,
+        "finish": 1
+      }
+    },
+    "locks": {
+      "slots": [
+        1,
+        2,
+        3
+      ],
+      "resources": {}
+    },
+    "retry": {
+      "max_attempts": 3,
+      "backoff_ms": [
+        60000,
+        120000,
+        240000
+      ]
+    },
+    "stall_ms": 1200000,
+    "gates": {
+      "start": "manual",
+      "repro_result": "manual",
+      "issue_push": "manual",
+      "assign": "manual",
+      "verify_start": "auto",
+      "ng_action": "manual",
+      "finish_start": "auto",
+      "pr_body": "manual",
+      "cleanup": "auto",
+      "adopt_workspace": "auto",
+      "base_changed": "manual"
+    },
+    "base": {
+      "resolve": "printf '%s\\n' '未設定: base.resolve' >&2; exit 1"
+    },
+    "vars": {
+      "main": "/REPLACE_WITH_ABSOLUTE_PROJECT_PATH",
+      "owner": "REPLACE_WITH_GITHUB_OWNER",
+      "repo": "REPLACE_WITH_GITHUB_REPOSITORY"
+    },
+    "remote": {
+      "authors": [
+        "Copilot",
+        "copilot-swe-agent"
+      ],
+      "done_when": "review_requested",
+      "ng_action": {
+        "command": "gh pr comment {pr.number} --body-file {issue_dir}/ng-comment.md",
+        "set_stage": "修正中"
+      }
+    },
+    "steps": {
+      "repro": {
+        "when_stage": "未着手",
+        "gate_before": "start",
+        "workspace": {
+          "from_base": "origin/{base}",
+          "branch": "flow/repro-{issue}"
+        },
+        "agent": {
+          "kind": "claude",
+          "name": "flow-repro-{issue}"
+        },
+        "done_when": {
+          "files": [
+            "repro.md",
+            "scripts/repro.sh",
+            "evidence/before/checks.tsv"
+          ]
+        },
+        "gate_after": "repro_result",
+        "on_ok": {
+          "set_stage": "再現済"
+        },
+        "on_ng": {
+          "stop": true,
+          "notify": "action"
+        }
+      },
+      "refine": {
+        "when_stage": "再現済",
+        "workspace": "none",
+        "agent": {
+          "kind": "claude",
+          "name": "flow-refine-{issue}"
+        },
+        "done_when": {
+          "files": [
+            "issue.md"
+          ]
+        },
+        "gate_after": "issue_push",
+        "on_approve": {
+          "command": "flow issue push {issue}"
+        },
+        "on_ok": {
+          "remove_workspaces": [
+            "flow/repro-{issue}"
+          ]
+        }
+      },
+      "implement": {
+        "when_stage": "Issue更新済",
+        "gate_before": "assign",
+        "remote": {
+          "kind": "copilot",
+          "transport": "rest",
+          "login": "copilot-swe-agent[bot]",
+          "assign": "gh api --method POST /repos/{owner}/{repo}/issues/{issue}/assignees --input {assign_body}",
+          "agent_assignment": {
+            "target_repo": "{owner}/{repo}",
+            "base_branch": "{base}"
+          }
+        },
+        "on_done": {
+          "set_stage": "修正中"
+        }
+      },
+      "verify": {
+        "when_stage": "修正中",
+        "gate_before": "verify_start",
+        "workspace": {
+          "pr": true
+        },
+        "agent": {
+          "kind": "claude",
+          "name": "flow-verify-{issue}"
+        },
+        "done_when": {
+          "files": [
+            "evidence/after/checks.tsv"
+          ],
+          "stage_in": [
+            "検証済",
+            "検証NG"
+          ]
+        },
+        "on_ng": {
+          "gate": "ng_action"
+        }
+      },
+      "finish": {
+        "when_stage": "検証済",
+        "gate_before": "finish_start",
+        "skippable": true,
+        "workspace": {
+          "pr": true
+        },
+        "agent": {
+          "kind": "claude",
+          "name": "flow-finish-{issue}"
+        },
+        "done_when": {
+          "files": [
+            "pr-body.md"
+          ]
+        },
+        "gate_after": "pr_body",
+        "on_approve": {
+          "prompt": "pr_body が承認されました。flow-finish スキルの「B. 承認の後に更新する」を実行し、{flow_dir}/result-finish-{attempt}.json を書き直してください。"
+        }
+      },
+      "cleanup": {
+        "when_pr_merged": true,
+        "gate_before": "cleanup",
+        "action": {
+          "remove_workspaces": true,
+          "command": "flow issue status --update"
+        }
+      }
+    }
+  },
+  "statuses": [
+    "idle",
+    "running",
+    "waiting_gate",
+    "waiting_remote",
+    "retry_wait",
+    "failed",
+    "stopped",
+    "done"
+  ]
+}

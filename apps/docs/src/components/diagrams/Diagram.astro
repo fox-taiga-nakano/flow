@@ -1,0 +1,125 @@
+---
+import DiagramCanvas from './DiagramCanvas'
+import allDiagrams from '../../generated/diagrams.json'
+import type { LaidOutDiagram } from '../../diagrams/model'
+
+interface Props { name: keyof typeof allDiagrams }
+const { name } = Astro.props
+const diagram = allDiagrams[name] as LaidOutDiagram
+const byId = new Map(diagram.nodes.map((node) => [node.id, node]))
+const byLabel = Map.groupBy(diagram.nodes, ({ label }) => label)
+const labels = new Map(diagram.nodes.map(({ id, label, parent }) => {
+    const owner = parent ? byId.get(parent) : undefined
+    const qualified = owner && (byLabel.get(label)?.length ?? 0) > 1
+    return [id, qualified ? `${label}（${owner.label.split('（')[0]}）` : label]
+}))
+const connections = Map.groupBy(diagram.edges, ({ from }) => from)
+const responsive = diagram.presentation !== 'sequence'
+---
+
+<flow-diagram-view class="not-content">
+<figure
+    class:list={['flow-diagram', {
+        'flow-diagram--sequence': diagram.presentation === 'sequence',
+        'flow-diagram--architecture': diagram.presentation === 'architecture',
+        'flow-diagram--plain': name === 'workflow' || name === 'workflowDetail',
+    }]}
+    aria-label={diagram.title}
+    data-responsive={responsive ? '' : undefined}
+>
+    <figcaption>
+        <div><strong>{diagram.title}</strong><span>{diagram.description}</span></div>
+        {diagram.presentation === 'architecture' && (
+            <ul class="architecture-legend" aria-label="凡例">
+                <li class="diagram-tone--human">人</li>
+                <li class="diagram-tone--claude">Claude Code</li>
+                <li class="diagram-tone--remote">ほかの AI</li>
+                <li>ツール・外部サービス</li>
+            </ul>
+        )}
+    </figcaption>
+    {responsive && (
+        <div class="diagram-modes" role="group" aria-label="表示形式" hidden>
+            <button type="button" data-mode="outline" aria-pressed="false">関係一覧</button>
+            <button type="button" data-mode="canvas" aria-pressed="false">図を操作</button>
+        </div>
+    )}
+    <noscript><style is:inline>.flow-diagram .diagram-interactive { display: none; }</style></noscript>
+    <DiagramCanvas diagram={diagram} client:visible={{ rootMargin: '150px' }} />
+    <details class="diagram-alternative">
+        <summary>図のテキスト版</summary>
+        <div class="diagram-outline">
+            <ul class="diagram-connections">
+                {[...connections].map(([from, edges]) => (
+                    <li>
+                        <strong>{labels.get(from)}</strong>
+                        <ul>
+                            {edges.map(({ to, label }) => (
+                                <li><span aria-hidden="true">→ </span>{labels.get(to)}{label && <span class="diagram-connection-label">{label}</span>}</li>
+                            ))}
+                        </ul>
+                    </li>
+                ))}
+            </ul>
+            <details class="diagram-node-details">
+                <summary>各要素の説明</summary>
+                <dl>
+                    {diagram.nodes.map((node) => (
+                        <>
+                            <dt>{node.label}{node.parent && `（${labels.get(node.parent)} 内）`}</dt>
+                            <dd>{node.detail}{node.badges?.map(({ phase, label, gate }) => ` ${phase} ${label}${gate ? `（${gate}）` : ''}。`)}{node.href && <> <a href={node.href}>関連ドキュメント</a></>}</dd>
+                        </>
+                    ))}
+                </dl>
+            </details>
+        </div>
+    </details>
+</figure>
+</flow-diagram-view>
+
+<script>
+    class FlowDiagramView extends HTMLElement {
+        private lifecycle?: AbortController
+
+        connectedCallback() {
+            const figure = this.querySelector<HTMLElement>('figure[data-responsive]')
+            const controls = this.querySelector<HTMLElement>('.diagram-modes')
+            const outline = this.querySelector<HTMLDetailsElement>('.diagram-alternative')
+            if (!figure || !controls || !outline) { return }
+
+            this.lifecycle = new AbortController()
+            const { signal } = this.lifecycle
+            const width = window.matchMedia('(max-width: 42rem)')
+            const buttons = Array.from(controls.querySelectorAll<HTMLButtonElement>('button[data-mode]'))
+            const show = (view: string) => {
+                figure.dataset.view = view
+                outline.open = view === 'outline'
+                for (const button of buttons) {
+                    button.setAttribute('aria-pressed', String(button.dataset.mode === view))
+                }
+            }
+            const reset = () => {
+                controls.hidden = !width.matches
+                if (width.matches) {
+                    show('outline')
+                } else {
+                    delete figure.dataset.view
+                    outline.open = false
+                }
+            }
+            for (const button of buttons) {
+                button.addEventListener('click', () => show(button.dataset.mode ?? 'outline'), { signal })
+            }
+            width.addEventListener('change', reset, { signal })
+            reset()
+        }
+
+        disconnectedCallback() {
+            this.lifecycle?.abort()
+        }
+    }
+
+    if (!customElements.get('flow-diagram-view')) {
+        customElements.define('flow-diagram-view', FlowDiagramView)
+    }
+</script>

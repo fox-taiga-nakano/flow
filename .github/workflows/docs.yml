@@ -1,0 +1,32 @@
+name: Documentation
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Report documentation impact
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/docs/impact.mjs "$BASE_SHA"
+      - name: Check reference coverage, settings, diagrams and CLI snapshots
+        run: pnpm docs:check
+      - name: Build Astro and validate internal links
+        run: pnpm docs:build
+      - run: pnpm typecheck
+      - run: pnpm exec tsc --noEmit --project apps/docs/tsconfig.json
+      - run: pnpm test

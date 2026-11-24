@@ -1,0 +1,1087 @@
+[
+  {
+    "id": "flow",
+    "name": "flow",
+    "aliases": [],
+    "summary": "Issue の各段階を進めるオーケストレーター",
+    "syntax": "flow [options] [command]",
+    "args": [],
+    "options": [
+      {
+        "id": "--project",
+        "flags": "--project <path>",
+        "description": "対象プロジェクト（既定: カレントディレクトリ）",
+        "kind": "value",
+        "required": false,
+        "conflicts": []
+      },
+      {
+        "id": "--json",
+        "flags": "--json",
+        "description": "状態を JSON で表示（コマンド省略時は status）",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow [オプション] [コマンド]\n\nIssue の各段階を進めるオーケストレーター\n\nオプション:\n  --project <path>                     対象プロジェクト（既定: カレントディレクトリ）\n  --json                               状態を JSON で表示（コマンド省略時は status）\n  -h, --help                           ヘルプを表示\n\nコマンド一覧:\n  tick [オプション]                    tick を1回実行\n  run [オプション]                     tick を定期実行（Ctrl+C で終了）\n  status [オプション] [issue]          状態・承認待ちを表示\n  approve [オプション] <issue> [gate]  gate を承認\n  reject [オプション] <issue> [gate]   対象外にして停止（gate 省略可）\n  retry <issue>                        試行回数を戻して再開\n  stop [オプション] <issue>            所有するエージェントを停止\n  answer <issue> <text>                agent の質問に回答\n  open <issue>                         Issue のタブを表示\n  watch [オプション]                   本番ログの承認待ち・エラーを待って JSON で表示\n  issue                                Issue のディレクトリと段階を扱う（WORKFLOW.md から呼ぶ）\n  wt                                   herdr の worktree を扱う（WORKFLOW.md から呼ぶ）\n  lock                                 資源ロックを取得・解放・表示\n  logs [オプション] [issue]            イベントログを表示\n  init                                 テンプレートから WORKFLOW.md・worktree の設定・スキルを作る\n  validate                             WORKFLOW.md の設定を検証\n  help [コマンド]                      コマンドの使い方を表示\n"
+  },
+  {
+    "id": "tick",
+    "name": "flow tick",
+    "aliases": [],
+    "summary": "tick を1回実行",
+    "syntax": "flow tick [options]",
+    "args": [],
+    "options": [
+      {
+        "id": "--dry-run",
+        "flags": "--dry-run",
+        "description": "変更せず実行予定を表示",
+        "kind": "flag",
+        "required": false,
+        "default": false,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow tick [オプション]\n\ntick を1回実行\n\nオプション:\n  --dry-run   変更せず実行予定を表示（既定: 無効）\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "run",
+    "name": "flow run",
+    "aliases": [],
+    "summary": "tick を定期実行（Ctrl+C で終了）",
+    "syntax": "flow run [options]",
+    "args": [],
+    "options": [
+      {
+        "id": "--interval",
+        "flags": "--interval <秒>",
+        "description": "tick の実行間隔",
+        "kind": "value",
+        "required": false,
+        "default": 60,
+        "conflicts": []
+      },
+      {
+        "id": "--dry-run",
+        "flags": "--dry-run",
+        "description": "変更せず実行予定を表示",
+        "kind": "flag",
+        "required": false,
+        "default": false,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow run [オプション]\n\ntick を定期実行（Ctrl+C で終了）\n\nオプション:\n  --interval <秒>  tick の実行間隔（既定: 60）\n  --dry-run        変更せず実行予定を表示（既定: 無効）\n  -h, --help       ヘルプを表示\n"
+  },
+  {
+    "id": "status",
+    "name": "flow status",
+    "aliases": [],
+    "summary": "状態・承認待ちを表示",
+    "syntax": "flow status [options] [issue]",
+    "args": [
+      {
+        "name": "issue",
+        "description": "正の Issue 番号（省略で一覧）",
+        "required": false,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--json",
+        "flags": "--json",
+        "description": "JSON で表示",
+        "kind": "flag",
+        "required": false,
+        "default": false,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow status [オプション] [issue]\n\n状態・承認待ちを表示\n\n引数:\n  issue       正の Issue 番号（省略で一覧）\n\nオプション:\n  --json      JSON で表示（既定: 無効）\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "approve",
+    "name": "flow approve",
+    "aliases": [],
+    "summary": "gate を承認",
+    "syntax": "flow approve [options] <issue> [gate]",
+    "args": [
+      {
+        "name": "issue",
+        "description": "正の Issue 番号",
+        "required": true,
+        "variadic": false
+      },
+      {
+        "name": "gate",
+        "description": "現在の gate（省略可）",
+        "required": false,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--choice",
+        "flags": "--choice <選択>",
+        "description": "ng_action / base_changed / 復旧 / 開始 gate の skip / cleanup の keep の選択",
+        "kind": "value",
+        "required": false,
+        "choices": [
+          "copilot",
+          "self",
+          "stop",
+          "keep",
+          "retarget",
+          "applied",
+          "retry",
+          "skip"
+        ],
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow approve [オプション] <issue> [gate]\n\ngate を承認\n\n引数:\n  issue            正の Issue 番号\n  gate             現在の gate（省略可）\n\nオプション:\n  --choice <選択>  ng_action / base_changed / 復旧 / 開始 gate の skip / cleanup の keep\n                   の選択（選択肢: copilot|self|stop|keep|retarget|applied|retry|skip）\n  -h, --help       ヘルプを表示\n"
+  },
+  {
+    "id": "reject",
+    "name": "flow reject",
+    "aliases": [],
+    "summary": "対象外にして停止（gate 省略可）",
+    "syntax": "flow reject [options] <issue> [gate]",
+    "args": [
+      {
+        "name": "issue",
+        "description": "正の Issue 番号",
+        "required": true,
+        "variadic": false
+      },
+      {
+        "name": "gate",
+        "description": "現在の gate（省略可）",
+        "required": false,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--reason",
+        "flags": "--reason <理由>",
+        "description": "履歴に残す却下理由",
+        "kind": "value",
+        "required": false,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow reject [オプション] <issue> [gate]\n\n対象外にして停止（gate 省略可）\n\n引数:\n  issue            正の Issue 番号\n  gate             現在の gate（省略可）\n\nオプション:\n  --reason <理由>  履歴に残す却下理由\n  -h, --help       ヘルプを表示\n"
+  },
+  {
+    "id": "retry",
+    "name": "flow retry",
+    "aliases": [],
+    "summary": "試行回数を戻して再開",
+    "syntax": "flow retry [options] <issue>",
+    "args": [
+      {
+        "name": "issue",
+        "description": "正の Issue 番号",
+        "required": true,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow retry [オプション] <issue>\n\n試行回数を戻して再開\n\n引数:\n  issue       正の Issue 番号\n\nオプション:\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "stop",
+    "name": "flow stop",
+    "aliases": [],
+    "summary": "所有するエージェントを停止",
+    "syntax": "flow stop [options] <issue>",
+    "args": [
+      {
+        "name": "issue",
+        "description": "正の Issue 番号",
+        "required": true,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--reason",
+        "flags": "--reason <理由>",
+        "description": "停止の理由",
+        "kind": "value",
+        "required": false,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow stop [オプション] <issue>\n\n所有するエージェントを停止\n\n引数:\n  issue            正の Issue 番号\n\nオプション:\n  --reason <理由>  停止の理由\n  -h, --help       ヘルプを表示\n"
+  },
+  {
+    "id": "answer",
+    "name": "flow answer",
+    "aliases": [],
+    "summary": "agent の質問に回答",
+    "syntax": "flow answer [options] <issue> <text>",
+    "args": [
+      {
+        "name": "issue",
+        "description": "正の Issue 番号",
+        "required": true,
+        "variadic": false
+      },
+      {
+        "name": "text",
+        "description": "質問への回答",
+        "required": true,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow answer [オプション] <issue> <text>\n\nagent の質問に回答\n\n引数:\n  issue       正の Issue 番号\n  text        質問への回答\n\nオプション:\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "open",
+    "name": "flow open",
+    "aliases": [],
+    "summary": "Issue のタブを表示",
+    "syntax": "flow open [options] <issue>",
+    "args": [
+      {
+        "name": "issue",
+        "description": "正の Issue 番号",
+        "required": true,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow open [オプション] <issue>\n\nIssue のタブを表示\n\n引数:\n  issue       正の Issue 番号\n\nオプション:\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "watch",
+    "name": "flow watch",
+    "aliases": [],
+    "summary": "本番ログの承認待ち・エラーを待って JSON で表示",
+    "syntax": "flow watch [options]",
+    "args": [],
+    "options": [
+      {
+        "id": "--prime",
+        "flags": "--prime",
+        "description": "既存のログを読まず、今の末尾から監視を始める",
+        "kind": "flag",
+        "required": false,
+        "default": false,
+        "conflicts": []
+      },
+      {
+        "id": "--timeout",
+        "flags": "--timeout <秒>",
+        "description": "イベントが無いときに待つ上限",
+        "kind": "value",
+        "required": false,
+        "default": 600,
+        "conflicts": []
+      },
+      {
+        "id": "--interval",
+        "flags": "--interval <秒>",
+        "description": "ログを読み直す間隔",
+        "kind": "value",
+        "required": false,
+        "default": 1,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow watch [オプション]\n\n本番ログの承認待ち・エラーを待って JSON で表示\n\nオプション:\n  --prime          既存のログを読まず、今の末尾から監視を始める（既定: 無効）\n  --timeout <秒>   イベントが無いときに待つ上限（既定: 600）\n  --interval <秒>  ログを読み直す間隔（既定: 1）\n  -h, --help       ヘルプを表示\n"
+  },
+  {
+    "id": "issue",
+    "name": "flow issue",
+    "aliases": [],
+    "summary": "Issue のディレクトリと段階を扱う（WORKFLOW.md から呼ぶ）",
+    "syntax": "flow issue [options] [command]",
+    "args": [],
+    "options": [
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow issue [オプション] [コマンド]\n\nIssue のディレクトリと段階を扱う（WORKFLOW.md から呼ぶ）\n\nオプション:\n  -h, --help                  ヘルプを表示\n\nコマンド一覧:\n  dir [オプション] <number>   Issue\n                              のディレクトリ（<ISSUE_DIR>/<並び順>-<状態>_<番号>）の絶対パスを表示\n  mark <number> <status>      Issue の状態を変える（ディレクトリ名を <並び順>-<状態>_<番号>\n                              に変える）\n  push [オプション] <number>  <Issue のディレクトリ>/issue.md で Issue 本文を更新し、GitHub\n                              の本文と一致するか確かめる\n  status [オプション]         全 Issue の状態と GitHub の PR・Issue の状態を一覧表示\n  help [コマンド]             コマンドの使い方を表示\n"
+  },
+  {
+    "id": "issue/dir",
+    "name": "flow issue dir",
+    "aliases": [],
+    "summary": "Issue のディレクトリ（<ISSUE_DIR>/<並び順>-<状態>_<番号>）の絶対パスを表示",
+    "syntax": "flow issue dir [options] <number>",
+    "args": [
+      {
+        "name": "number",
+        "description": "GitHub の Issue 番号",
+        "required": true,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--create",
+        "flags": "--create",
+        "description": "無ければ「未着手」で作る",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow issue dir [オプション] <number>\n\nIssue のディレクトリ（<ISSUE_DIR>/<並び順>-<状態>_<番号>）の絶対パスを表示\n\n引数:\n  number      GitHub の Issue 番号\n\nオプション:\n  --create    無ければ「未着手」で作る\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "issue/mark",
+    "name": "flow issue mark",
+    "aliases": [],
+    "summary": "Issue の状態を変える（ディレクトリ名を <並び順>-<状態>_<番号> に変える）",
+    "syntax": "flow issue mark [options] <number> <status>",
+    "args": [
+      {
+        "name": "number",
+        "description": "GitHub の Issue 番号",
+        "required": true,
+        "variadic": false
+      },
+      {
+        "name": "status",
+        "description": "新しい状態（ISSUE_STATUSES の名前）",
+        "required": true,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow issue mark [オプション] <number> <status>\n\nIssue の状態を変える（ディレクトリ名を <並び順>-<状態>_<番号> に変える）\n\n引数:\n  number      GitHub の Issue 番号\n  status      新しい状態（ISSUE_STATUSES の名前）\n\nオプション:\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "issue/push",
+    "name": "flow issue push",
+    "aliases": [],
+    "summary": "<Issue のディレクトリ>/issue.md で Issue 本文を更新し、GitHub の本文と一致するか確かめる",
+    "syntax": "flow issue push [options] <number>",
+    "args": [
+      {
+        "name": "number",
+        "description": "GitHub の Issue 番号",
+        "required": true,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--diff",
+        "flags": "--diff",
+        "description": "更新せず、GitHub の現在の本文と下書きの差分だけを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow issue push [オプション] <number>\n\n<Issue のディレクトリ>/issue.md で Issue 本文を更新し、GitHub の本文と一致するか確かめる\n\n引数:\n  number      GitHub の Issue 番号\n\nオプション:\n  --diff      更新せず、GitHub の現在の本文と下書きの差分だけを表示\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "issue/status",
+    "name": "flow issue status",
+    "aliases": [],
+    "summary": "全 Issue の状態と GitHub の PR・Issue の状態を一覧表示",
+    "syntax": "flow issue status [options]",
+    "args": [],
+    "options": [
+      {
+        "id": "--update",
+        "flags": "--update",
+        "description": "PR が open なら「修正中」、Issue が close 済みなら「完了」に付け替える",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow issue status [オプション]\n\n全 Issue の状態と GitHub の PR・Issue の状態を一覧表示\n\nオプション:\n  --update    PR が open なら「修正中」、Issue が close 済みなら「完了」に付け替える\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "issue/help",
+    "name": "flow issue help",
+    "aliases": [],
+    "summary": "コマンドの使い方を表示",
+    "syntax": "flow issue help [command]",
+    "args": [
+      {
+        "name": "command",
+        "required": false,
+        "description": "表示対象のサブコマンド"
+      }
+    ],
+    "options": []
+  },
+  {
+    "id": "wt",
+    "name": "flow wt",
+    "aliases": [],
+    "summary": "herdr の worktree を扱う（WORKFLOW.md から呼ぶ）",
+    "syntax": "flow wt [options] [command]",
+    "args": [],
+    "options": [
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow wt [オプション] [コマンド]\n\nherdr の worktree を扱う（WORKFLOW.md から呼ぶ）\n\nオプション:\n  -h, --help                       ヘルプを表示\n\nコマンド一覧:\n  create [オプション] <branch>     ブランチを herdr worktree に展開し、.herdr/worktree.json\n                                   に従ってコピー・ポート割り当て・フックまで行う\n  list                             worktree と herdr workspace の対応を slot\n                                   と合わせて表示（workspace・slot・branch・path のタブ区切り）\n  ports [オプション] [path]        worktree に dev ポートの slot を割り当て、.herdr/worktree.json の\n                                   env_files に反映\n  sync [オプション] [path]         メインから .herdr/worktree.json の sync のファイルを worktree\n                                   にコピーし、ポートとフックを反映\n  remove [オプション] <workspace>  worktree を削除（.herdr/worktree.json の pre_remove\n                                   フックがあれば先に実行）\n  stop [path]                      チェックアウトの dev タブで動いている dev\n                                   サーバーを停止し、ポートが閉じるまで待つ\n  agent <name>                     カレントの worktree の agent タブ（flow の agent と同じタブ）で\n                                   claude を起動\n  hook <name> [path]               .herdr/worktree.json のフックをチェックアウトのルートで実行\n  help [コマンド]                  コマンドの使い方を表示\n"
+  },
+  {
+    "id": "wt/create",
+    "name": "flow wt create",
+    "aliases": [],
+    "summary": "ブランチを herdr worktree に展開し、.herdr/worktree.json に従ってコピー・ポート割り当て・フックまで行う",
+    "syntax": "flow wt create [options] <branch>",
+    "args": [
+      {
+        "name": "branch",
+        "description": "対象ブランチ（リモートのみでも可）",
+        "required": true,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--no-hooks",
+        "flags": "--no-hooks",
+        "description": "フック（post_sync / post_create）を実行しない",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow wt create [オプション] <branch>\n\nブランチを herdr worktree に展開し、.herdr/worktree.json\nに従ってコピー・ポート割り当て・フックまで行う\n\n引数:\n  branch      対象ブランチ（リモートのみでも可）\n\nオプション:\n  --no-hooks  フック（post_sync / post_create）を実行しない\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "wt/list",
+    "name": "flow wt list",
+    "aliases": [],
+    "summary": "worktree と herdr workspace の対応を slot と合わせて表示（workspace・slot・branch・path のタブ区切り）",
+    "syntax": "flow wt list [options]",
+    "args": [],
+    "options": [
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow wt list [オプション]\n\nworktree と herdr workspace の対応を slot と合わせて表示（workspace・slot・branch・path\nのタブ区切り）\n\nオプション:\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "wt/ports",
+    "name": "flow wt ports",
+    "aliases": [],
+    "summary": "worktree に dev ポートの slot を割り当て、.herdr/worktree.json の env_files に反映",
+    "syntax": "flow wt ports [options] [path]",
+    "args": [
+      {
+        "name": "path",
+        "description": "対象 worktree（省略時はカレント）",
+        "required": false,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--slot",
+        "flags": "--slot <n>",
+        "description": "slot（1〜9）。省略時は割り当て済み、無ければ空いている最小の slot",
+        "kind": "value",
+        "required": false,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow wt ports [オプション] [path]\n\nworktree に dev ポートの slot を割り当て、.herdr/worktree.json の env_files に反映\n\n引数:\n  path        対象 worktree（省略時はカレント）\n\nオプション:\n  --slot <n>  slot（1〜9）。省略時は割り当て済み、無ければ空いている最小の slot\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "wt/sync",
+    "name": "flow wt sync",
+    "aliases": [],
+    "summary": "メインから .herdr/worktree.json の sync のファイルを worktree にコピーし、ポートとフックを反映",
+    "syntax": "flow wt sync [options] [path]",
+    "args": [
+      {
+        "name": "path",
+        "description": "コピー先 worktree（省略時はカレント）",
+        "required": false,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--no-hooks",
+        "flags": "--no-hooks",
+        "description": "post_sync フックを実行しない",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow wt sync [オプション] [path]\n\nメインから .herdr/worktree.json の sync のファイルを worktree にコピーし、ポートとフックを反映\n\n引数:\n  path        コピー先 worktree（省略時はカレント）\n\nオプション:\n  --no-hooks  post_sync フックを実行しない\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "wt/remove",
+    "name": "flow wt remove",
+    "aliases": [],
+    "summary": "worktree を削除（.herdr/worktree.json の pre_remove フックがあれば先に実行）",
+    "syntax": "flow wt remove [options] <workspace>",
+    "args": [
+      {
+        "name": "workspace",
+        "description": "herdr の workspace ID（flow wt list で確認）",
+        "required": true,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--force",
+        "flags": "--force",
+        "description": "未コミットの変更があっても削除する",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      },
+      {
+        "id": "--no-hooks",
+        "flags": "--no-hooks",
+        "description": "pre_remove フックを実行しない",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      },
+      {
+        "id": "--yes",
+        "flags": "--yes",
+        "description": "互換のため受け付ける（確認はしない）",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow wt remove [オプション] <workspace>\n\nworktree を削除（.herdr/worktree.json の pre_remove フックがあれば先に実行）\n\n引数:\n  workspace   herdr の workspace ID（flow wt list で確認）\n\nオプション:\n  --force     未コミットの変更があっても削除する\n  --no-hooks  pre_remove フックを実行しない\n  --yes       互換のため受け付ける（確認はしない）\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "wt/stop",
+    "name": "flow wt stop",
+    "aliases": [],
+    "summary": "チェックアウトの dev タブで動いている dev サーバーを停止し、ポートが閉じるまで待つ",
+    "syntax": "flow wt stop [options] [path]",
+    "args": [
+      {
+        "name": "path",
+        "description": "対象のチェックアウト（省略時はカレント）",
+        "required": false,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow wt stop [オプション] [path]\n\nチェックアウトの dev タブで動いている dev サーバーを停止し、ポートが閉じるまで待つ\n\n引数:\n  path        対象のチェックアウト（省略時はカレント）\n\nオプション:\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "wt/agent",
+    "name": "flow wt agent",
+    "aliases": [],
+    "summary": "カレントの worktree の agent タブ（flow の agent と同じタブ）で claude を起動",
+    "syntax": "flow wt agent [options] <name>",
+    "args": [
+      {
+        "name": "name",
+        "description": "herdr のエージェント名（例: verify-123）",
+        "required": true,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow wt agent [オプション] <name>\n\nカレントの worktree の agent タブ（flow の agent と同じタブ）で claude を起動\n\n引数:\n  name        herdr のエージェント名（例: verify-123）\n\nオプション:\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "wt/hook",
+    "name": "flow wt hook",
+    "aliases": [],
+    "summary": ".herdr/worktree.json のフックをチェックアウトのルートで実行",
+    "syntax": "flow wt hook [options] <name> [path]",
+    "args": [
+      {
+        "name": "name",
+        "description": "フック名（post_create / post_sync / pre_serve / pre_remove）",
+        "required": true,
+        "variadic": false
+      },
+      {
+        "name": "path",
+        "description": "対象のチェックアウト（省略時はカレント）",
+        "required": false,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow wt hook [オプション] <name> [path]\n\n.herdr/worktree.json のフックをチェックアウトのルートで実行\n\n引数:\n  name        フック名（post_create / post_sync / pre_serve / pre_remove）\n  path        対象のチェックアウト（省略時はカレント）\n\nオプション:\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "wt/help",
+    "name": "flow wt help",
+    "aliases": [],
+    "summary": "コマンドの使い方を表示",
+    "syntax": "flow wt help [command]",
+    "args": [
+      {
+        "name": "command",
+        "required": false,
+        "description": "表示対象のサブコマンド"
+      }
+    ],
+    "options": []
+  },
+  {
+    "id": "lock",
+    "name": "flow lock",
+    "aliases": [],
+    "summary": "資源ロックを取得・解放・表示",
+    "syntax": "flow lock [options] [command]",
+    "args": [],
+    "options": [
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow lock [オプション] [コマンド]\n\n資源ロックを取得・解放・表示\n\nオプション:\n  -h, --help                       ヘルプを表示\n\nコマンド一覧:\n  acquire [オプション] <resource>  資源ロックを取得\n  release [オプション] <resource>  資源ロックを解放\n  list                             ロックの一覧を表示\n  help [コマンド]                  コマンドの使い方を表示\n"
+  },
+  {
+    "id": "lock/acquire",
+    "name": "flow lock acquire",
+    "aliases": [],
+    "summary": "資源ロックを取得",
+    "syntax": "flow lock acquire [options] <resource>",
+    "args": [
+      {
+        "name": "resource",
+        "description": "db:shared / db:exclusive など",
+        "required": true,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--issue",
+        "flags": "--issue <番号>",
+        "description": "ロックを持つ Issue 番号",
+        "kind": "value",
+        "required": true,
+        "conflicts": []
+      },
+      {
+        "id": "--wait",
+        "flags": "--wait",
+        "description": "取得できるまで待つ",
+        "kind": "flag",
+        "required": false,
+        "default": false,
+        "conflicts": []
+      },
+      {
+        "id": "--timeout",
+        "flags": "--timeout <ms>",
+        "description": "待つ上限ミリ秒（0は無制限）",
+        "kind": "value",
+        "required": false,
+        "default": 0,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow lock acquire [オプション] <resource>\n\n資源ロックを取得\n\n引数:\n  resource        db:shared / db:exclusive など\n\nオプション:\n  --issue <番号>  ロックを持つ Issue 番号\n  --wait          取得できるまで待つ（既定: 無効）\n  --timeout <ms>  待つ上限ミリ秒（0は無制限）（既定: 0）\n  -h, --help      ヘルプを表示\n"
+  },
+  {
+    "id": "lock/release",
+    "name": "flow lock release",
+    "aliases": [],
+    "summary": "資源ロックを解放",
+    "syntax": "flow lock release [options] <resource>",
+    "args": [
+      {
+        "name": "resource",
+        "description": "解放する資源名",
+        "required": true,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--issue",
+        "flags": "--issue <番号>",
+        "description": "ロックを持つ Issue 番号",
+        "kind": "value",
+        "required": true,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow lock release [オプション] <resource>\n\n資源ロックを解放\n\n引数:\n  resource        解放する資源名\n\nオプション:\n  --issue <番号>  ロックを持つ Issue 番号\n  -h, --help      ヘルプを表示\n"
+  },
+  {
+    "id": "lock/list",
+    "name": "flow lock list",
+    "aliases": [],
+    "summary": "ロックの一覧を表示",
+    "syntax": "flow lock list [options]",
+    "args": [],
+    "options": [
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow lock list [オプション]\n\nロックの一覧を表示\n\nオプション:\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "lock/help",
+    "name": "flow lock help",
+    "aliases": [],
+    "summary": "コマンドの使い方を表示",
+    "syntax": "flow lock help [command]",
+    "args": [
+      {
+        "name": "command",
+        "required": false,
+        "description": "表示対象のサブコマンド"
+      }
+    ],
+    "options": []
+  },
+  {
+    "id": "logs",
+    "name": "flow logs",
+    "aliases": [],
+    "summary": "イベントログを表示",
+    "syntax": "flow logs [options] [issue]",
+    "args": [
+      {
+        "name": "issue",
+        "description": "正の Issue 番号（省略で全体）",
+        "required": false,
+        "variadic": false
+      }
+    ],
+    "options": [
+      {
+        "id": "--follow",
+        "flags": "-f, --follow",
+        "description": "ログを追跡",
+        "kind": "flag",
+        "required": false,
+        "default": false,
+        "conflicts": []
+      },
+      {
+        "id": "--date",
+        "flags": "--date <YYYY-MM-DD>",
+        "description": "日本時間の指定日",
+        "kind": "value",
+        "required": false,
+        "conflicts": [
+          "days"
+        ]
+      },
+      {
+        "id": "--days",
+        "flags": "--days <N>",
+        "description": "今日を含む過去N日",
+        "kind": "value",
+        "required": false,
+        "default": 1,
+        "conflicts": []
+      },
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow logs [オプション] [issue]\n\nイベントログを表示\n\n引数:\n  issue                正の Issue 番号（省略で全体）\n\nオプション:\n  -f, --follow         ログを追跡（既定: 無効）\n  --date <YYYY-MM-DD>  日本時間の指定日\n  --days <N>           今日を含む過去N日（既定: 1）\n  -h, --help           ヘルプを表示\n"
+  },
+  {
+    "id": "init",
+    "name": "flow init",
+    "aliases": [],
+    "summary": "テンプレートから WORKFLOW.md・worktree の設定・スキルを作る",
+    "syntax": "flow init [options]",
+    "args": [],
+    "options": [
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow init [オプション]\n\nテンプレートから WORKFLOW.md・worktree の設定・スキルを作る\n\nオプション:\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "validate",
+    "name": "flow validate",
+    "aliases": [],
+    "summary": "WORKFLOW.md の設定を検証",
+    "syntax": "flow validate [options]",
+    "args": [],
+    "options": [
+      {
+        "id": "--help",
+        "flags": "-h, --help",
+        "description": "ヘルプを表示",
+        "kind": "flag",
+        "required": false,
+        "conflicts": []
+      }
+    ],
+    "help": "使い方: flow validate [オプション]\n\nWORKFLOW.md の設定を検証\n\nオプション:\n  -h, --help  ヘルプを表示\n"
+  },
+  {
+    "id": "help",
+    "name": "flow help",
+    "aliases": [],
+    "summary": "コマンドの使い方を表示",
+    "syntax": "flow help [command]",
+    "args": [
+      {
+        "name": "command",
+        "required": false,
+        "description": "表示対象のサブコマンド"
+      }
+    ],
+    "options": []
+  }
+]
