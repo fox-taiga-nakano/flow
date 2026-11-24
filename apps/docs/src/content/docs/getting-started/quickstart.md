@@ -17,7 +17,7 @@ flow init
 
 1. `WORKFLOW.md` の `vars.main`、`owner`、`repo` を確認します。
 2. `base.resolve` をマージ先のブランチ名を1行目に出力するコマンドに置き換えます。テンプレートの値は未設定を明示して失敗します。
-3. 同梱の Issue 操作を使う場合、`ISSUE_DIR` を設定します。たとえば `[env]` で `ISSUE_DIR = "app-issues"` とします。同梱スクリプトではメインチェックアウトの親ディレクトリ配下に解決します。
+3. 同梱の Issue 操作を使う場合、`ISSUE_DIR` にメインのチェックアウトのルートからの相対パスを設定します。たとえば `[env]` で `ISSUE_DIR = "app-issues"` とすると、メインのチェックアウト直下の `app-issues/` に Issue を格納します。
 4. ローカル実行情報を Git 管理から外すため、`/.flow/state/`、`/.flow/run/`、`/.flow/logs/` を `.gitignore` に追加します。
 5. worktree の同期・ポート・フックと、スキルの開発サーバー、テスト、成果物の手順を調整します。認証は CLI の実行環境に設定します。
 
