@@ -1935,6 +1935,13 @@ export class Orchestrator {
                     s.startedAt = null
                     s.status = 'idle'
                     s.completed = s.completed.filter((x) => x !== s.step)
+                    // effects の key は `<step>:<attempt>:...`。attempt を 0 に戻すと前回の試行と key が衝突し、
+                    // 初回プロンプトなどが「送信済み」と見なされて飛ばされる。step の実行済み記録も一緒に戻す。
+                    if (s.step) {
+                        const prefix = `${s.step}:`
+                        s.effects = s.effects.filter((x) => !x.startsWith(prefix))
+                        s.resultReminder = false
+                    }
                     s.nextRetryAt = null
                     s.approvals = []
                     delete s.dbReset
