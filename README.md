@@ -122,7 +122,7 @@ sequenceDiagram
 
 ```toml
 [tools]
-"github:fox-taiga-nakano/flow" = { version = "0.1.1", asset_pattern = "flow-universal.tar.gz", bin_path = "bin" }
+"github:fox-taiga-nakano/flow" = { version = "0.1.2", asset_pattern = "flow-universal.tar.gz", bin_path = "bin" }
 
 [tasks.flow]
 tools.node = "24.22.1"

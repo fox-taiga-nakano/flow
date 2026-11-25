@@ -1,6 +1,6 @@
 {
     "name": "flow-orchestrator",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Project-configurable issue workflow orchestrator",
     "license": "MIT",
     "bin": {
