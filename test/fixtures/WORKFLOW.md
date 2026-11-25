@@ -83,7 +83,7 @@ steps:
     on_ng: { stop: true, notify: action }
   refine:
     when_stage: 再現済
-    workspace: none
+    workspace: { reuse: 'flow/repro-{issue}' }
     agent: { kind: claude, name: 'flow-refine-{issue}' }
     done_when: { files: [issue.md] }
     gate_after: issue_push
@@ -122,9 +122,12 @@ steps:
     on_approve:
       prompt: 'pr_body が承認されました。pr-finish スキルの A の「了承を得て更新する」を実行し、{flow_dir}/result-finish-{attempt}.json を書き直してください。人に聞きたいことがあれば result: blocked にして needs に書いてください。'
   cleanup:
-    when_pr_merged: true
+    when_pr_review_requested: [reviewer-one, reviewer-two]
     gate_before: cleanup
-    action: { remove_workspaces: true, command: 'mise issue:status --update' }
+    action: { remove_workspaces: true }
+  complete:
+    when_pr_merged: true
+    action: { command: 'flow issue mark {issue} 完了' }
 base:
   resolve: "git -C {main} ls-remote --heads origin 'delivery/*' | sed 's#.*refs/heads/##' | sort | tail -1"
 vars:

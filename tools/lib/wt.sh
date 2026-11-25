@@ -90,7 +90,10 @@ wt_run_hook() {
   local cmd
   while IFS= read -r -d '' cmd; do
     echo "==> $1: $cmd" >&2
-    (cd "$WT_PATH" && bash -c "$cmd") || wt_die "フック $1 が失敗しました (exit $?): $cmd"
+    # mise run はタスクを別のプロセスグループで動かす。mise のタスク (mise wt:hook など) の中ならその親が端末を渡すが、
+    # flow から直接動かすと端末のフォアグラウンドではなくなり、turbo などが端末を操作したところで停止して
+    # フックが終わらなくなる。MISE_TASK_PGID_MANAGED=1 で mise に新しいグループを作らせない
+    (cd "$WT_PATH" && MISE_TASK_PGID_MANAGED=1 bash -c "$cmd") || wt_die "フック $1 が失敗しました (exit $?): $cmd"
   done < <(jq -j --arg h "$1" '.hooks[$h] // [] | .[] | . + "\u0000"' "$WT_CONFIG")
 }
 

@@ -4,6 +4,7 @@ import { vi } from 'vite-plus/test'
 import { parse, stringify } from 'yaml'
 
 import { RestAssignment } from '../src/adapters/assignment.js'
+import { CopilotRemote } from '../src/adapters/copilot.js'
 import { atomic } from '../src/core/files.js'
 import { Orchestrator } from '../src/core/orchestrator.js'
 import type { Adapters, RunnerAgent, TrackerIssue, TrackerPR, Workflow, WorkspaceInfo } from '../src/core/types.js'
@@ -145,7 +146,9 @@ export async function harness(options: { dryRun?: boolean; stage?: string; count
             stop: vi.fn(async () => {}),
         },
         notifier: { notify: vi.fn(async () => {}) },
-        remote: vi.fn(() => ({
+        remote: vi.fn((step) => ({
+            hasOpenPullRequest: (issue: number) =>
+                new CopilotRemote(a.exec, a.tracker, step, workflow).hasOpenPullRequest(issue),
             prepare: vi.fn(async (issue, base) =>
                 new RestAssignment().prepare(a.exec, workflow, workflow.steps.implement!, issue, base)
             ),

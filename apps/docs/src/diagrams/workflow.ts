@@ -8,6 +8,7 @@ const titles: Record<string, string> = {
     verify: '動作確認',
     finish: '仕上げ',
     cleanup: '片付け',
+    complete: '段階を更新',
 }
 
 export function workflowDiagram(workflow: Workflow, overview = false): Diagram {
@@ -22,10 +23,13 @@ export function workflowDiagram(workflow: Workflow, overview = false): Diagram {
             node('detect', 'Issue の検出', 'process', 'GitHub の検索条件に一致する Issue を取得します。', {
                 icon: 'github',
             }),
+            node('review', '指定ユーザーにレビューを依頼', 'service', '関連 PR のレビュー依頼先を確認します。', {
+                icon: 'github',
+            }),
             node('merge', 'PR がマージ済み', 'service', '関連 PR のマージを GitHub から検出します。', {
                 icon: 'github',
             }),
-            node('end', '完了', 'process', 'テンプレートの片付けが終了した状態です。'),
+            node('end', '完了', 'process', 'PR がマージされ、Issue の段階を完了に更新した状態です。'),
             node(
                 'failure',
                 'エラー・停止',
@@ -51,11 +55,15 @@ export function workflowDiagram(workflow: Workflow, overview = false): Diagram {
         const tone = icon === 'claude' ? 'claude' : icon ? 'remote' : 'neutral'
         const details = [
             step.when_stage && `段階 ${step.when_stage} で開始。`,
+            step.when_pr_review_requested && '指定ユーザーのいずれかにレビュー依頼が出たら開始。',
             step.when_pr_merged && 'PR マージ後に開始。',
             step.agent &&
-                `${step.agent.kind} を ${step.workspace && step.workspace !== 'none' ? 'worktree' : 'メイン'} で起動。`,
+                (step.workspace && step.workspace !== 'none' && step.workspace.reuse
+                    ? `${step.agent.kind} を既存の worktree で起動。worktree が無ければメインで実行。`
+                    : `${step.agent.kind} を ${step.workspace && step.workspace !== 'none' ? 'worktree' : 'メイン'} で起動。`),
             step.remote && 'GitHub 側の作業完了を監視。',
-            step.action && '設定された片付け操作を実行。',
+            step.action?.remove_workspaces && '所有 worktree を片付ける。',
+            step.action?.command && '設定されたコマンドを実行。',
         ]
             .filter(Boolean)
             .join(' ')
@@ -130,11 +138,14 @@ export function workflowDiagram(workflow: Workflow, overview = false): Diagram {
         if (next && next !== name) {
             diagram.edges.push(edge(after, first(next), overview ? undefined : (nextStage ?? '段階更新')))
         }
+        if (step.when_pr_review_requested) {
+            diagram.edges.push(edge('review', first(name)), edge(after, 'merge', overview ? undefined : 'マージ待ち'))
+        }
         if (step.when_pr_merged) {
-            diagram.edges.push(edge('merge', first(name)), edge(after, 'end', overview ? undefined : '片付け成功'))
+            diagram.edges.push(edge('merge', first(name)), edge(after, 'end'))
         }
         if (name === 'finish') {
-            diagram.edges.push(edge(after, 'merge', overview ? undefined : 'マージ待ち'))
+            diagram.edges.push(edge(after, 'review', overview ? undefined : 'レビュー依頼待ち'))
         }
         if (!overview && step.on_ng?.gate) {
             const gateId = `ng:${name}`

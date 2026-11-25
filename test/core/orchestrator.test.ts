@@ -81,6 +81,29 @@ describe('tick and durable state', () => {
         await h.o.control(1, 'retry')
         expect((await h.o.states.read(1))?.attempt).toBe(0)
     })
+    it('retry clears the step effects so the initial prompt is sent again for attempt 1', async () => {
+        const h = await setup()
+        h.workflow.retry.max_attempts = 1
+        await h.o.tick()
+        await h.o.tick()
+        const stored = await h.o.states.read(1)
+        expect(stored?.effects).toContain('repro:1:initial-prompt')
+        await h.result(1)
+        vi.mocked(h.a.runner.status).mockResolvedValue('done')
+        await h.o.tick()
+        expect((await h.o.states.read(1))?.status).toBe('failed')
+        await h.o.control(1, 'retry')
+        const retried = await h.o.states.read(1)
+        expect(retried?.effects.filter((x) => x.startsWith('repro:'))).toEqual([])
+        expect(retried?.resultReminder).toBe(false)
+        const before = vi.mocked(h.a.runner.prompt).mock.calls.length
+        vi.mocked(h.a.runner.status).mockResolvedValue('working')
+        await h.o.tick()
+        await h.o.tick()
+        expect(starts(h.a).length).toBeGreaterThanOrEqual(2)
+        expect(vi.mocked(h.a.runner.prompt).mock.calls.length).toBeGreaterThan(before)
+        expect((await h.o.states.read(1))?.effects).toContain('repro:1:initial-prompt')
+    })
     it('does not restart a stalled agent while it is still working', async () => {
         const h = await setup()
         await h.o.tick()
@@ -164,12 +187,10 @@ describe('tick and durable state', () => {
         expect((await h.o.states.read(1))?.status).toBe('idle')
         expect(starts(h.a)).toHaveLength(1)
     })
-    it('keeps cleanup gate across ticks even for closed merged issue, deletes only on approval', async () => {
+    it('keeps the cleanup gate across ticks for a requested reviewer even if the issue is closed', async () => {
         const h = await setup()
         await h.o.tick()
-        const p = pr()
-        p.state = 'merged'
-        h.prs.set(1, [p])
+        h.prs.set(1, [{ ...pr(), requestedReviewers: ['reviewer-one'] }])
         h.candidates[0]!.state = 'closed'
         await h.o.tick()
         await h.o.tick()
@@ -180,9 +201,37 @@ describe('tick and durable state', () => {
         expect(h.a.workspace.remove).toHaveBeenCalledTimes(1)
         expect((await h.o.states.read(1))?.status).toBe('done')
     })
-    it('never assigns a remote agent if an open Copilot PR already exists', async () => {
-        const h = await setup({ stage: 'Issue更新済' })
+    it('backs off PR-triggered cleanup failures and respects the retry limit', async () => {
+        const h = await setup({ stage: '検証済' })
+        h.workflow.gates.cleanup = 'auto'
+        h.workflow.retry.max_attempts = 2
+        h.a.workspace.remove = vi.fn().mockRejectedValue(new Error('worktree removal failed'))
+        h.workspaces.push(
+            { key: 'main', branch: 'main', path: h.dir, workspaceId: 'w0', slot: null },
+            { key: 'ext', branch: 'branch-101', path: path.join(h.dir, 'ext'), workspaceId: 'w9', slot: 2 }
+        )
         h.prs.set(1, [pr()])
+        await h.o.tick()
+        await h.o.control(1, 'approve', { gate: 'finish_start', choice: 'skip' })
+        await h.o.tick()
+        h.prs.set(1, [{ ...pr(), requestedReviewers: ['reviewer-one'] }])
+        await h.o.tick()
+        expect(await h.o.states.read(1)).toMatchObject({ step: 'cleanup', status: 'retry_wait', attempt: 1 })
+        expect(h.a.workspace.remove).toHaveBeenCalledTimes(1)
+        await h.o.tick()
+        expect(h.a.workspace.remove).toHaveBeenCalledTimes(1)
+        h.advance(120000)
+        await h.o.tick()
+        expect(await h.o.states.read(1)).toMatchObject({ step: 'cleanup', status: 'failed', attempt: 2 })
+        expect(h.a.workspace.remove).toHaveBeenCalledTimes(2)
+        h.prs.set(1, [{ ...pr(), state: 'merged' }])
+        await h.o.tick()
+        expect(await h.o.states.read(1)).toMatchObject({ step: 'complete', status: 'done' })
+    })
+    it.each(['app/copilot-swe-agent', 'octocat'])('does not reassign an open Copilot PR by %s', async (author) => {
+        const h = await setup({ stage: 'Issue更新済' })
+        h.prs.set(1, [{ ...pr(), author, branch: 'copilot/fix-layout' }])
+        vi.mocked(h.a.exec.run).mockResolvedValue('[[{"event":"copilot_work_started"}]]')
         await h.o.tick()
         expect((await h.o.states.read(1))?.status).toBe('waiting_remote')
         expect(vi.mocked(h.a.exec.run).mock.calls.filter(([r]) => r.mutation)).toHaveLength(0)
@@ -197,6 +246,7 @@ describe('tick and durable state', () => {
         h.prs.set(1, [pr()])
         const remote = h.a.remote(h.workflow.steps.implement!)
         vi.mocked(h.a.remote).mockReturnValue({
+            hasOpenPullRequest: (issue) => remote.hasOpenPullRequest(issue),
             prepare: (...args) => remote.prepare(...args),
             request: vi.fn(),
             poll: vi.fn(async () => 'done' as const),
@@ -326,7 +376,7 @@ describe('approval and recovery edge cases', () => {
         )
         expect((await h.o.owned.read()).workspaces).toEqual([])
     })
-    it('moves a done finish to cleanup after the merge and keeps the worktree with --choice keep', async () => {
+    it('moves a done finish to cleanup for any configured requested reviewer and supports --choice keep', async () => {
         const h = await setup({ stage: '検証済' })
         h.prs.set(1, [pr()])
         const main = { key: 'main', branch: 'main', path: h.dir, workspaceId: 'w0', slot: null }
@@ -337,9 +387,14 @@ describe('approval and recovery edge cases', () => {
         await h.o.tick()
         expect((await h.o.states.read(1))?.status).toBe('done')
         await expect(h.o.control(1, 'approve', { choice: 'keep' })).rejects.toThrow('該当する gate')
-        h.prs.set(1, [{ ...pr(), state: 'merged' }])
+        h.prs.set(1, [{ ...pr(), requestedReviewers: ['other-user'] }])
+        await h.o.tick()
+        expect((await h.o.states.read(1))?.step).toBe('finish')
+        expect(h.a.workspace.remove).not.toHaveBeenCalled()
+        h.prs.set(1, [{ ...pr(), requestedReviewers: ['other-user', 'Reviewer-Two'] }])
         await h.o.tick()
         expect((await h.o.states.read(1))?.gate?.name).toBe('cleanup')
+        h.prs.set(1, [pr()]) // The review request can disappear while the cleanup gate is open.
         await h.o.control(1, 'approve', { gate: 'cleanup', choice: 'keep' })
         await h.o.tick()
         const cleaned = await h.o.states.read(1)
@@ -349,6 +404,23 @@ describe('approval and recovery edge cases', () => {
         expect(h.workspaces).toContain(external)
         expect((await h.o.locks.list()).holders.filter((l) => l.issue === 1)).toEqual([])
         expect((await h.o.owned.read()).workspaces).toEqual([])
+        await h.o.tick()
+        expect(h.stages.get(1)).toBe('検証済')
+        expect((await h.o.owned.read()).workspaces).toEqual([])
+        h.prs.set(1, [{ ...pr(), state: 'merged' }])
+        await h.o.tick()
+        expect((await h.o.states.read(1))?.completed).toContain('complete')
+        expect(h.a.exec.run).toHaveBeenCalledWith(
+            expect.objectContaining({ command: "flow issue mark '1' 完了", mutation: true })
+        )
+        expect(h.a.workspace.remove).not.toHaveBeenCalled()
+    })
+    it('marks a merged PR complete even if cleanup was never triggered', async () => {
+        const h = await setup({ stage: '検証済' })
+        h.prs.set(1, [{ ...pr(), state: 'merged' }])
+        await h.o.tick()
+        expect((await h.o.states.read(1))?.completed).toEqual(['complete'])
+        expect(h.a.workspace.remove).not.toHaveBeenCalled()
     })
     it('rejects keep for a start gate of a step that does not remove worktrees', async () => {
         const h = await setup({ stage: '検証済' })
@@ -581,17 +653,18 @@ describe('step agent placement', () => {
         expect(s?.agent?.name).toBe('flow-repro-1')
         expect(s?.worker).toBeUndefined()
     })
-    it('starts a main agent for a step without a worktree', async () => {
+    it('starts refine in the main checkout if the repro worktree is missing', async () => {
         const h = await setup({ stage: '再現済' })
         await h.o.tick()
         expect(vi.mocked(h.a.runner.start).mock.calls.map(([spec]) => [spec.name, spec.place])).toEqual([
             ['flow-refine-1', 'main'],
         ])
+        expect(h.a.workspace.ensure).not.toHaveBeenCalled()
     })
 })
 
 describe('refine worktree cleanup', () => {
-    it.each([false, true])('removes the repro workspace or retains it when dirty (dirty=%s)', async (dirty) => {
+    it.each(['clean', 'dirty', 'push failed'])('reuses the repro workspace and handles %s cleanup', async (outcome) => {
         const h = await setup()
         await h.o.tick()
         vi.mocked(h.a.runner.status).mockResolvedValue('done')
@@ -602,15 +675,37 @@ describe('refine worktree cleanup', () => {
         await h.o.tick()
         await h.o.control(1, 'approve')
         await h.o.tick()
+        expect(starts(h.a).map(([spec]) => [spec.name, spec.place, spec.ws.path])).toEqual([
+            ['flow-repro-1', 'worktree', h.workspaces[0]!.path],
+            ['flow-refine-1', 'worktree', h.workspaces[0]!.path],
+        ])
+        expect(h.workspaces).toHaveLength(1)
         await h.file(1, 'issue.md')
         await h.result(1)
         await h.o.tick()
-        if (dirty) {
+        expect(h.a.workspace.remove).not.toHaveBeenCalled()
+        if (outcome === 'dirty') {
             const { WorkspaceDirtyError } = await import('../../src/core/ownership.js')
             vi.mocked(h.a.workspace.remove).mockRejectedValueOnce(new WorkspaceDirtyError('未コミット'))
         }
+        if (outcome === 'push failed') {
+            vi.mocked(h.a.exec.run).mockImplementation(async ({ command, mutation }) => {
+                if (command.startsWith('mise issue:push ')) {
+                    throw new Error('issue push failed')
+                }
+                return mutation ? '' : 'main'
+            })
+        }
         await h.o.control(1, 'approve')
         const s = (await h.o.states.read(1))!
+        if (outcome === 'push failed') {
+            expect(s.gate?.name).toBe('operation_recovery')
+            expect(h.a.workspace.remove).not.toHaveBeenCalled()
+            expect(h.workspaces).toHaveLength(1)
+            expect(s.completed).not.toContain('refine')
+            return
+        }
+        const dirty = outcome === 'dirty'
         expect(s.status).toBe('idle')
         expect(s.completed).toContain('refine')
         expect(h.workspaces).toHaveLength(dirty ? 1 : 0)
@@ -704,9 +799,7 @@ describe('reviewed cleanup and issue tab safety', () => {
             await h.o.control(1, 'reject')
         } else {
             await h.o.tick()
-            const merged = pr()
-            merged.state = 'merged'
-            h.prs.set(1, [merged])
+            h.prs.set(1, [{ ...pr(), requestedReviewers: ['reviewer-one'] }])
             await h.o.tick()
             await h.o.control(1, 'approve', { gate: 'cleanup' })
             await h.o.tick()

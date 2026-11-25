@@ -7,7 +7,6 @@ import { resetDatabase } from './db-reset.js'
 import { Events } from './events.js'
 import { artifact, atomic, exists, mutex } from './files.js'
 import { approved, gateKey, makeGate } from './gates.js'
-import { normalizeAuthor } from './identity.js'
 import { Locks } from './locks.js'
 import { IssueTabBusyError, Ownership, OwnershipError, sameWorkspace, WorkspaceBusyError } from './ownership.js'
 import { FlowPaths } from './paths.js'
@@ -471,39 +470,52 @@ export class Orchestrator {
             'error'
         )
     }
-    async removeWorkspaces(s: State, branches?: string[]): Promise<boolean> {
-        const registered = (await this.owned.read()).workspaces.filter((w) => w.issue === s.issue)
-        const targets = [...new Map([...registered, ...s.workspaces].map((w) => [w.path, w])).values()]
+    async removeWorkspaces(s: State, branches?: string[], bestEffort = false): Promise<boolean> {
+        const targets = (await this.owned.read()).workspaces.filter((w) => w.issue === s.issue)
         for (const ws of targets) {
             if (branches && !branches.includes(ws.branch)) {
                 continue
             }
-            if (!(await this.owned.workspace(ws))) {
-                continue
-            }
-            const current = (await this.a.workspace.list()).find((w) => sameWorkspace(w, ws))
-            if (current && !s.keepWorkspaces) {
-                if (await this.owned.foreignBusy(current, await this.a.runner.list())) {
-                    return false
+            try {
+                if ((await this.owned.workspace(ws))?.issue !== s.issue) {
+                    continue
                 }
-                for (const a of (await this.owned.read()).agents) {
-                    if (a.keepTab && a.issue === s.issue && a.workspacePath === ws.path) {
-                        if ((await this.agentStatus(a)) === 'gone') {
-                            await this.owned.removeAgent(a)
-                        } else {
-                            await this.a.runner.close(a)
+                const current = (await this.a.workspace.list()).find((w) => sameWorkspace(w, ws))
+                if (current && !s.keepWorkspaces) {
+                    if (await this.owned.foreignBusy(current, await this.a.runner.list())) {
+                        if (!bestEffort) {
+                            return false
+                        }
+                        throw new WorkspaceBusyError('人の agent が使用中です')
+                    }
+                    for (const a of (await this.owned.read()).agents) {
+                        if (a.keepTab && a.issue === s.issue && a.workspacePath === ws.path) {
+                            if ((await this.agentStatus(a)) === 'gone') {
+                                await this.owned.removeAgent(a)
+                            } else {
+                                await this.a.runner.close(a)
+                            }
                         }
                     }
+                    await this.a.workspace.remove(ws)
                 }
-                await this.a.workspace.remove(ws)
+                await this.owned.removeWorkspace(ws)
+                const slot = ws.slot ?? current?.slot ?? s.workspaces.find((w) => sameWorkspace(w, ws))?.slot ?? null
+                if (slot !== null) {
+                    await this.locks.release(s.issue, `slot:${slot}`)
+                    s.locks = s.locks.filter((l) => l !== `slot:${slot}`)
+                }
+                s.workspaces = s.workspaces.filter((w) => w.path !== ws.path)
+                if (s.workspace?.path === ws.path) {
+                    s.workspace = null
+                }
+                await this.save(s)
+            } catch (e) {
+                if (!bestEffort) {
+                    throw e
+                }
+                await this.notify(s, 'worktree を削除できませんでした', `${ws.path}\n${String(e)}`, 'action')
             }
-            await this.owned.removeWorkspace(ws)
-            if (ws.slot !== null) {
-                await this.locks.release(s.issue, `slot:${ws.slot}`)
-                s.locks = s.locks.filter((l) => l !== `slot:${ws.slot}`)
-            }
-            s.workspaces = s.workspaces.filter((w) => w.path !== ws.path)
-            await this.save(s)
         }
         return true
     }
@@ -664,7 +676,11 @@ export class Orchestrator {
                 !s.workspaces.some((x) => path.resolve(x.path) === path.resolve(w.path))
         )
         // 引き継ぎは adopt_workspace が auto のときだけ。manual なら step の開始時に承認を求める（従来どおり）
-        if (foreign.length && this.workflow.gates.adopt_workspace === 'auto') {
+        const cleaned = s.completed.some((name) => {
+            const step = this.workflow.steps[name]
+            return step?.when_pr_review_requested && step.action?.remove_workspaces
+        })
+        if (!cleaned && foreign.length && this.workflow.gates.adopt_workspace === 'auto') {
             const branches = new Set(
                 (await this.a.tracker.findPullRequests(s.issue)).filter((p) => p.state === 'open').map((p) => p.branch)
             )
@@ -694,16 +710,37 @@ export class Orchestrator {
             await this.save(s)
         }
     }
-    /** done でも、マージ後の cleanup がまだなら PR のマージを見続ける（finish の done は「マージ待ち」） */
-    awaitingCleanup(s: State): boolean {
-        const cleanup = Object.entries(this.workflow.steps).find(([, step]) => step.when_pr_merged)
-        return s.status === 'done' && !!cleanup && !s.completed.includes(cleanup[0])
+    private pendingPrSteps(s: State): [string, Step][] {
+        const entries = Object.entries(this.workflow.steps)
+        if (entries.some(([name, step]) => step.when_pr_merged && s.completed.includes(name))) {
+            return []
+        }
+        return entries.filter(
+            ([name, step]) =>
+                (step.when_pr_merged || !!step.when_pr_review_requested?.length) && !s.completed.includes(name)
+        )
+    }
+    private selectPrStep(pending: [string, Step][], prs: TrackerPR[]): [string, Step] | undefined {
+        const merge = pending.find(([, step]) => step.when_pr_merged)
+        if (merge && prs.some((pr) => pr.state === 'merged')) {
+            return merge
+        }
+        return pending.find(([, step]) => {
+            const users = new Set(step.when_pr_review_requested?.map((login) => login.toLowerCase()))
+            return prs.some(
+                (pr) => pr.state === 'open' && pr.requestedReviewers?.some((login) => users.has(login.toLowerCase()))
+            )
+        })
     }
     async reconcile(s: State, candidates: Set<number>, knownIssue?: TrackerIssue): Promise<void> {
-        if (s.status === 'stopped' || (s.status === 'failed' && !s.retainResources)) {
-            return
-        }
-        if (s.status === 'done' && !this.awaitingCleanup(s)) {
+        const pending = this.pendingPrSteps(s)
+        const currentPrStep = pending.find(([name]) => name === s.step)?.[1]
+        const failed = s.status === 'failed' && !s.retainResources
+        if (
+            s.status === 'stopped' ||
+            (s.status === 'done' && pending.length === 0) ||
+            (failed && !currentPrStep?.when_pr_review_requested)
+        ) {
             return
         }
         if ((await this.a.stages.get(s.issue)) === this.workflow.stage_store.rejected) {
@@ -711,30 +748,43 @@ export class Orchestrator {
         }
         const issue = knownIssue ?? (await this.a.tracker.getIssue(s.issue))
         const prs = await this.a.tracker.findPullRequests(s.issue)
-        const cleanup = Object.entries(this.workflow.steps).find(([, step]) => step.when_pr_merged)
-        if (cleanup && s.step === cleanup[0] && !s.completed.includes(cleanup[0])) {
+        const selected = this.selectPrStep(pending, prs)
+        if (failed && !selected?.[1].when_pr_merged) {
             return
         }
-        if (cleanup && prs.some((p) => p.state === 'merged') && !s.completed.includes(cleanup[0])) {
-            // Cleanup has precedence over the closed-issue cancellation rule.
+        if (selected && selected[0] !== s.step) {
+            // PR-triggered steps take precedence over the closed-issue cancellation rule.
             if (s.agent || s.worker) {
                 await this.stopAndClose(s)
             }
             await this.release(s)
             s.startedAt = null
-            s.step = cleanup[0]
+            s.step = selected[0]
             s.status = 'idle'
             s.gate = null
             s.attempt = 0
             s.agent = null
+            s.nextRetryAt = null
+            s.resultReminder = false
+            delete s.continuation
+            delete s.pendingResult
+            delete s.approvedGate
+            delete s.launchPending
+            delete s.initialPrompt
+            delete s.inflight
+            delete s.dbReset
+            delete s.keepWorkspaces
+            delete s.baseChange
+            delete s.baseAccepted
+            delete s.remoteRetry
             await this.save(s)
             return
         }
-        // マージ待ちの done は、マージを見るだけで、ほかの判定（Issue の close・base の変更など）はしない
+        // レビュー依頼やマージを待つ done は、PR の条件だけを確認する。
         if (s.status === 'done') {
             return
         }
-        if (!issue || issue.state === 'closed' || !candidates.has(s.issue)) {
+        if (!currentPrStep && (!issue || issue.state === 'closed' || !candidates.has(s.issue))) {
             if ((s.agent || s.worker) && (['running', 'waiting_gate'].includes(s.status) || s.retainResources)) {
                 await this.stopAndClose(s)
             }
@@ -746,7 +796,7 @@ export class Orchestrator {
             await this.notify(s, '対象外のため停止', 'Issue が閉じられた、アサインが外れた、または取得条件の対象外です')
             return
         }
-        if (!(await this.checkBase(s, prs))) {
+        if (!currentPrStep && !(await this.checkBase(s, prs))) {
             return
         }
         if (s.retainResources && (s.agent || s.worker)) {
@@ -939,12 +989,10 @@ export class Orchestrator {
             return null
         }
         const prs = await this.a.tracker.findPullRequests(s.issue)
-        const cleanup = Object.entries(this.workflow.steps).find(
-            ([name, step]) =>
-                step.when_pr_merged && prs.some((p) => p.state === 'merged') && !s.completed.includes(name)
-        )
-        if (cleanup) {
-            return cleanup
+        const pending = this.pendingPrSteps(s)
+        const prStep = this.selectPrStep(pending, prs) ?? pending.find(([name]) => name === s.step)
+        if (prStep) {
+            return prStep
         }
         const choices = Object.entries(this.workflow.steps).filter(([, step]) => step.when_stage === stage)
         if (choices.length > 1) {
@@ -1019,20 +1067,13 @@ export class Orchestrator {
             delete s.continuation
             delete s.pendingResult
         }
-        const prs = await this.a.tracker.findPullRequests(s.issue)
-        if (step.remote && !s.remoteRetry) {
-            const authors = step.remote.authors ?? this.workflow.remote?.authors ?? ['Copilot', 'copilot-swe-agent']
-            if (
-                prs.some(
-                    (pr) => pr.state === 'open' && authors.map(normalizeAuthor).includes(normalizeAuthor(pr.author))
-                )
-            ) {
-                s.status = 'waiting_remote'
-                s.attempt = Math.max(1, s.attempt)
-                s.gate = null
-                await this.save(s)
-                return
-            }
+        const remote = step.remote ? this.a.remote(step) : undefined
+        if (remote && !s.remoteRetry && (await remote.hasOpenPullRequest(s.issue))) {
+            s.status = 'waiting_remote'
+            s.attempt = Math.max(1, s.attempt)
+            s.gate = null
+            await this.save(s)
+            return
         }
         let resolved: string | null | undefined
         if (step.agent || step.remote || (step.workspace && step.workspace !== 'none' && step.workspace.from_base)) {
@@ -1042,8 +1083,8 @@ export class Orchestrator {
             }
         }
         let assignment: { body: unknown; command: string } | undefined
-        if (step.remote && this.dryRun) {
-            assignment = await this.a.remote(step).prepare(s.issue, resolved!)
+        if (remote && this.dryRun) {
+            assignment = await remote.prepare(s.issue, resolved!)
             const file = this.paths.assignment(s.issue)
             await atomic(file, assignment.body)
             this.output(
@@ -1069,13 +1110,13 @@ export class Orchestrator {
         ) {
             return
         }
-        if (step.remote) {
+        if (remote) {
             if (!s.remoteRetry && s.effects.includes(`${name}:${s.attempt}:request`)) {
                 s.status = 'waiting_remote'
                 await this.save(s)
                 return
             }
-            assignment ??= await this.a.remote(step).prepare(s.issue, resolved!)
+            assignment ??= await remote.prepare(s.issue, resolved!)
             await fs.mkdir(this.paths.run, { recursive: true })
             const temp = await fs.mkdtemp(this.paths.assignmentTemp)
             const file = FlowPaths.assignmentBody(temp)
@@ -1091,7 +1132,7 @@ export class Orchestrator {
                 const command = render(assignment.command, ctx, true)
                 if (
                     !(await this.command(s, assignment.command, `${name}:${s.attempt}:request`, ctx, () =>
-                        this.a.remote(step).request({ command })
+                        remote.request({ command })
                     ))
                 ) {
                     return
@@ -1124,23 +1165,19 @@ export class Orchestrator {
             await this.save(s)
             return
         }
-        const open = prs.filter((p) => p.state === 'open')
-        if (step.workspace !== 'none' && step.workspace?.pr && open.length !== 1) {
+        const open = (await this.a.tracker.findPullRequests(s.issue)).filter((p) => p.state === 'open')
+        const workspace = step.workspace === 'none' ? undefined : step.workspace
+        if (workspace?.pr && open.length !== 1) {
             throw new Error(`open PR が1件必要です（${open.length}件）`)
         }
         const pr = open[0]
-        const branch =
-            step.workspace && step.workspace !== 'none'
-                ? step.workspace.pr
-                    ? pr!.branch
-                    : render(step.workspace.branch!, {
-                          ...this.workflow.vars,
-                          issue: s.issue,
-                          base: resolved,
-                      })
-                : ''
+        const vars = { ...this.workflow.vars, issue: s.issue, base: resolved }
+        const branch = workspace?.pr ? pr!.branch : render(workspace?.reuse ?? workspace?.branch ?? '', vars)
         const occupied = await this.a.workspace.list()
         const existing = occupied.find((w) => w.branch === branch)
+        const ownedWorkspace = existing && (await this.owned.workspace(existing))
+        const reused = workspace?.reuse && ownedWorkspace?.issue === s.issue ? ownedWorkspace : undefined
+        const useWorktree = !!workspace && (!workspace.reuse || !!reused)
         const agentName = render(step.agent!.name, { ...this.workflow.vars, issue: s.issue })
         if (!/^flow-[a-z0-9_-]{1,27}$/.test(agentName)) {
             throw new OwnershipError(`agent 名は flow- で始めてください: ${agentName}`)
@@ -1150,7 +1187,7 @@ export class Orchestrator {
         if (named && !(await this.owned.liveAgent(named))) {
             throw new OwnershipError(`同名の agent は flow の所有物ではありません: ${agentName}`)
         }
-        if (existing && !(await this.owned.workspace(existing))) {
+        if (useWorktree && existing && !ownedWorkspace) {
             if (this.workflow.gates.adopt_workspace === 'auto') {
                 await this.owned.addWorkspace(existing, { issue: s.issue, step: name }, 'adopted')
             } else {
@@ -1165,14 +1202,14 @@ export class Orchestrator {
                 return
             }
         }
-        if (existing && (await this.owned.foreignBusy(existing, agents))) {
+        if (useWorktree && existing && (await this.owned.foreignBusy(existing, agents))) {
             return
         }
         const lockList = [...(step.locks ?? [])]
-        if (step.workspace && step.workspace !== 'none' && !lockList.includes('slot')) {
+        if (useWorktree && !lockList.includes('slot')) {
             lockList.unshift('slot')
         }
-        const held = await this.locks.acquire(lockList, s.issue, occupied, existing?.path)
+        const held = await this.locks.acquire(lockList, s.issue, occupied, useWorktree ? existing?.path : undefined)
         if (!held) {
             return
         }
@@ -1184,18 +1221,13 @@ export class Orchestrator {
         s.resultReminder = false
         delete s.tailHash
         let ws: WorkspaceInfo
-        if (step.workspace && step.workspace !== 'none') {
+        if (useWorktree) {
             ws = await this.a.workspace.ensure({
-                key: step.workspace.pr ? `pr-${pr!.number}` : `${name}-${s.issue}`,
+                key: reused?.key ?? (workspace.pr ? `pr-${pr!.number}` : `${name}-${s.issue}`),
                 owner: { issue: s.issue, step: name },
                 branch,
-                base: step.workspace.from_base
-                    ? render(step.workspace.from_base, {
-                          ...this.workflow.vars,
-                          issue: s.issue,
-                          base: resolved,
-                      })
-                    : undefined,
+                base: reused?.base ?? (workspace.from_base ? render(workspace.from_base, vars) : undefined),
+                ...(reused ? { existingOnly: true } : {}),
             })
             if (!existing) {
                 await this.owned.addWorkspace(ws, { issue: s.issue, step: name }, 'created')
@@ -1212,11 +1244,16 @@ export class Orchestrator {
                 await this.locks.bindSlot(s.issue, n, ws.path)
             }
             s.workspace = ws
-            if (!s.workspaces.some((x) => x.path === ws.path)) {
+            const previous = s.workspaces.findIndex((x) => x.path === ws.path)
+            if (previous === -1) {
                 s.workspaces.push(ws)
+            } else {
+                s.workspaces[previous] = ws
             }
             await this.save(s)
-            await this.a.workspace.sync(ws)
+            if (!reused) {
+                await this.a.workspace.sync(ws)
+            }
         } else {
             ws = {
                 key: 'main',
@@ -1362,7 +1399,7 @@ export class Orchestrator {
                 const active: State[] = []
                 for (const s of states) {
                     try {
-                        if (s.status === 'stopped' || (s.status === 'done' && !this.awaitingCleanup(s))) {
+                        if (s.status === 'stopped' || (s.status === 'done' && this.pendingPrSteps(s).length === 0)) {
                             continue
                         }
                         if ((await this.a.stages.get(s.issue)) === this.workflow.stage_store.rejected) {
@@ -1935,6 +1972,13 @@ export class Orchestrator {
                     s.startedAt = null
                     s.status = 'idle'
                     s.completed = s.completed.filter((x) => x !== s.step)
+                    // effects の key は `<step>:<attempt>:...`。attempt を 0 に戻すと前回の試行と key が衝突し、
+                    // 初回プロンプトなどが「送信済み」と見なされて飛ばされる。step の実行済み記録も一緒に戻す。
+                    if (s.step) {
+                        const prefix = `${s.step}:`
+                        s.effects = s.effects.filter((x) => !x.startsWith(prefix))
+                        s.resultReminder = false
+                    }
                     s.nextRetryAt = null
                     s.approvals = []
                     delete s.dbReset
@@ -1963,6 +2007,7 @@ export class Orchestrator {
                         // Save the original stage before issue:mark moves the entire directory.
                         await this.save(s)
                         await this.a.stages.set(issue, this.workflow.stage_store.rejected)
+                        delete s.keepWorkspaces
                     }
                     await this.release(s)
                     delete s.dbReset
@@ -1977,6 +2022,9 @@ export class Orchestrator {
                 }
                 s.gate = null
                 await this.save(s)
+                if (action === 'reject') {
+                    await this.removeWorkspaces(s, undefined, true)
+                }
                 await this.events.add(issue, s.step, action, options.reason ?? action)
             } catch (e) {
                 if (e instanceof CommandError) {

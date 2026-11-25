@@ -5,7 +5,7 @@
 **アサインされた GitHub Issue の再現から PR の仕上げまでを自動化する CLI。**
 
 再現 → Issue の整理 → 実装（Copilot）→ 動作確認 → PR の仕上げ → 後片付け。<br>
-各段階を [Herdr](https://herdr.dev/) 上のエージェントに任せて複数の Issue を並列に進めます。要所で人の承認を待ち、PR のマージ後に worktree を片付けます。
+各段階を [Herdr](https://herdr.dev/) 上のエージェントに任せて複数の Issue を並列に進めます。指定ユーザーに PR のレビューを依頼すると worktree を片付け、PR のマージ後に Issue を完了にします。
 
 [![Release](https://img.shields.io/github/v/release/fox-taiga-nakano/flow?style=flat-square)](https://github.com/fox-taiga-nakano/flow/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
@@ -88,8 +88,10 @@ sequenceDiagram
     A->>G: PR の本文を更新
 
     Note over F,G: 6. cleanup（後片付け）
-    U->>G: PR をマージ
+    U->>G: 指定ユーザーに PR のレビューを依頼
     F->>F: worktree を削除
+    U->>G: PR をマージ
+    F->>F: Issue の段階を「完了」にする
 ```
 
 `approve（…）` が gate です。`flow` は tick ごとに GitHub と各 Issue の状態を読み、次に進める step を決めます。gate が `manual` なら承認を待ち、`auto` ならそのまま進みます。テンプレートでは `verify_start`、`finish_start`、`cleanup`、既存 worktree を引き継ぐ `adopt_workspace` が `auto` です。
@@ -120,7 +122,7 @@ sequenceDiagram
 
 ```toml
 [tools]
-"github:fox-taiga-nakano/flow" = { version = "0.1.0", asset_pattern = "flow-universal.tar.gz", bin_path = "bin" }
+"github:fox-taiga-nakano/flow" = { version = "0.1.1", asset_pattern = "flow-universal.tar.gz", bin_path = "bin" }
 
 [tasks.flow]
 tools.node = "24.22.1"
@@ -153,6 +155,7 @@ flow init
 
 - `.flow/WORKFLOW.md` の `vars.main`、`vars.owner`、`vars.repo` を確認します
 - `base.resolve` を、PR のマージ先ブランチ名を標準出力の 1 行目に出すコマンドに置き換えます
+- `steps.cleanup.when_pr_review_requested` に GitHub ユーザー名を配列で指定します（例 `[alice, bob]`）。いずれか1人がレビュー依頼先に入ると起動します。初期値の `[]` では cleanup を実行しません
 - `mise.toml` の `[env]` などで、`ISSUE_DIR` にメインのチェックアウトのルートからの相対パスを設定します。たとえば `ISSUE_DIR = ".dev/issues"` なら、そのルート配下の `.dev/issues/` に Issue ごとのディレクトリが作られます
 - `.gitignore` に `/.flow/state/`、`/.flow/run/`、`/.flow/logs/` を追加します
 - `.herdr/worktree.json` の同期対象、ポート、フックを調整し、各スキルの開発サーバー起動やテストの手順を書き換えます

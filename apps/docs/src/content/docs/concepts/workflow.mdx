@@ -5,7 +5,7 @@ description: プロジェクトが決める段階と flow が制御する実行�
 
 import Diagram from '../../../components/diagrams/Diagram.astro'
 
-Workflow はプロジェクトごとの作業手順です。**Step** は起動から結果確定までの単位で、`agent`、`remote`、`action` のいずれかを持ちます。開始条件は `when_stage` または `when_pr_merged` です。
+Workflow はプロジェクトごとの作業手順です。**Step** は起動から結果確定までの単位で、`agent`、`remote`、`action` のいずれかを持ちます。開始条件には `when_stage`、`when_pr_review_requested`、`when_pr_merged` を使えます。
 
 **Stage** は利用先の Issue の段階です。例は `未着手`、`再現済`、`Issue更新済`、`修正中`、`検証済`、`検証NG`、`完了`、`保留`、`対象外`。同梱のディレクトリ管理では、段階変更でディレクトリ名が変わります。前の絶対パスを保存していた場合は解決し直します。
 

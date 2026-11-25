@@ -95,11 +95,9 @@ it('does not manufacture an after gate, an automatic gate or a nonexistent issue
     expect(h.a.stages.ensure).not.toHaveBeenCalled()
     expect(h.a.stages.set).not.toHaveBeenCalled()
 })
-it('does not allocate any step, including merged cleanup, for the rejected stage', async () => {
+it('does not allocate cleanup for the rejected stage even with a matching review request', async () => {
     const h = await setup({ stage: '対象外' })
-    const p = pr()
-    p.state = 'merged'
-    h.prs.set(1, [p])
+    h.prs.set(1, [{ ...pr(), requestedReviewers: ['reviewer-one'] }])
     await h.o.tick()
     await h.o.tick()
     expect((await h.o.states.read(1))?.step).toBeNull()
@@ -280,5 +278,37 @@ describe('reject without a gate', () => {
         await h.o.control(1, 'reject')
         expect(h.stages.get(1)).toBe('対象外')
         expect(vi.mocked(h.a.runner.close).mock.calls.map(([a]) => a.name)).toEqual(['flow-repro-1'])
+        expect(h.a.workspace.remove).toHaveBeenCalledTimes(1)
+        expect((await h.o.owned.read()).workspaces).toEqual([])
+        expect((await h.o.locks.list()).holders).toEqual([])
+    })
+    it('retains dirty and busy worktrees while cleaning up other owned worktrees', async () => {
+        const h = await setup()
+        await h.o.tick()
+        const dirty = h.workspaces[0]!
+        const clean = { ...dirty, path: path.join(h.dir, 'clean'), branch: 'clean', slot: 2, workspaceId: 'clean' }
+        const busy = { ...clean, path: path.join(h.dir, 'busy'), branch: 'busy', slot: 3, workspaceId: 'busy' }
+        const foreign = { ...clean, path: path.join(h.dir, 'foreign'), branch: 'foreign', slot: 4 }
+        h.workspaces.push(busy, clean, foreign)
+        await h.o.owned.addWorkspace(busy, { issue: 1, step: 'verify' }, 'created')
+        await h.o.owned.addWorkspace(clean, { issue: 1, step: 'repro' }, 'created')
+        vi.mocked(h.a.runner.list).mockResolvedValue([{ paneId: 'busy:1', workspaceId: 'busy', status: 'working' }])
+        vi.mocked(h.a.workspace.remove).mockRejectedValueOnce(new Error('未コミットの変更があります'))
+        await h.o.control(1, 'reject')
+        expect(h.workspaces).toEqual([dirty, busy, foreign])
+        expect((await h.o.owned.read()).workspaces.map((ws) => ws.path)).toEqual([dirty.path, busy.path])
+        expect((await h.o.states.read(1))?.status).toBe('stopped')
+        expect(h.a.notifier.notify).toHaveBeenCalledWith(
+            expect.objectContaining({
+                title: 'worktree を削除できませんでした',
+                body: expect.stringContaining(dirty.path),
+            })
+        )
+        expect(h.a.notifier.notify).toHaveBeenCalledWith(
+            expect.objectContaining({
+                title: 'worktree を削除できませんでした',
+                body: expect.stringContaining(busy.path),
+            })
+        )
     })
 })

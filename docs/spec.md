@@ -68,6 +68,7 @@ type TrackerPR = {
   isDraft: boolean
   author: string
   url: string
+  requestedReviewers?: string[]
 }
 
 interface StageStore {
@@ -229,7 +230,7 @@ steps: # 段階（stage）ごとに、次に行う step を決める
     on_ng: { stop: true, notify: action } # 再現できなかった・仕様の確認が要る。stage は変えず stopped にして人に渡す
   refine:
     when_stage: 再現済
-    workspace: none # メインのチェックアウトで動く
+    workspace: { reuse: 'flow/repro-{issue}' }
     agent: { kind: claude, name: 'flow-refine-{issue}' }
     done_when: { files: ['issue.md'] }
     gate_after: issue_push
@@ -264,9 +265,12 @@ steps: # 段階（stage）ごとに、次に行う step を決める
         prompt: 'pr_body が承認されました。pr-finish スキルの A の「了承を得て更新する」を実行し、{flow_dir}/result-finish-{attempt}.json を書き直してください。',
       }
   cleanup:
-    when_pr_merged: true
+    when_pr_review_requested: [alice, bob]
     gate_before: cleanup
-    action: { remove_workspaces: true, command: 'mise issue:status --update' }
+    action: { remove_workspaces: true }
+  complete:
+    when_pr_merged: true
+    action: { command: 'flow issue mark {issue} 完了' }
 base:
   resolve: "git -C {main} ls-remote --heads origin 'delivery/*' | sed 's#.*refs/heads/##' | sort | tail -1" # 9.1
 vars:
@@ -303,8 +307,9 @@ pr-verify スキルの worktree 側（手順 3〜10）で動作確認してく�
 1. **設定の読み込み**：`WORKFLOW.md` を読み、検証する
 2. **候補の取得**：`tracker.listCandidates()`。新しい Issue は `stageStore.ensure()` で初期状態にし、state.json を作る
 3. **突き合わせ**（`running` / `waiting_*` の Issue ごと）
-   - `tracker.getIssue()` が closed で、その Issue を閉じる PR がマージ済み：`cleanup` の step に進める（`gate_before: cleanup` に従う）
-   - `tracker.getIssue()` が closed（マージ済みの PR なし）・アサインが外れた・見つからない：エージェントを `stop` し、`stopped` にして通知する（worktree は消さない）
+   - 関連する open PR のレビュー依頼先に設定ユーザーが1人以上いると `cleanup` に進む（`gate_before: cleanup` に従う）。
+   - 関連 PR がマージされたら `complete` に進み、Issue の段階を「完了」にする。
+   - PR による起動条件を満たさず、Issue が closed・アサインが外れた・見つからない場合は、エージェントを `stop` し、`stopped` にして通知する（worktree は消さない）。
    - エージェントの状態が `gone`：失敗として扱う（6 章）
    - `blocked`：`waiting_gate`（gate 名 `agent_question`）にして通知する。人がペインで答えたら、次の tick で `working` に戻ったのを見て `running` に戻す
    - `stall_ms` の間、`runner.tail()` の内容が変わらず `working` のまま：止まったとみなして失敗扱い
@@ -345,7 +350,7 @@ flow は、**自分で作った worktree と、自分で起動したエージェ
   gate `adopt_workspace`（既定 manual）を立てて通知する。承認されたら `owned.json` に記録して使う。却下されたら `stopped`
 - flow の worktree でも、その workspace に flow が起動していないエージェント（名前の無いものを含む）が `working` / `blocked` なら、使用中とみなして割り振らない（次の tick に回す）
 - エージェントの名前は `flow-` で始める。同じ名前のエージェントが既にあり、`owned.json` に無いときは、プロンプトを送らずにエラーにする（乗っ取らない）
-- worktree の削除（refine 完了後と cleanup）も、`owned.json` にある worktree だけを対象にする。refine 後に未コミット・未 push の変更で削除が拒否された場合は通知して保持し、cleanup で再度試みる。
+- worktree の削除（refine 完了後、cleanup、`flow reject`）は、該当 Issue が `owned.json` で所有する worktree を対象にする。人のエージェントが使用中、または未コミット・未 push の変更で削除が拒否された worktree は通知して保持する。
 
 ## 8. gate
 
@@ -366,7 +371,7 @@ flow は、**自分で作った worktree と、自分で起動したエージェ
 ## 9. Copilot（RemoteAgent）
 
 - `request`：`assign` のコマンドを実行し、`waiting_remote` にする
-- `poll`：`tracker.findPullRequests(issue)` で、作者が Copilot（`Copilot` / `copilot-swe-agent`。WORKFLOW.md で設定）の open な PR を探す
+- アサイン前と `poll` の両方で、Issue に紐づく open PR を探す。作者が設定済みの Copilot アカウントの場合、または `copilot/` ブランチかつタイムラインに Copilot の作業イベントがある場合に該当する。
   - 無い：`pending`（Copilot がまだ PR を作っていない）
   - ある：作業が終わったかを判定する。判定方法は実装時に `gh api` で PR のタイムラインやレビュー依頼を調べて決め、
     WORKFLOW.md の `remote.done_when` で選べるようにする（候補：draft が外れた／Copilot からレビュー依頼が来た／タイムラインの作業完了のイベント）。
@@ -427,7 +432,7 @@ POST /repos/{owner}/{repo}/issues/{issue}/assignees
   - 候補の Issue：今の `gh issue list`（1 回）
   - 候補ではないが state.json のある Issue（閉じた・アサインが外れたかの確認が要るもの）：まとめて 1 回（GraphQL の `nodes` や `search` など。件数が多ければ分割）
   - PR：`gh pr list --state all --json number,headRefName,baseRefName,state,isDraft,author,url,closingIssuesReferences`（1 回。件数の上限は WORKFLOW.md で設定）から、Issue ごとの PR を引く
-  - `stopped`・`done`・対象外（`stage_store.rejected`）の Issue は、GitHub に問い合わせない（`flow retry` などで再開したときに問い合わせる）
+  - `stopped`・対象外（`stage_store.rejected`）・未完了の PR 起動条件がない `done` の Issue は、GitHub に問い合わせない（`flow retry` などで再開したときに問い合わせる）
   - 目安：今の約 16 件で、dry-run の tick が 10 秒以内。直す前後の所要時間と、GitHub への呼び出しの回数を報告書に書く
 - **外部コマンドの失敗の記録**：終了コード・stderr の末尾（数十行）・シグナル・タイムアウトかどうかを、エラーの文言と events に残す
 - **経過秒**：`startedAt`（step を始めた時刻）、無ければ状態が変わった時刻（`statusChangedAt` を足す）から数える。`updatedAt` は使わない

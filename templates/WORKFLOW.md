@@ -87,7 +87,7 @@ steps:
     on_ng: { stop: true, notify: action }
   refine:
     when_stage: 再現済
-    workspace: none
+    workspace: { reuse: 'flow/repro-{issue}' }
     agent: { kind: claude, name: 'flow-refine-{issue}' }
     done_when: { files: [issue.md] }
     gate_after: issue_push
@@ -124,9 +124,13 @@ steps:
     on_approve:
       prompt: 'pr_body が承認されました。flow-finish スキルの「B. 承認の後に更新する」を実行し、{flow_dir}/result-finish-{attempt}.json を書き直してください。'
   cleanup:
-    when_pr_merged: true
+    # cleanup を始めるレビュー依頼先の GitHub ユーザー名を列挙します。空の配列では起動しません。
+    when_pr_review_requested: []
     gate_before: cleanup
-    action: { remove_workspaces: true, command: 'flow issue status --update' }
+    action: { remove_workspaces: true }
+  complete:
+    when_pr_merged: true
+    action: { command: 'flow issue mark {issue} 完了' }
 ---
 
 ## prompt: repro

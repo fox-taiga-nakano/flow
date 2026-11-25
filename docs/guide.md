@@ -1,6 +1,6 @@
 # flow の使い方：Issue のアサインからマージまで
 
-Issue が自分にアサインされてから、PR がマージされて worktree を片付けるまでの流れ。
+Issue が自分にアサインされてから、レビュー依頼時に worktree を片付け、PR のマージで完了するまでの流れ。
 設定は対象リポジトリの `.flow/WORKFLOW.md`、仕様は [仕様書](spec.md)。
 
 > このガイドは、[導入時の設定](integration.md) の example-app での使用例に沿った運用例です。
@@ -65,10 +65,13 @@ sequenceDiagram
         Claude-->>flow: pr-body.md（下書き）
         人->>flow: approve pr_body
         Claude->>GitHub: PR 本文を更新
-        Note over flow: マージ待ち
-        GitHub-->>flow: PR のマージを検出
+        人->>GitHub: 指定ユーザーにレビューを依頼
+        GitHub-->>flow: レビュー依頼を検出
         Note over flow: cleanup は auto
         flow->>flow: ⑥ cleanup（worktree の削除）
+        Note over flow: マージ待ち
+        GitHub-->>flow: PR のマージを検出
+        flow->>flow: Issue の段階を「完了」にする
         Note over flow: 完了
     end
 ```
@@ -88,7 +91,7 @@ sequenceDiagram
 
 ## 各 step の実行場所
 
-worktree を使う step（repro・verify・finish）は、worktree の `agent` タブで `flow-<step>-<番号>` を1つ起動し、step の指示を直接送ります。質問には `flow answer <番号> "回答"` またはそのペインで答えます。メインで動く refine は、Issue ごとの `flow-<番号>` タブを使います。
+worktree を使う step は、worktree の `agent` タブで `flow-<step>-<番号>` を1つ起動し、step の指示を直接送ります。質問には `flow answer <番号> "回答"` またはそのペインで答えます。refine がメインで動く場合は、Issue ごとの `flow-<番号>` タブを使います。
 
 ## ① repro：再現（Claude）
 
@@ -106,7 +109,7 @@ worktree を使う step（repro・verify・finish）は、worktree の `agent` �
 
 | 項目         | 内容                                                                                                                                                                                      |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 動く場所     | メインのチェックアウト（メインの workspace の `flow-<番号>` タブ）                                                                                                                        |
+| 動く場所     | repro と同じ worktree。flow が所有する再現用 worktree が無ければメインのチェックアウト                                                                                                    |
 | エージェント | `flow-refine-<番号>`（issue-refine スキル）                                                                                                                                               |
 | 作るもの     | `issue.md`（下書き）、`issue.orig.md`（元の本文）                                                                                                                                         |
 | 承認         | `issue_push`：`issue.md` を確かめて（差分は `mise issue:push <番号> --diff`）`flow approve <番号> issue_push` → flow が `mise issue:push` で GitHub の本文を更新し、段階が「Issue更新済」 |
@@ -158,14 +161,16 @@ worktree を使う step（repro・verify・finish）は、worktree の `agent` �
 
 ## ⑥ cleanup：後片付け
 
-| 項目            | 内容                                                                                                                                                                       |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| きっかけ        | PR がマージされたことを flow が見つける                                                                                                                                    |
-| 承認            | `cleanup`：auto なら自動実行。manual なら `flow approve <番号> cleanup`                                                                                                    |
-| flow がすること | flow が作った・引き継いだ worktree だけを削除（コミットしていない変更や push していないコミットがあれば削除しない）し、`mise issue:status --update` で段階を「完了」にする |
-| worktree を残す | manual のとき `flow approve <番号> cleanup --choice keep`：worktree は消さず、flow の記録と slot のロックだけ外す                                                          |
+| 項目            | 内容                                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------------------- |
+| きっかけ        | open PR のレビュー依頼先に、`steps.cleanup.when_pr_review_requested` に設定した GitHub ユーザーが1人以上いる        |
+| 承認            | `cleanup`：auto なら自動実行。manual なら `flow approve <番号> cleanup`                                             |
+| flow がすること | flow が作った・引き継いだ worktree を削除する（コミットしていない変更や push していないコミットがあれば削除しない） |
+| worktree を残す | manual のとき `flow approve <番号> cleanup --choice keep`：worktree は消さず、flow の記録と slot のロックだけ外す   |
 
 - cleanup と対象外では Issue の `flow-<番号>` タブを閉じる。人がペインを追加している場合は閉じずに通知する。
+- `flow reject` は flow が所有する worktree も片付ける。人のエージェントが使用中、または未コミット・未 push の変更がある worktree は残して通知する。
+- Issue の段階は、関連 PR のマージを検出したときに「完了」に更新する。
 - flow の外で開いた worktree（`mise wt` など）も、Issue の open PR のブランチか `flow/repro-<番号>` なら、`gates.adopt_workspace: auto` のとき次の tick で flow が引き継ぐ（記録と slot のロック。manual なら step の開始時に承認を求める）。flow の外で worktree を消したときも、次の tick で記録とロックを外す
 
 ## 保留：「保留」ラベル

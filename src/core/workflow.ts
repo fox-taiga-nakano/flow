@@ -178,12 +178,29 @@ export function parseWorkflow(source: string): Workflow {
                     !!step.agent &&
                     !!step.workspace &&
                     step.workspace !== 'none' &&
+                    !step.workspace.reuse &&
                     step.locks?.includes('db:shared') &&
                     'db_reset' in raw.gates,
                 `${name}: db_reset には database・worktree の agent・db:shared ロック・db_reset gate が必要です`
             )
         }
-        need(typeof step.when_stage === 'string' || step.when_pr_merged === true, `${name}: 起動条件が必要`)
+        need(
+            step.when_pr_review_requested === undefined ||
+                (strings(step.when_pr_review_requested) &&
+                    step.when_pr_review_requested.every((login) => login.length > 0 && !/[\s@]/.test(login))),
+            `${name}: when_pr_review_requested は GitHub ユーザー名の配列`
+        )
+        need(
+            typeof step.when_stage === 'string' ||
+                step.when_pr_merged === true ||
+                step.when_pr_review_requested !== undefined,
+            `${name}: 起動条件が必要`
+        )
+        need(
+            step.when_pr_review_requested === undefined ||
+                (step.when_stage === undefined && step.when_pr_merged !== true),
+            `${name}: when_pr_review_requested は他の起動条件と併用できません`
+        )
         need(
             [step.agent, step.remote, step.action].filter(Boolean).length === 1,
             `${name}: agent/remote/action のいずれか1つ`
@@ -208,8 +225,14 @@ export function parseWorkflow(source: string): Workflow {
         if (step.workspace && step.workspace !== 'none') {
             need(
                 object(step.workspace) &&
-                    (step.workspace.pr === true ||
-                        (typeof step.workspace.branch === 'string' && typeof step.workspace.from_base === 'string')),
+                    (step.workspace.reuse === undefined
+                        ? step.workspace.pr === true ||
+                          (typeof step.workspace.branch === 'string' && typeof step.workspace.from_base === 'string')
+                        : typeof step.workspace.reuse === 'string' &&
+                          !!step.workspace.reuse.trim() &&
+                          step.workspace.pr === undefined &&
+                          step.workspace.branch === undefined &&
+                          step.workspace.from_base === undefined),
                 `${name}: workspace が不正`
             )
         }
@@ -348,6 +371,10 @@ export function parseWorkflow(source: string): Workflow {
         .filter(Boolean)
     need(new Set(stages).size === stages.length, 'when_stage が重複しています')
     need(Object.values(raw.steps).filter((s) => (s as Step).when_pr_merged).length <= 1, 'when_pr_merged は1つまで')
+    need(
+        Object.values(raw.steps).filter((s) => (s as Step).when_pr_review_requested !== undefined).length <= 1,
+        'when_pr_review_requested は1つまで'
+    )
     need(
         Object.keys(raw.tracker.query).every((k) =>
             ['assignee', 'state', 'label', 'search', 'milestone', 'author'].includes(k)

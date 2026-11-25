@@ -3,7 +3,7 @@ import { type Diagram, edge, node } from './model.ts'
 
 export function stateMachine(workflow: Workflow) {
     const startConditions = Object.entries(workflow.steps).map(([name, step]) => {
-        const trigger = step.when_stage ?? 'PR マージ後'
+        const trigger = step.when_stage ?? (step.when_pr_merged ? 'PR マージ後' : '指定ユーザーへのレビュー依頼後')
         const gate = step.gate_before
         return `${trigger} → ${name}${gate ? `（${gate}: ${workflow.gates[gate]}）` : ''}`
     })

@@ -17,6 +17,7 @@ export type TrackerPR = {
     isDraft: boolean
     author: string
     url: string
+    requestedReviewers?: string[]
 }
 export type WorkspaceInfo = {
     key: string
@@ -68,6 +69,7 @@ export interface Workspace {
         key: string
         branch: string
         base?: string
+        existingOnly?: boolean
         owner: { issue: number; step: string }
     }): Promise<WorkspaceInfo>
     sync(ws: WorkspaceInfo): Promise<void>
@@ -96,6 +98,7 @@ export interface Runner {
     stop(h: AgentHandle): Promise<void>
 }
 export interface RemoteAgent {
+    hasOpenPullRequest(issue: number): Promise<boolean>
     prepare(issue: number, base: string): Promise<{ body: unknown; command: string }>
     request(spec: { command: string }): Promise<void>
     poll(issue: number, since?: string): Promise<'pending' | 'working' | 'done' | 'failed'>
@@ -133,11 +136,12 @@ export type Step = {
     db_reset?: boolean
     when_stage?: string
     when_pr_merged?: boolean
+    when_pr_review_requested?: string[]
     gate_before?: string
     gate_after?: string
     /** gate_before で `--choice skip` を受け付け、step を実行せずに完了にする。 */
     skippable?: boolean
-    workspace?: 'none' | { from_base?: string; branch?: string; pr?: boolean }
+    workspace?: 'none' | { from_base?: string; branch?: string; pr?: boolean; reuse?: string }
     agent?: { kind: 'claude' | 'codex'; name: string }
     locks?: string[]
     remote?: {

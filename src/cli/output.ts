@@ -65,10 +65,10 @@ export function nowLabel(
         case 'retry_wait':
             return `再試行待ち（${step}）`
         case 'done':
-            if (r.step === 'cleanup' || r.stage === '完了') {
+            if (r.step === 'complete' || r.stage === '完了') {
                 return '終了'
             }
-            return r.step === 'finish' ? 'マージ待ち' : `${step} 完了。次の段階待ち`
+            return r.step === 'finish' || r.step === 'cleanup' ? 'マージ待ち' : `${step} 完了。次の段階待ち`
         case 'stopped':
             if (r.stage === rejected) {
                 return '対象外'

@@ -150,6 +150,33 @@ describe('adapters through fake exec', () => {
         expect(await remote.poll(1)).toBe('pending')
         expect(e.run.mock.calls[0]?.[0].mutation).toBe(false)
     })
+    it('matches a user-authored Copilot PR by its branch and work timeline', async () => {
+        const w = await config()
+        const copilot = { ...pr(101), author: 'octocat', branch: 'copilot/fix-layout' }
+        const manual = { ...pr(102), author: 'octocat', branch: 'copilot/manual' }
+        const tracker = {
+            listCandidates: vi.fn(),
+            getIssue: vi.fn(),
+            findPullRequests: vi.fn(async () => [manual, copilot]),
+        }
+        const work = JSON.parse(await fixture('timeline-4050.json'))
+        const exec = {
+            run: vi.fn(async (r: ExecRequest) =>
+                JSON.stringify([r.command.includes('/101/timeline') ? work : [{ event: 'review_requested' }]])
+            ),
+        }
+        const remote = new CopilotRemote(exec, tracker, w.steps.implement!, w)
+        expect(await remote.hasOpenPullRequest(1)).toBe(true)
+        exec.run.mockClear()
+        expect(await remote.poll(1)).toBe('done')
+        expect(exec.run).toHaveBeenCalledTimes(2)
+        expect(await remote.poll(1, '2026-10-21T00:00:00Z')).toBe('working')
+        tracker.findPullRequests.mockResolvedValue([manual, { ...pr(103), author: 'octocat' }])
+        expect(await remote.hasOpenPullRequest(1)).toBe(false)
+        expect(await remote.poll(1)).toBe('pending')
+        tracker.findPullRequests.mockResolvedValue([copilot, pr(104)])
+        await expect(remote.hasOpenPullRequest(1)).rejects.toThrow('Copilot の open PR が複数')
+    })
     it('reuses existing workspace without creating it and refuses dirty cleanup', async () => {
         const w = await config()
         const exec = {
