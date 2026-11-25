@@ -58,7 +58,9 @@ export function workflowDiagram(workflow: Workflow, overview = false): Diagram {
             step.when_pr_review_requested && '指定ユーザーのいずれかにレビュー依頼が出たら開始。',
             step.when_pr_merged && 'PR マージ後に開始。',
             step.agent &&
-                `${step.agent.kind} を ${step.workspace && step.workspace !== 'none' ? 'worktree' : 'メイン'} で起動。`,
+                (step.workspace && step.workspace !== 'none' && step.workspace.reuse
+                    ? `${step.agent.kind} を既存の worktree で起動。worktree が無ければメインで実行。`
+                    : `${step.agent.kind} を ${step.workspace && step.workspace !== 'none' ? 'worktree' : 'メイン'} で起動。`),
             step.remote && 'GitHub 側の作業完了を監視。',
             step.action?.remove_workspaces && '所有 worktree を片付ける。',
             step.action?.command && '設定されたコマンドを実行。',

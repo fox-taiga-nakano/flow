@@ -135,6 +135,7 @@ description: "型と検証規則から生成した設定リファレンス"
 | `steps.*.workspace.from_base` | `string` | 省略可 |
 | `steps.*.workspace.branch` | `string` | 省略可 |
 | `steps.*.workspace.pr` | `boolean` | 省略可 |
+| `steps.*.workspace.reuse` | `string` | 省略可 |
 | `steps.*.agent` | `オブジェクト` | 省略可 |
 | `steps.*.agent.kind` | `'claude' / 'codex'` | 親の指定時に必須 |
 | `steps.*.agent.name` | `string` | 親の指定時に必須 |
@@ -246,7 +247,7 @@ need(raw.gates.base_changed === 'manual', 'base_changed は選択肢が必要な
 need(object(raw.steps) && Object.keys(raw.steps).length, 'steps がありません')
 need(/^[\w-]+$/.test(name) && object(value), `step が不正: ${name}`)
 need(step.db_reset === undefined || typeof step.db_reset === 'boolean', `${name}: db_reset は真偽値`)
-need(raw.database !== undefined && !!step.agent && !!step.workspace && step.workspace !== 'none' && step.locks?.includes('db:shared') && 'db_reset' in raw.gates, `${name}: db_reset には database・worktree の agent・db:shared ロック・db_reset gate が必要です`)
+need(raw.database !== undefined && !!step.agent && !!step.workspace && step.workspace !== 'none' && !step.workspace.reuse && step.locks?.includes('db:shared') && 'db_reset' in raw.gates, `${name}: db_reset には database・worktree の agent・db:shared ロック・db_reset gate が必要です`)
 need(step.when_pr_review_requested === undefined || (strings(step.when_pr_review_requested) && step.when_pr_review_requested.every((login) => login.length > 0 && !/[\s@]/.test(login))), `${name}: when_pr_review_requested は GitHub ユーザー名の配列`)
 need(typeof step.when_stage === 'string' || step.when_pr_merged === true || step.when_pr_review_requested !== undefined, `${name}: 起動条件が必要`)
 need(step.when_pr_review_requested === undefined || (step.when_stage === undefined && step.when_pr_merged !== true), `${name}: when_pr_review_requested は他の起動条件と併用できません`)
@@ -254,7 +255,7 @@ need([step.agent, step.remote, step.action].filter(Boolean).length === 1, `${nam
 need(step.when_stage !== raw.stage_store.rejected, `${name}: stage_store.rejected を when_stage に指定できません`)
 need(raw.stage_store.held === undefined || step.when_stage !== raw.stage_store.held, `${name}: stage_store.held を when_stage に指定できません`)
 need(['claude', 'codex'].includes(step.agent.kind) && typeof step.agent.name === 'string' && step.agent.name.startsWith('flow-') && !!prompts[name], `${name}: agent または prompt が不正`)
-need(object(step.workspace) && (step.workspace.pr === true || (typeof step.workspace.branch === 'string' && typeof step.workspace.from_base === 'string')), `${name}: workspace が不正`)
+need(object(step.workspace) && (step.workspace.reuse === undefined ? step.workspace.pr === true || (typeof step.workspace.branch === 'string' && typeof step.workspace.from_base === 'string') : typeof step.workspace.reuse === 'string' && !!step.workspace.reuse.trim() && step.workspace.pr === undefined && step.workspace.branch === undefined && step.workspace.from_base === undefined), `${name}: workspace が不正`)
 need(gate in raw.gates, `gate 未定義: ${gate}`)
 need(step.skippable === undefined || typeof step.skippable === 'boolean', `${name}: skippable は真偽値`)
 need(!!step.gate_before, `${name}: skippable には gate_before が必要`)

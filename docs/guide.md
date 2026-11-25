@@ -91,7 +91,7 @@ sequenceDiagram
 
 ## 各 step の実行場所
 
-worktree を使う step（repro・verify・finish）は、worktree の `agent` タブで `flow-<step>-<番号>` を1つ起動し、step の指示を直接送ります。質問には `flow answer <番号> "回答"` またはそのペインで答えます。メインで動く refine は、Issue ごとの `flow-<番号>` タブを使います。
+worktree を使う step は、worktree の `agent` タブで `flow-<step>-<番号>` を1つ起動し、step の指示を直接送ります。質問には `flow answer <番号> "回答"` またはそのペインで答えます。refine がメインで動く場合は、Issue ごとの `flow-<番号>` タブを使います。
 
 ## ① repro：再現（Claude）
 
@@ -109,7 +109,7 @@ worktree を使う step（repro・verify・finish）は、worktree の `agent` �
 
 | 項目         | 内容                                                                                                                                                                                      |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 動く場所     | メインのチェックアウト（メインの workspace の `flow-<番号>` タブ）                                                                                                                        |
+| 動く場所     | repro と同じ worktree。flow が所有する再現用 worktree が無ければメインのチェックアウト                                                                                                    |
 | エージェント | `flow-refine-<番号>`（issue-refine スキル）                                                                                                                                               |
 | 作るもの     | `issue.md`（下書き）、`issue.orig.md`（元の本文）                                                                                                                                         |
 | 承認         | `issue_push`：`issue.md` を確かめて（差分は `mise issue:push <番号> --diff`）`flow approve <番号> issue_push` → flow が `mise issue:push` で GitHub の本文を更新し、段階が「Issue更新済」 |
@@ -169,6 +169,7 @@ worktree を使う step（repro・verify・finish）は、worktree の `agent` �
 | worktree を残す | manual のとき `flow approve <番号> cleanup --choice keep`：worktree は消さず、flow の記録と slot のロックだけ外す   |
 
 - cleanup と対象外では Issue の `flow-<番号>` タブを閉じる。人がペインを追加している場合は閉じずに通知する。
+- `flow reject` は flow が所有する worktree も片付ける。人のエージェントが使用中、または未コミット・未 push の変更がある worktree は残して通知する。
 - Issue の段階は、関連 PR のマージを検出したときに「完了」に更新する。
 - flow の外で開いた worktree（`mise wt` など）も、Issue の open PR のブランチか `flow/repro-<番号>` なら、`gates.adopt_workspace: auto` のとき次の tick で flow が引き継ぐ（記録と slot のロック。manual なら step の開始時に承認を求める）。flow の外で worktree を消したときも、次の tick で記録とロックを外す
 

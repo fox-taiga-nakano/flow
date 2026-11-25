@@ -230,7 +230,7 @@ steps: # 段階（stage）ごとに、次に行う step を決める
     on_ng: { stop: true, notify: action } # 再現できなかった・仕様の確認が要る。stage は変えず stopped にして人に渡す
   refine:
     when_stage: 再現済
-    workspace: none # メインのチェックアウトで動く
+    workspace: { reuse: 'flow/repro-{issue}' }
     agent: { kind: claude, name: 'flow-refine-{issue}' }
     done_when: { files: ['issue.md'] }
     gate_after: issue_push
@@ -350,7 +350,7 @@ flow は、**自分で作った worktree と、自分で起動したエージェ
   gate `adopt_workspace`（既定 manual）を立てて通知する。承認されたら `owned.json` に記録して使う。却下されたら `stopped`
 - flow の worktree でも、その workspace に flow が起動していないエージェント（名前の無いものを含む）が `working` / `blocked` なら、使用中とみなして割り振らない（次の tick に回す）
 - エージェントの名前は `flow-` で始める。同じ名前のエージェントが既にあり、`owned.json` に無いときは、プロンプトを送らずにエラーにする（乗っ取らない）
-- worktree の削除（refine 完了後と cleanup）も、`owned.json` にある worktree だけを対象にする。refine 後に未コミット・未 push の変更で削除が拒否された場合は通知して保持し、cleanup で再度試みる。
+- worktree の削除（refine 完了後、cleanup、`flow reject`）は、該当 Issue が `owned.json` で所有する worktree を対象にする。人のエージェントが使用中、または未コミット・未 push の変更で削除が拒否された worktree は通知して保持する。
 
 ## 8. gate
 

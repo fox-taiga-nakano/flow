@@ -87,7 +87,7 @@ steps:
     on_ng: { stop: true, notify: action }
   refine:
     when_stage: 再現済
-    workspace: none
+    workspace: { reuse: 'flow/repro-{issue}' }
     agent: { kind: claude, name: 'flow-refine-{issue}' }
     done_when: { files: [issue.md] }
     gate_after: issue_push

@@ -385,6 +385,12 @@
       "ancestorsRequired": false
     },
     {
+      "path": "steps.*.workspace.reuse",
+      "type": "string",
+      "required": false,
+      "ancestorsRequired": false
+    },
+    {
       "path": "steps.*.agent",
       "type": "オブジェクト",
       "required": false,
@@ -833,7 +839,7 @@
       "`${name}: db_reset は真偽値`"
     ],
     [
-      "raw.database !== undefined && !!step.agent && !!step.workspace && step.workspace !== 'none' && step.locks?.includes('db:shared') && 'db_reset' in raw.gates",
+      "raw.database !== undefined && !!step.agent && !!step.workspace && step.workspace !== 'none' && !step.workspace.reuse && step.locks?.includes('db:shared') && 'db_reset' in raw.gates",
       "`${name}: db_reset には database・worktree の agent・db:shared ロック・db_reset gate が必要です`"
     ],
     [
@@ -865,7 +871,7 @@
       "`${name}: agent または prompt が不正`"
     ],
     [
-      "object(step.workspace) && (step.workspace.pr === true || (typeof step.workspace.branch === 'string' && typeof step.workspace.from_base === 'string'))",
+      "object(step.workspace) && (step.workspace.reuse === undefined ? step.workspace.pr === true || (typeof step.workspace.branch === 'string' && typeof step.workspace.from_base === 'string') : typeof step.workspace.reuse === 'string' && !!step.workspace.reuse.trim() && step.workspace.pr === undefined && step.workspace.branch === undefined && step.workspace.from_base === undefined)",
       "`${name}: workspace が不正`"
     ],
     [
@@ -1143,7 +1149,9 @@
       },
       "refine": {
         "when_stage": "再現済",
-        "workspace": "none",
+        "workspace": {
+          "reuse": "flow/repro-{issue}"
+        },
         "agent": {
           "kind": "claude",
           "name": "flow-refine-{issue}"

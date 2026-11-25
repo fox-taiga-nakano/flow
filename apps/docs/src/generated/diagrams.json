@@ -479,7 +479,7 @@
         "id": "step:refine",
         "label": "Issue 更新",
         "kind": "agent",
-        "detail": "段階 再現済 で開始。 claude を メイン で起動。",
+        "detail": "段階 再現済 で開始。 claude を既存の worktree で起動。worktree が無ければメインで実行。",
         "stepCode": "refine",
         "badges": [
           {
@@ -914,7 +914,7 @@
         "id": "step:refine",
         "label": "Issue 更新 · refine",
         "kind": "agent",
-        "detail": "段階 再現済 で開始。 claude を メイン で起動。",
+        "detail": "段階 再現済 で開始。 claude を既存の worktree で起動。worktree が無ければメインで実行。",
         "tone": "claude",
         "icon": "claude",
         "href": "/concepts/workflow/",

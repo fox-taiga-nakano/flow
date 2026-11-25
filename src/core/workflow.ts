@@ -178,6 +178,7 @@ export function parseWorkflow(source: string): Workflow {
                     !!step.agent &&
                     !!step.workspace &&
                     step.workspace !== 'none' &&
+                    !step.workspace.reuse &&
                     step.locks?.includes('db:shared') &&
                     'db_reset' in raw.gates,
                 `${name}: db_reset には database・worktree の agent・db:shared ロック・db_reset gate が必要です`
@@ -224,8 +225,14 @@ export function parseWorkflow(source: string): Workflow {
         if (step.workspace && step.workspace !== 'none') {
             need(
                 object(step.workspace) &&
-                    (step.workspace.pr === true ||
-                        (typeof step.workspace.branch === 'string' && typeof step.workspace.from_base === 'string')),
+                    (step.workspace.reuse === undefined
+                        ? step.workspace.pr === true ||
+                          (typeof step.workspace.branch === 'string' && typeof step.workspace.from_base === 'string')
+                        : typeof step.workspace.reuse === 'string' &&
+                          !!step.workspace.reuse.trim() &&
+                          step.workspace.pr === undefined &&
+                          step.workspace.branch === undefined &&
+                          step.workspace.from_base === undefined),
                 `${name}: workspace が不正`
             )
         }

@@ -653,17 +653,18 @@ describe('step agent placement', () => {
         expect(s?.agent?.name).toBe('flow-repro-1')
         expect(s?.worker).toBeUndefined()
     })
-    it('starts a main agent for a step without a worktree', async () => {
+    it('starts refine in the main checkout if the repro worktree is missing', async () => {
         const h = await setup({ stage: '再現済' })
         await h.o.tick()
         expect(vi.mocked(h.a.runner.start).mock.calls.map(([spec]) => [spec.name, spec.place])).toEqual([
             ['flow-refine-1', 'main'],
         ])
+        expect(h.a.workspace.ensure).not.toHaveBeenCalled()
     })
 })
 
 describe('refine worktree cleanup', () => {
-    it.each([false, true])('removes the repro workspace or retains it when dirty (dirty=%s)', async (dirty) => {
+    it.each(['clean', 'dirty', 'push failed'])('reuses the repro workspace and handles %s cleanup', async (outcome) => {
         const h = await setup()
         await h.o.tick()
         vi.mocked(h.a.runner.status).mockResolvedValue('done')
@@ -674,15 +675,37 @@ describe('refine worktree cleanup', () => {
         await h.o.tick()
         await h.o.control(1, 'approve')
         await h.o.tick()
+        expect(starts(h.a).map(([spec]) => [spec.name, spec.place, spec.ws.path])).toEqual([
+            ['flow-repro-1', 'worktree', h.workspaces[0]!.path],
+            ['flow-refine-1', 'worktree', h.workspaces[0]!.path],
+        ])
+        expect(h.workspaces).toHaveLength(1)
         await h.file(1, 'issue.md')
         await h.result(1)
         await h.o.tick()
-        if (dirty) {
+        expect(h.a.workspace.remove).not.toHaveBeenCalled()
+        if (outcome === 'dirty') {
             const { WorkspaceDirtyError } = await import('../../src/core/ownership.js')
             vi.mocked(h.a.workspace.remove).mockRejectedValueOnce(new WorkspaceDirtyError('未コミット'))
         }
+        if (outcome === 'push failed') {
+            vi.mocked(h.a.exec.run).mockImplementation(async ({ command, mutation }) => {
+                if (command.startsWith('mise issue:push ')) {
+                    throw new Error('issue push failed')
+                }
+                return mutation ? '' : 'main'
+            })
+        }
         await h.o.control(1, 'approve')
         const s = (await h.o.states.read(1))!
+        if (outcome === 'push failed') {
+            expect(s.gate?.name).toBe('operation_recovery')
+            expect(h.a.workspace.remove).not.toHaveBeenCalled()
+            expect(h.workspaces).toHaveLength(1)
+            expect(s.completed).not.toContain('refine')
+            return
+        }
+        const dirty = outcome === 'dirty'
         expect(s.status).toBe('idle')
         expect(s.completed).toContain('refine')
         expect(h.workspaces).toHaveLength(dirty ? 1 : 0)

@@ -87,10 +87,13 @@ export class HerdrWorkspace implements Workspace {
         }
         return rows
     }
-    async ensure(spec: { key: string; branch: string; base?: string; owner: Owner }): Promise<WorkspaceInfo> {
+    async ensure(spec: Parameters<Workspace['ensure']>[0]): Promise<WorkspaceInfo> {
         const existing = (await this.list()).find((ws) => ws.branch === spec.branch)
         if (existing) {
             await this.owned.assertWorkspace(existing)
+            if (spec.existingOnly && (await this.owned.workspace(existing))?.issue !== spec.owner.issue) {
+                throw new WorkspaceBusyError(`再利用する worktree の所有者が変わりました: ${spec.branch}`)
+            }
             if (await this.owned.foreignBusy(existing, await readAgents(this.exec, String(this.vars.main)))) {
                 throw new WorkspaceBusyError('人の agent が使用中の workspace です')
             }
@@ -112,6 +115,9 @@ export class HerdrWorkspace implements Workspace {
                 await this.owned.replaceWorkspace(previous, existing)
             }
             return { ...existing, key: spec.key, base: spec.base }
+        }
+        if (spec.existingOnly) {
+            throw new WorkspaceBusyError(`再利用する worktree が見つかりません: ${spec.branch}`)
         }
         const output = await this.command(spec.base ? 'create_from_base' : 'create_for_branch', {
             ...spec,

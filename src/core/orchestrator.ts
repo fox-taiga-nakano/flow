@@ -470,39 +470,52 @@ export class Orchestrator {
             'error'
         )
     }
-    async removeWorkspaces(s: State, branches?: string[]): Promise<boolean> {
-        const registered = (await this.owned.read()).workspaces.filter((w) => w.issue === s.issue)
-        const targets = [...new Map([...registered, ...s.workspaces].map((w) => [w.path, w])).values()]
+    async removeWorkspaces(s: State, branches?: string[], bestEffort = false): Promise<boolean> {
+        const targets = (await this.owned.read()).workspaces.filter((w) => w.issue === s.issue)
         for (const ws of targets) {
             if (branches && !branches.includes(ws.branch)) {
                 continue
             }
-            if (!(await this.owned.workspace(ws))) {
-                continue
-            }
-            const current = (await this.a.workspace.list()).find((w) => sameWorkspace(w, ws))
-            if (current && !s.keepWorkspaces) {
-                if (await this.owned.foreignBusy(current, await this.a.runner.list())) {
-                    return false
+            try {
+                if ((await this.owned.workspace(ws))?.issue !== s.issue) {
+                    continue
                 }
-                for (const a of (await this.owned.read()).agents) {
-                    if (a.keepTab && a.issue === s.issue && a.workspacePath === ws.path) {
-                        if ((await this.agentStatus(a)) === 'gone') {
-                            await this.owned.removeAgent(a)
-                        } else {
-                            await this.a.runner.close(a)
+                const current = (await this.a.workspace.list()).find((w) => sameWorkspace(w, ws))
+                if (current && !s.keepWorkspaces) {
+                    if (await this.owned.foreignBusy(current, await this.a.runner.list())) {
+                        if (!bestEffort) {
+                            return false
+                        }
+                        throw new WorkspaceBusyError('人の agent が使用中です')
+                    }
+                    for (const a of (await this.owned.read()).agents) {
+                        if (a.keepTab && a.issue === s.issue && a.workspacePath === ws.path) {
+                            if ((await this.agentStatus(a)) === 'gone') {
+                                await this.owned.removeAgent(a)
+                            } else {
+                                await this.a.runner.close(a)
+                            }
                         }
                     }
+                    await this.a.workspace.remove(ws)
                 }
-                await this.a.workspace.remove(ws)
+                await this.owned.removeWorkspace(ws)
+                const slot = ws.slot ?? current?.slot ?? s.workspaces.find((w) => sameWorkspace(w, ws))?.slot ?? null
+                if (slot !== null) {
+                    await this.locks.release(s.issue, `slot:${slot}`)
+                    s.locks = s.locks.filter((l) => l !== `slot:${slot}`)
+                }
+                s.workspaces = s.workspaces.filter((w) => w.path !== ws.path)
+                if (s.workspace?.path === ws.path) {
+                    s.workspace = null
+                }
+                await this.save(s)
+            } catch (e) {
+                if (!bestEffort) {
+                    throw e
+                }
+                await this.notify(s, 'worktree を削除できませんでした', `${ws.path}\n${String(e)}`, 'action')
             }
-            await this.owned.removeWorkspace(ws)
-            if (ws.slot !== null) {
-                await this.locks.release(s.issue, `slot:${ws.slot}`)
-                s.locks = s.locks.filter((l) => l !== `slot:${ws.slot}`)
-            }
-            s.workspaces = s.workspaces.filter((w) => w.path !== ws.path)
-            await this.save(s)
         }
         return true
     }
@@ -1152,23 +1165,19 @@ export class Orchestrator {
             await this.save(s)
             return
         }
-        const open = prs.filter((p) => p.state === 'open')
-        if (step.workspace !== 'none' && step.workspace?.pr && open.length !== 1) {
+        const open = (await this.a.tracker.findPullRequests(s.issue)).filter((p) => p.state === 'open')
+        const workspace = step.workspace === 'none' ? undefined : step.workspace
+        if (workspace?.pr && open.length !== 1) {
             throw new Error(`open PR が1件必要です（${open.length}件）`)
         }
         const pr = open[0]
-        const branch =
-            step.workspace && step.workspace !== 'none'
-                ? step.workspace.pr
-                    ? pr!.branch
-                    : render(step.workspace.branch!, {
-                          ...this.workflow.vars,
-                          issue: s.issue,
-                          base: resolved,
-                      })
-                : ''
+        const vars = { ...this.workflow.vars, issue: s.issue, base: resolved }
+        const branch = workspace?.pr ? pr!.branch : render(workspace?.reuse ?? workspace?.branch ?? '', vars)
         const occupied = await this.a.workspace.list()
         const existing = occupied.find((w) => w.branch === branch)
+        const ownedWorkspace = existing && (await this.owned.workspace(existing))
+        const reused = workspace?.reuse && ownedWorkspace?.issue === s.issue ? ownedWorkspace : undefined
+        const useWorktree = !!workspace && (!workspace.reuse || !!reused)
         const agentName = render(step.agent!.name, { ...this.workflow.vars, issue: s.issue })
         if (!/^flow-[a-z0-9_-]{1,27}$/.test(agentName)) {
             throw new OwnershipError(`agent 名は flow- で始めてください: ${agentName}`)
@@ -1178,7 +1187,7 @@ export class Orchestrator {
         if (named && !(await this.owned.liveAgent(named))) {
             throw new OwnershipError(`同名の agent は flow の所有物ではありません: ${agentName}`)
         }
-        if (existing && !(await this.owned.workspace(existing))) {
+        if (useWorktree && existing && !ownedWorkspace) {
             if (this.workflow.gates.adopt_workspace === 'auto') {
                 await this.owned.addWorkspace(existing, { issue: s.issue, step: name }, 'adopted')
             } else {
@@ -1193,14 +1202,14 @@ export class Orchestrator {
                 return
             }
         }
-        if (existing && (await this.owned.foreignBusy(existing, agents))) {
+        if (useWorktree && existing && (await this.owned.foreignBusy(existing, agents))) {
             return
         }
         const lockList = [...(step.locks ?? [])]
-        if (step.workspace && step.workspace !== 'none' && !lockList.includes('slot')) {
+        if (useWorktree && !lockList.includes('slot')) {
             lockList.unshift('slot')
         }
-        const held = await this.locks.acquire(lockList, s.issue, occupied, existing?.path)
+        const held = await this.locks.acquire(lockList, s.issue, occupied, useWorktree ? existing?.path : undefined)
         if (!held) {
             return
         }
@@ -1212,18 +1221,13 @@ export class Orchestrator {
         s.resultReminder = false
         delete s.tailHash
         let ws: WorkspaceInfo
-        if (step.workspace && step.workspace !== 'none') {
+        if (useWorktree) {
             ws = await this.a.workspace.ensure({
-                key: step.workspace.pr ? `pr-${pr!.number}` : `${name}-${s.issue}`,
+                key: reused?.key ?? (workspace.pr ? `pr-${pr!.number}` : `${name}-${s.issue}`),
                 owner: { issue: s.issue, step: name },
                 branch,
-                base: step.workspace.from_base
-                    ? render(step.workspace.from_base, {
-                          ...this.workflow.vars,
-                          issue: s.issue,
-                          base: resolved,
-                      })
-                    : undefined,
+                base: reused?.base ?? (workspace.from_base ? render(workspace.from_base, vars) : undefined),
+                ...(reused ? { existingOnly: true } : {}),
             })
             if (!existing) {
                 await this.owned.addWorkspace(ws, { issue: s.issue, step: name }, 'created')
@@ -1240,11 +1244,16 @@ export class Orchestrator {
                 await this.locks.bindSlot(s.issue, n, ws.path)
             }
             s.workspace = ws
-            if (!s.workspaces.some((x) => x.path === ws.path)) {
+            const previous = s.workspaces.findIndex((x) => x.path === ws.path)
+            if (previous === -1) {
                 s.workspaces.push(ws)
+            } else {
+                s.workspaces[previous] = ws
             }
             await this.save(s)
-            await this.a.workspace.sync(ws)
+            if (!reused) {
+                await this.a.workspace.sync(ws)
+            }
         } else {
             ws = {
                 key: 'main',
@@ -1998,6 +2007,7 @@ export class Orchestrator {
                         // Save the original stage before issue:mark moves the entire directory.
                         await this.save(s)
                         await this.a.stages.set(issue, this.workflow.stage_store.rejected)
+                        delete s.keepWorkspaces
                     }
                     await this.release(s)
                     delete s.dbReset
@@ -2012,6 +2022,9 @@ export class Orchestrator {
                 }
                 s.gate = null
                 await this.save(s)
+                if (action === 'reject') {
+                    await this.removeWorkspaces(s, undefined, true)
+                }
                 await this.events.add(issue, s.step, action, options.reason ?? action)
             } catch (e) {
                 if (e instanceof CommandError) {

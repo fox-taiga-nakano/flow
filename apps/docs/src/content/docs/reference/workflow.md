@@ -36,7 +36,7 @@ description: 設定ファイルの構造、検証規則、外部コマンドと�
 既存の設定を移行する場合は、`cleanup` の `when_pr_merged` を `when_pr_review_requested` に置き換え、`cleanup` のアクションを `{ remove_workspaces: true }` にします。テンプレートの `complete` を追加して、マージ時に段階を更新します。
 
 - **agent** は `claude` または `codex`。展開後の名前は `flow-` に続けて小文字の英数字・`_`・`-` を1〜27文字。対応する名前のプロンプトが必要です。
-- **workspace** は `none`、`{ pr: true }`、または `{ from_base, branch }`。worktree を使う場合は `adopt_workspace` Gate を定義します。
+- **workspace** は `none`、`{ pr: true }`、`{ from_base, branch }`、`{ reuse: 'flow/repro-{issue}' }` のいずれかです。`reuse` は同じ Issue が所有する指定ブランチの worktree を使い、見つからなければメインで実行します。worktree を使う場合は `adopt_workspace` Gate を定義します。
 - **remote** は `kind: copilot`。`assign` には `{assign_body}` が必要です。`transport` の REST / GraphQL はアサイン本文の形式を選びます。`authors`・`done_when` は Step ごとの値を優先できます。完了条件は `timeline`、`review_requested`、`not_draft` のいずれかです。
 - **action** にはコマンドまたは `remove_workspaces: true` を指定します。削除は所有する worktree が対象です。
 - **done_when** の `files` は Issue ディレクトリ内の相対パス。`stage_in` は許可する完了段階です。ローカル Step では結果ファイルも確認します。
