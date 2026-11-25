@@ -371,7 +371,7 @@ flow は、**自分で作った worktree と、自分で起動したエージェ
 ## 9. Copilot（RemoteAgent）
 
 - `request`：`assign` のコマンドを実行し、`waiting_remote` にする
-- `poll`：`tracker.findPullRequests(issue)` で、作者が Copilot（`Copilot` / `copilot-swe-agent`。WORKFLOW.md で設定）の open な PR を探す
+- アサイン前と `poll` の両方で、Issue に紐づく open PR を探す。作者が設定済みの Copilot アカウントの場合、または `copilot/` ブランチかつタイムラインに Copilot の作業イベントがある場合に該当する。
   - 無い：`pending`（Copilot がまだ PR を作っていない）
   - ある：作業が終わったかを判定する。判定方法は実装時に `gh api` で PR のタイムラインやレビュー依頼を調べて決め、
     WORKFLOW.md の `remote.done_when` で選べるようにする（候補：draft が外れた／Copilot からレビュー依頼が来た／タイムラインの作業完了のイベント）。

@@ -1,6 +1,6 @@
 import { normalizeAuthor } from '../core/identity.js'
 import { quote } from '../core/template.js'
-import type { Exec, RemoteAgent, Step, Tracker, Workflow } from '../core/types.js'
+import type { Exec, RemoteAgent, Step, Tracker, TrackerPR, Workflow } from '../core/types.js'
 import { GraphQLAssignment, RestAssignment } from './assignment.js'
 
 export type TimelineEvent = {
@@ -10,6 +10,8 @@ export type TimelineEvent = {
     review_requester?: { login: string }
 }
 export { normalizeAuthor } from '../core/identity.js'
+
+const workEvents = ['copilot_work_started', 'copilot_work_finished', 'copilot_work_failed']
 
 export function remoteStatus(
     events: TimelineEvent[],
@@ -26,9 +28,9 @@ export function remoteStatus(
             .find(
                 (e) =>
                     e.event === 'review_requested' &&
-                    authors
-                        .map(normalizeAuthor)
-                        .includes(normalizeAuthor(e.actor?.login ?? e.review_requester?.login ?? ''))
+                    [e.actor, e.review_requester].some(
+                        (user) => user && authors.map(normalizeAuthor).includes(normalizeAuthor(user.login))
+                    )
             )
         const failure = [...events].reverse().find((e) => e.event === 'copilot_work_failed')
         if (failure && (!review || (failure.created_at ?? '') > (review.created_at ?? ''))) {
@@ -36,9 +38,7 @@ export function remoteStatus(
         }
         return review ? 'done' : 'working'
     }
-    const latest = [...events]
-        .reverse()
-        .find((e) => ['copilot_work_started', 'copilot_work_finished', 'copilot_work_failed'].includes(e.event))
+    const latest = [...events].reverse().find((e) => workEvents.includes(e.event))
     return latest?.event === 'copilot_work_finished'
         ? 'done'
         : latest?.event === 'copilot_work_failed'
@@ -63,33 +63,53 @@ export class CopilotRemote implements RemoteAgent {
             mutation: true,
         })
     }
-    async poll(issue: number, since?: string): Promise<'pending' | 'working' | 'done' | 'failed'> {
-        const authors = this.step.remote?.authors ?? this.workflow.remote?.authors ?? ['Copilot', 'copilot-swe-agent']
-        const prs = (await this.tracker.findPullRequests(issue)).filter(
-            (p) => p.state === 'open' && authors.map(normalizeAuthor).includes(normalizeAuthor(p.author))
-        )
-        if (!prs.length) {
-            return 'pending'
+    private authors() {
+        return this.step.remote?.authors ?? this.workflow.remote?.authors ?? ['Copilot', 'copilot-swe-agent']
+    }
+    private async timeline(pr: TrackerPR): Promise<TimelineEvent[]> {
+        const output = await this.exec.run({
+            command: `gh api --method GET ${quote(`repos/{owner}/{repo}/issues/${pr.number}/timeline`)} --paginate --slurp`,
+            cwd: String(this.workflow.vars.main),
+            mutation: false,
+        })
+        return (JSON.parse(output) as TimelineEvent[][]).flat()
+    }
+    private async openPullRequest(issue: number) {
+        const authors = this.authors().map(normalizeAuthor)
+        const matches: { pr: TrackerPR; events?: TimelineEvent[] }[] = []
+        for (const pr of await this.tracker.findPullRequests(issue)) {
+            if (pr.state !== 'open') {
+                continue
+            }
+            if (authors.includes(normalizeAuthor(pr.author))) {
+                matches.push({ pr })
+            } else if (pr.branch.startsWith('copilot/')) {
+                const events = await this.timeline(pr)
+                if (events.some((event) => workEvents.includes(event.event))) {
+                    matches.push({ pr, events })
+                }
+            }
         }
-        if (prs.length > 1) {
+        if (matches.length > 1) {
             throw new Error(`Copilot の open PR が複数あります: #${issue}`)
         }
-        const pr = prs[0]!
+        return matches[0]
+    }
+    async hasOpenPullRequest(issue: number): Promise<boolean> {
+        return !!(await this.openPullRequest(issue))
+    }
+    async poll(issue: number, since?: string): Promise<'pending' | 'working' | 'done' | 'failed'> {
+        const match = await this.openPullRequest(issue)
+        if (!match) {
+            return 'pending'
+        }
+        const { pr } = match
         const mode = this.step.remote?.done_when ?? this.workflow.remote?.done_when ?? 'timeline'
-        const output =
-            mode === 'not_draft'
-                ? '[]'
-                : await this.exec.run({
-                      command: `gh api --method GET ${quote(`repos/{owner}/{repo}/issues/${pr.number}/timeline`)} --paginate --slurp`,
-                      cwd: String(this.workflow.vars.main),
-                      mutation: false,
-                  })
+        const events = mode === 'not_draft' ? [] : (match.events ?? (await this.timeline(pr)))
         return remoteStatus(
-            (JSON.parse(output) as TimelineEvent[][])
-                .flat()
-                .filter((e) => !since || (!!e.created_at && Date.parse(e.created_at) >= Date.parse(since))),
+            events.filter((e) => !since || (!!e.created_at && Date.parse(e.created_at) >= Date.parse(since))),
             mode,
-            authors,
+            this.authors(),
             pr.isDraft
         )
     }

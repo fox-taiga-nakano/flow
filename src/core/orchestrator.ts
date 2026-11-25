@@ -7,7 +7,6 @@ import { resetDatabase } from './db-reset.js'
 import { Events } from './events.js'
 import { artifact, atomic, exists, mutex } from './files.js'
 import { approved, gateKey, makeGate } from './gates.js'
-import { normalizeAuthor } from './identity.js'
 import { Locks } from './locks.js'
 import { IssueTabBusyError, Ownership, OwnershipError, sameWorkspace, WorkspaceBusyError } from './ownership.js'
 import { FlowPaths } from './paths.js'
@@ -1055,20 +1054,13 @@ export class Orchestrator {
             delete s.continuation
             delete s.pendingResult
         }
-        const prs = await this.a.tracker.findPullRequests(s.issue)
-        if (step.remote && !s.remoteRetry) {
-            const authors = step.remote.authors ?? this.workflow.remote?.authors ?? ['Copilot', 'copilot-swe-agent']
-            if (
-                prs.some(
-                    (pr) => pr.state === 'open' && authors.map(normalizeAuthor).includes(normalizeAuthor(pr.author))
-                )
-            ) {
-                s.status = 'waiting_remote'
-                s.attempt = Math.max(1, s.attempt)
-                s.gate = null
-                await this.save(s)
-                return
-            }
+        const remote = step.remote ? this.a.remote(step) : undefined
+        if (remote && !s.remoteRetry && (await remote.hasOpenPullRequest(s.issue))) {
+            s.status = 'waiting_remote'
+            s.attempt = Math.max(1, s.attempt)
+            s.gate = null
+            await this.save(s)
+            return
         }
         let resolved: string | null | undefined
         if (step.agent || step.remote || (step.workspace && step.workspace !== 'none' && step.workspace.from_base)) {
@@ -1078,8 +1070,8 @@ export class Orchestrator {
             }
         }
         let assignment: { body: unknown; command: string } | undefined
-        if (step.remote && this.dryRun) {
-            assignment = await this.a.remote(step).prepare(s.issue, resolved!)
+        if (remote && this.dryRun) {
+            assignment = await remote.prepare(s.issue, resolved!)
             const file = this.paths.assignment(s.issue)
             await atomic(file, assignment.body)
             this.output(
@@ -1105,13 +1097,13 @@ export class Orchestrator {
         ) {
             return
         }
-        if (step.remote) {
+        if (remote) {
             if (!s.remoteRetry && s.effects.includes(`${name}:${s.attempt}:request`)) {
                 s.status = 'waiting_remote'
                 await this.save(s)
                 return
             }
-            assignment ??= await this.a.remote(step).prepare(s.issue, resolved!)
+            assignment ??= await remote.prepare(s.issue, resolved!)
             await fs.mkdir(this.paths.run, { recursive: true })
             const temp = await fs.mkdtemp(this.paths.assignmentTemp)
             const file = FlowPaths.assignmentBody(temp)
@@ -1127,7 +1119,7 @@ export class Orchestrator {
                 const command = render(assignment.command, ctx, true)
                 if (
                     !(await this.command(s, assignment.command, `${name}:${s.attempt}:request`, ctx, () =>
-                        this.a.remote(step).request({ command })
+                        remote.request({ command })
                     ))
                 ) {
                     return

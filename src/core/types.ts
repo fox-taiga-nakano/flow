@@ -97,6 +97,7 @@ export interface Runner {
     stop(h: AgentHandle): Promise<void>
 }
 export interface RemoteAgent {
+    hasOpenPullRequest(issue: number): Promise<boolean>
     prepare(issue: number, base: string): Promise<{ body: unknown; command: string }>
     request(spec: { command: string }): Promise<void>
     poll(issue: number, since?: string): Promise<'pending' | 'working' | 'done' | 'failed'>

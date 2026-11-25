@@ -228,9 +228,10 @@ describe('tick and durable state', () => {
         await h.o.tick()
         expect(await h.o.states.read(1)).toMatchObject({ step: 'complete', status: 'done' })
     })
-    it('never assigns a remote agent if an open Copilot PR already exists', async () => {
+    it.each(['app/copilot-swe-agent', 'octocat'])('does not reassign an open Copilot PR by %s', async (author) => {
         const h = await setup({ stage: 'Issue更新済' })
-        h.prs.set(1, [pr()])
+        h.prs.set(1, [{ ...pr(), author, branch: 'copilot/fix-layout' }])
+        vi.mocked(h.a.exec.run).mockResolvedValue('[[{"event":"copilot_work_started"}]]')
         await h.o.tick()
         expect((await h.o.states.read(1))?.status).toBe('waiting_remote')
         expect(vi.mocked(h.a.exec.run).mock.calls.filter(([r]) => r.mutation)).toHaveLength(0)
@@ -245,6 +246,7 @@ describe('tick and durable state', () => {
         h.prs.set(1, [pr()])
         const remote = h.a.remote(h.workflow.steps.implement!)
         vi.mocked(h.a.remote).mockReturnValue({
+            hasOpenPullRequest: (issue) => remote.hasOpenPullRequest(issue),
             prepare: (...args) => remote.prepare(...args),
             request: vi.fn(),
             poll: vi.fn(async () => 'done' as const),
