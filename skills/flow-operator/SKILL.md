@@ -64,7 +64,7 @@ gateには、WORKFLOW.mdのstepが決めるものと、flow本体が立てるも
 | `base_changed`                           | 固定したbase・現在のbase・PRのbase。`keep` / `retarget` の対象と影響                                                      |
 | `adopt_workspace`                        | 人が作ったworkspaceのpath・branch・所有状況。flowへ任せてよいか                                                           |
 | `db_reset`                               | リセットの対象・排他ロック・ほかの作業                                                                                    |
-| `cleanup`（`--choice keep` あり）        | マージ済みか、削除するflow所有のworktree、未コミット・未pushの作業がないか                                                |
+| `cleanup`（`--choice keep` あり）        | 指定ユーザーへのレビュー依頼、削除するflow所有のworktree、未コミット・未pushの作業がないか                                |
 | `agent_question`                         | 「失敗・質問・停止」を参照                                                                                                |
 | `launch_recovery` / `operation_recovery` | 「失敗・質問・停止」を参照                                                                                                |
 

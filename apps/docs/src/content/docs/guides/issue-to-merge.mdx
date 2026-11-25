@@ -14,14 +14,15 @@ import Diagram from '../../../components/diagrams/Diagram.astro'
   <Diagram name="workflowDetail" />
 </details>
 
-| 作業             | 確認するもの                                                 | 次の操作                                                                                           |
-| ---------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| 検出 → repro     | open かつ自分に割り当てられ、除外ラベルが無い Issue          | `flow approve 123 start`。専用 worktree で再現作業を開始。                                         |
-| repro の結果     | `repro.md`、`scripts/repro.sh`、`evidence/before/checks.tsv` | `flow approve 123 repro_result`。OK なら `再現済` に進む。                                         |
-| refine           | メイン側で作った `issue.md`                                  | `flow issue push 123 --diff` で差分を読み、`flow approve 123 issue_push` で本文反映。              |
-| implement        | 更新後の Issue 本文と固定 base                               | `flow approve 123 assign`。Copilot へ依頼し、PR の設定済み完了条件を監視。                         |
-| verify           | PR の worktree、`evidence/after/checks.tsv` と段階           | テンプレートは開始が auto。NG は `ng_action` の対応を選ぶ。                                        |
-| finish           | `pr-body.md` の下書き                                        | `flow approve 123 pr_body`。継続指示で PR 本文を更新。                                             |
-| マージ → cleanup | レビューとマージの成立、手元の変更                           | マージは GitHub の通常の手順で行う。次の tick で所有 worktree を片付け、同梱コマンドで段階を同期。 |
+| 作業                   | 確認するもの                                                 | 次の操作                                                                                          |
+| ---------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| 検出 → repro           | open かつ自分に割り当てられ、除外ラベルが無い Issue          | `flow approve 123 start`。専用 worktree で再現作業を開始。                                        |
+| repro の結果           | `repro.md`、`scripts/repro.sh`、`evidence/before/checks.tsv` | `flow approve 123 repro_result`。OK なら `再現済` に進む。                                        |
+| refine                 | メイン側で作った `issue.md`                                  | `flow issue push 123 --diff` で差分を読み、`flow approve 123 issue_push` で本文反映。             |
+| implement              | 更新後の Issue 本文と固定 base                               | `flow approve 123 assign`。Copilot へ依頼し、PR の設定済み完了条件を監視。                        |
+| verify                 | PR の worktree、`evidence/after/checks.tsv` と段階           | テンプレートは開始が auto。NG は `ng_action` の対応を選ぶ。                                       |
+| finish                 | `pr-body.md` の下書き                                        | `flow approve 123 pr_body`。継続指示で PR 本文を更新。                                            |
+| レビュー依頼 → cleanup | PR のレビュー依頼先、手元の変更                              | 設定した GitHub ユーザーのうち1人以上にレビューを依頼する。次の tick で所有 worktree を片付ける。 |
+| マージ → 完了          | 関連 PR のマージ                                             | GitHub で PR をマージする。次の tick で Issue の段階を「完了」に更新する。                        |
 
 各 Step の切り替えは GitHub と Stage を確認した次の tick で起こります。進行が止まったら `flow status 123` を開き、`flow logs 123` で原因を確認します。手動の操作は [承認のガイド](/guides/approval/)にあります。

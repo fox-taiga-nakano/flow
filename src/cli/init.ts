@@ -122,6 +122,7 @@ export async function initProject(project: string, root = packageRoot()): Promis
 export const nextSteps = [
     '次の作業:',
     '  1. .flow/WORKFLOW.md の base.resolve を、PR のマージ先の base を出力するコマンドにする',
+    '     cleanup を使う場合は steps.cleanup.when_pr_review_requested に GitHub ユーザー名を指定する',
     '  2. 環境変数 ISSUE_DIR を設定する（例: mise.toml の [env] に ISSUE_DIR = ".dev/issues"）',
     '  3. .gitignore に /.flow/state/・/.flow/run/・/.flow/logs/ を追加する',
     '  4. .herdr/worktree.json と .agents/skills/flow-* を、プロジェクトに合わせて書き換える',

@@ -29,7 +29,11 @@ description: 設定ファイルの構造、検証規則、外部コマンドと�
 
 ## Step と Gate を設定する
 
-`steps` は名前から定義へのマップで、1件以上必要です。段階起動には重複しない `when_stage` を使い、PR マージで開始する `when_pr_merged: true` は1件までです。`agent`、`remote`、`action` は1種類だけ指定します。
+`steps` は名前から定義へのマップで、1件以上必要です。段階起動には重複しない `when_stage` を使います。`when_pr_review_requested` と `when_pr_merged: true` はそれぞれ1件までです。`agent`、`remote`、`action` は1種類だけ指定します。
+
+テンプレートの `steps.cleanup.when_pr_review_requested` には、`[alice, bob]` のように GitHub ユーザー名を指定します。関連する open PR の現在のレビュー依頼先に1人でも含まれると起動します。空の配列なら cleanup は無効です。`steps.complete` は関連 PR のマージを検出すると Issue の段階を「完了」にします。
+
+既存の設定を移行する場合は、`cleanup` の `when_pr_merged` を `when_pr_review_requested` に置き換え、`cleanup` のアクションを `{ remove_workspaces: true }` にします。テンプレートの `complete` を追加して、マージ時に段階を更新します。
 
 - **agent** は `claude` または `codex`。展開後の名前は `flow-` に続けて小文字の英数字・`_`・`-` を1〜27文字。対応する名前のプロンプトが必要です。
 - **workspace** は `none`、`{ pr: true }`、または `{ from_base, branch }`。worktree を使う場合は `adopt_workspace` Gate を定義します。

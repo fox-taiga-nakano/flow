@@ -127,6 +127,7 @@ description: "型と検証規則から生成した設定リファレンス"
 | `steps.*.db_reset` | `boolean` | 省略可 |
 | `steps.*.when_stage` | `string` | 省略可 |
 | `steps.*.when_pr_merged` | `boolean` | 省略可 |
+| `steps.*.when_pr_review_requested` | `string[]` | 省略可 |
 | `steps.*.gate_before` | `string` | 省略可 |
 | `steps.*.gate_after` | `string` | 省略可 |
 | `steps.*.skippable` | `boolean` | 省略可 |
@@ -246,7 +247,9 @@ need(object(raw.steps) && Object.keys(raw.steps).length, 'steps がありませ�
 need(/^[\w-]+$/.test(name) && object(value), `step が不正: ${name}`)
 need(step.db_reset === undefined || typeof step.db_reset === 'boolean', `${name}: db_reset は真偽値`)
 need(raw.database !== undefined && !!step.agent && !!step.workspace && step.workspace !== 'none' && step.locks?.includes('db:shared') && 'db_reset' in raw.gates, `${name}: db_reset には database・worktree の agent・db:shared ロック・db_reset gate が必要です`)
-need(typeof step.when_stage === 'string' || step.when_pr_merged === true, `${name}: 起動条件が必要`)
+need(step.when_pr_review_requested === undefined || (strings(step.when_pr_review_requested) && step.when_pr_review_requested.every((login) => login.length > 0 && !/[\s@]/.test(login))), `${name}: when_pr_review_requested は GitHub ユーザー名の配列`)
+need(typeof step.when_stage === 'string' || step.when_pr_merged === true || step.when_pr_review_requested !== undefined, `${name}: 起動条件が必要`)
+need(step.when_pr_review_requested === undefined || (step.when_stage === undefined && step.when_pr_merged !== true), `${name}: when_pr_review_requested は他の起動条件と併用できません`)
 need([step.agent, step.remote, step.action].filter(Boolean).length === 1, `${name}: agent/remote/action のいずれか1つ`)
 need(step.when_stage !== raw.stage_store.rejected, `${name}: stage_store.rejected を when_stage に指定できません`)
 need(raw.stage_store.held === undefined || step.when_stage !== raw.stage_store.held, `${name}: stage_store.held を when_stage に指定できません`)
@@ -275,6 +278,7 @@ need(object(raw.remote) && object(raw.remote.ng_action) && ['copilot', 'self', '
 need(Object.values(raw.steps).every( (s) => !(s as Step).workspace || (s as Step).workspace === 'none' || 'adopt_workspace' in (raw.gates as Record<string, unknown>) ), 'workspace を使う場合は adopt_workspace gate を定義してください')
 need(new Set(stages).size === stages.length, 'when_stage が重複しています')
 need(Object.values(raw.steps).filter((s) => (s as Step).when_pr_merged).length <= 1, 'when_pr_merged は1つまで')
+need(Object.values(raw.steps).filter((s) => (s as Step).when_pr_review_requested !== undefined).length <= 1, 'when_pr_review_requested は1つまで')
 need(Object.keys(raw.tracker.query).every((k) => ['assignee', 'state', 'label', 'search', 'milestone', 'author'].includes(k) ), 'tracker.query に未対応の条件があります')
 need(Object.hasOwn(known, root!) && (rest.length === 0 || (rest.length === 1 && known[root!]!.includes(rest[0]!))), `未定義の変数: ${m[1]}`)
 ````

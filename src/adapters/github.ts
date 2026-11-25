@@ -19,6 +19,7 @@ export type RawPR = {
     isDraft: boolean
     author: { login: string } | null
     url: string
+    reviewRequests?: { __typename: string; login?: string }[]
     closingIssuesReferences?: { number: number; url?: string }[]
     body?: string
 }
@@ -36,6 +37,9 @@ export const parsePR = (x: RawPR): TrackerPR => ({
     isDraft: x.isDraft,
     author: x.author?.login ?? '',
     url: x.url,
+    requestedReviewers: (x.reviewRequests ?? []).flatMap((reviewer) =>
+        reviewer.__typename === 'User' && reviewer.login ? [reviewer.login] : []
+    ),
 })
 export class GitHubTracker implements Tracker {
     private issuesSnapshot = new Map<number, Promise<TrackerIssue | null>>()
@@ -184,7 +188,7 @@ export class GitHubTracker implements Tracker {
         return (this.prsSnapshot ??= (async () => {
             const rows = JSON.parse(
                 await this.read(
-                    `gh pr list --state all --limit ${this.config.pr_limit ?? 100} --json number,headRefName,baseRefName,state,isDraft,author,url,closingIssuesReferences`
+                    `gh pr list --state all --limit ${this.config.pr_limit ?? 100} --json number,headRefName,baseRefName,state,isDraft,author,url,closingIssuesReferences,reviewRequests`
                 )
             ) as RawPR[]
             const byIssue = new Map<number, TrackerPR[]>()

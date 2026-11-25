@@ -576,10 +576,10 @@
         "height": 56
       },
       {
-        "id": "merge",
-        "label": "PR がマージ済み",
+        "id": "review",
+        "label": "指定ユーザーにレビューを依頼",
         "kind": "service",
-        "detail": "関連 PR のマージを GitHub から検出します。",
+        "detail": "関連 PR のレビュー依頼先を確認します。",
         "icon": "github",
         "x": 24,
         "y": 472,
@@ -590,7 +590,7 @@
         "id": "step:cleanup",
         "label": "片付け",
         "kind": "process",
-        "detail": "PR マージ後に開始。 設定された片付け操作を実行。",
+        "detail": "指定ユーザーのいずれかにレビュー依頼が出たら開始。 所有 worktree を片付ける。",
         "stepCode": "cleanup",
         "badges": [
           {
@@ -608,12 +608,37 @@
         "height": 40
       },
       {
+        "id": "merge",
+        "label": "PR がマージ済み",
+        "kind": "service",
+        "detail": "関連 PR のマージを GitHub から検出します。",
+        "icon": "github",
+        "x": 24,
+        "y": 600,
+        "width": 228,
+        "height": 40
+      },
+      {
+        "id": "step:complete",
+        "label": "段階を更新",
+        "kind": "process",
+        "detail": "PR マージ後に開始。 設定されたコマンドを実行。",
+        "stepCode": "complete",
+        "badges": [],
+        "tone": "neutral",
+        "href": "/concepts/workflow/",
+        "x": 24,
+        "y": 664,
+        "width": 228,
+        "height": 40
+      },
+      {
         "id": "end",
         "label": "完了",
         "kind": "process",
-        "detail": "テンプレートの片付けが終了した状態です。",
+        "detail": "PR がマージされ、Issue の段階を完了に更新した状態です。",
         "x": 24,
-        "y": 600,
+        "y": 728,
         "width": 228,
         "height": 40
       }
@@ -689,7 +714,7 @@
       },
       {
         "from": "step:finish",
-        "to": "merge",
+        "to": "review",
         "id": "edge-4",
         "points": [
           [
@@ -705,7 +730,7 @@
         ]
       },
       {
-        "from": "merge",
+        "from": "review",
         "to": "step:cleanup",
         "id": "edge-5",
         "points": [
@@ -723,7 +748,7 @@
       },
       {
         "from": "step:cleanup",
-        "to": "end",
+        "to": "merge",
         "id": "edge-6",
         "points": [
           [
@@ -739,9 +764,43 @@
         ]
       },
       {
+        "from": "merge",
+        "to": "step:complete",
+        "id": "edge-7",
+        "points": [
+          [
+            {
+              "x": 138,
+              "y": 640
+            },
+            {
+              "x": 138,
+              "y": 664
+            }
+          ]
+        ]
+      },
+      {
+        "from": "step:complete",
+        "to": "end",
+        "id": "edge-8",
+        "points": [
+          [
+            {
+              "x": 138,
+              "y": 704
+            },
+            {
+              "x": 138,
+              "y": 728
+            }
+          ]
+        ]
+      },
+      {
         "from": "detect",
         "to": "step:repro",
-        "id": "edge-7",
+        "id": "edge-9",
         "points": [
           [
             {
@@ -768,8 +827,19 @@
         "kind": "process",
         "detail": "GitHub の検索条件に一致する Issue を取得します。",
         "icon": "github",
-        "x": 188,
+        "x": 123,
         "y": 24,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "review",
+        "label": "指定ユーザーにレビューを依頼",
+        "kind": "service",
+        "detail": "関連 PR のレビュー依頼先を確認します。",
+        "icon": "github",
+        "x": 24,
+        "y": 1955,
         "width": 198,
         "height": 68
       },
@@ -779,8 +849,8 @@
         "kind": "service",
         "detail": "関連 PR のマージを GitHub から検出します。",
         "icon": "github",
-        "x": 287,
-        "y": 1911,
+        "x": 24,
+        "y": 2354,
         "width": 198,
         "height": 68
       },
@@ -788,9 +858,9 @@
         "id": "end",
         "label": "完了",
         "kind": "process",
-        "detail": "テンプレートの片付けが終了した状態です。",
-        "x": 287,
-        "y": 2310,
+        "detail": "PR がマージされ、Issue の段階を完了に更新した状態です。",
+        "x": 24,
+        "y": 2580,
         "width": 198,
         "height": 68
       },
@@ -800,8 +870,8 @@
         "kind": "process",
         "detail": "原因と残存する作業を確認。再試行可能な失敗は backoff を適用します。",
         "href": "/troubleshooting/",
-        "x": 24,
-        "y": 1625,
+        "x": 287,
+        "y": 1669,
         "width": 198,
         "height": 68
       },
@@ -813,7 +883,7 @@
         "tone": "claude",
         "icon": "claude",
         "href": "/concepts/workflow/",
-        "x": 188,
+        "x": 123,
         "y": 280,
         "width": 198,
         "height": 68
@@ -824,7 +894,7 @@
         "kind": "gate",
         "detail": "承認を待ってから Step を起動。",
         "href": "/guides/approval/",
-        "x": 188,
+        "x": 123,
         "y": 137,
         "width": 198,
         "height": 68
@@ -835,8 +905,8 @@
         "kind": "gate",
         "detail": "成果物を確認し、設定された承認後処理へ進みます。",
         "href": "/guides/approval/",
-        "x": 221,
-        "y": 430,
+        "x": 90,
+        "y": 452,
         "width": 198,
         "height": 68
       },
@@ -848,8 +918,8 @@
         "tone": "claude",
         "icon": "claude",
         "href": "/concepts/workflow/",
-        "x": 221,
-        "y": 573,
+        "x": 90,
+        "y": 595,
         "width": 198,
         "height": 68
       },
@@ -859,8 +929,8 @@
         "kind": "gate",
         "detail": "成果物を確認し、設定された承認後処理へ進みます。",
         "href": "/guides/approval/",
-        "x": 221,
-        "y": 716,
+        "x": 90,
+        "y": 738,
         "width": 198,
         "height": 68
       },
@@ -872,8 +942,8 @@
         "tone": "remote",
         "icon": "copilot",
         "href": "/concepts/workflow/",
-        "x": 221,
-        "y": 1002,
+        "x": 90,
+        "y": 1024,
         "width": 198,
         "height": 68
       },
@@ -883,8 +953,8 @@
         "kind": "gate",
         "detail": "承認を待ってから Step を起動。",
         "href": "/guides/approval/",
-        "x": 221,
-        "y": 859,
+        "x": 90,
+        "y": 881,
         "width": 198,
         "height": 68
       },
@@ -896,8 +966,8 @@
         "tone": "claude",
         "icon": "claude",
         "href": "/concepts/workflow/",
-        "x": 254,
-        "y": 1295,
+        "x": 57,
+        "y": 1317,
         "width": 198,
         "height": 68
       },
@@ -907,8 +977,8 @@
         "kind": "gate",
         "detail": "条件成立後に自動で進行。",
         "href": "/guides/approval/",
-        "x": 254,
-        "y": 1152,
+        "x": 57,
+        "y": 1174,
         "width": 198,
         "height": 68
       },
@@ -918,8 +988,8 @@
         "kind": "gate",
         "detail": "NG 結果への対応を決めます。",
         "href": "/guides/approval/",
-        "x": 57,
-        "y": 1475,
+        "x": 254,
+        "y": 1519,
         "width": 198,
         "height": 68
       },
@@ -931,8 +1001,8 @@
         "tone": "claude",
         "icon": "claude",
         "href": "/concepts/workflow/",
-        "x": 287,
-        "y": 1625,
+        "x": 24,
+        "y": 1669,
         "width": 198,
         "height": 68
       },
@@ -942,8 +1012,8 @@
         "kind": "gate",
         "detail": "条件成立後に自動で進行。",
         "href": "/guides/approval/",
-        "x": 287,
-        "y": 1475,
+        "x": 24,
+        "y": 1519,
         "width": 198,
         "height": 68
       },
@@ -953,8 +1023,8 @@
         "kind": "gate",
         "detail": "成果物を確認し、設定された承認後処理へ進みます。",
         "href": "/guides/approval/",
-        "x": 287,
-        "y": 1768,
+        "x": 24,
+        "y": 1812,
         "width": 198,
         "height": 68
       },
@@ -962,11 +1032,11 @@
         "id": "step:cleanup",
         "label": "片付け · cleanup",
         "kind": "process",
-        "detail": "PR マージ後に開始。 設定された片付け操作を実行。",
+        "detail": "指定ユーザーのいずれかにレビュー依頼が出たら開始。 所有 worktree を片付ける。",
         "tone": "neutral",
         "href": "/concepts/workflow/",
-        "x": 287,
-        "y": 2167,
+        "x": 24,
+        "y": 2211,
         "width": 198,
         "height": 68
       },
@@ -976,8 +1046,20 @@
         "kind": "gate",
         "detail": "条件成立後に自動で進行。",
         "href": "/guides/approval/",
-        "x": 287,
-        "y": 2024,
+        "x": 24,
+        "y": 2068,
+        "width": 198,
+        "height": 68
+      },
+      {
+        "id": "step:complete",
+        "label": "段階を更新 · complete",
+        "kind": "process",
+        "detail": "PR マージ後に開始。 設定されたコマンドを実行。",
+        "tone": "neutral",
+        "href": "/concepts/workflow/",
+        "x": 24,
+        "y": 2467,
         "width": 198,
         "height": 68
       }
@@ -991,17 +1073,17 @@
         "points": [
           [
             {
-              "x": 287,
+              "x": 222,
               "y": 205
             },
             {
-              "x": 287,
+              "x": 222,
               "y": 280
             }
           ]
         ],
         "caption": {
-          "x": 317,
+          "x": 252,
           "y": 224
         }
       },
@@ -1013,17 +1095,17 @@
         "points": [
           [
             {
-              "x": 320,
+              "x": 189,
               "y": 348
             },
             {
-              "x": 320,
-              "y": 430
+              "x": 189,
+              "y": 452
             }
           ]
         ],
         "caption": {
-          "x": 369.5,
+          "x": 238.5,
           "y": 367
         }
       },
@@ -1035,18 +1117,18 @@
         "points": [
           [
             {
-              "x": 320,
-              "y": 498
+              "x": 189,
+              "y": 520
             },
             {
-              "x": 320,
-              "y": 573
+              "x": 189,
+              "y": 595
             }
           ]
         ],
         "caption": {
-          "x": 356.5,
-          "y": 517
+          "x": 225.5,
+          "y": 539
         }
       },
       {
@@ -1057,34 +1139,34 @@
         "points": [
           [
             {
-              "x": 254,
+              "x": 255,
               "y": 348
             },
             {
-              "x": 254,
-              "y": 404
+              "x": 255,
+              "y": 426
             },
             {
-              "x": 32,
-              "y": 404
+              "x": 487,
+              "y": 426
             },
             {
-              "x": 32,
-              "y": 1599
+              "x": 487,
+              "y": 1643
             },
             {
-              "x": 90,
-              "y": 1599
+              "x": 419,
+              "y": 1643
             },
             {
-              "x": 90,
-              "y": 1625
+              "x": 419,
+              "y": 1669
             }
           ]
         ],
         "caption": {
-          "x": 284,
-          "y": 367
+          "x": 285,
+          "y": 389
         }
       },
       {
@@ -1095,18 +1177,18 @@
         "points": [
           [
             {
-              "x": 320,
-              "y": 641
+              "x": 189,
+              "y": 663
             },
             {
-              "x": 320,
-              "y": 716
+              "x": 189,
+              "y": 738
             }
           ]
         ],
         "caption": {
-          "x": 369.5,
-          "y": 660
+          "x": 238.5,
+          "y": 682
         }
       },
       {
@@ -1117,18 +1199,18 @@
         "points": [
           [
             {
-              "x": 320,
-              "y": 784
+              "x": 189,
+              "y": 806
             },
             {
-              "x": 320,
-              "y": 859
+              "x": 189,
+              "y": 881
             }
           ]
         ],
         "caption": {
-          "x": 389,
-          "y": 803
+          "x": 258,
+          "y": 825
         }
       },
       {
@@ -1139,18 +1221,18 @@
         "points": [
           [
             {
-              "x": 320,
-              "y": 927
+              "x": 189,
+              "y": 949
             },
             {
-              "x": 320,
-              "y": 1002
+              "x": 189,
+              "y": 1024
             }
           ]
         ],
         "caption": {
-          "x": 350,
-          "y": 946
+          "x": 219,
+          "y": 968
         }
       },
       {
@@ -1161,18 +1243,18 @@
         "points": [
           [
             {
-              "x": 353,
-              "y": 1070
+              "x": 156,
+              "y": 1092
             },
             {
-              "x": 353,
-              "y": 1152
+              "x": 156,
+              "y": 1174
             }
           ]
         ],
         "caption": {
-          "x": 389.5,
-          "y": 1089
+          "x": 192.5,
+          "y": 1111
         }
       },
       {
@@ -1183,18 +1265,18 @@
         "points": [
           [
             {
-              "x": 353,
-              "y": 1220
+              "x": 156,
+              "y": 1242
             },
             {
-              "x": 353,
-              "y": 1295
+              "x": 156,
+              "y": 1317
             }
           ]
         ],
         "caption": {
-          "x": 383,
-          "y": 1239
+          "x": 186,
+          "y": 1261
         }
       },
       {
@@ -1205,18 +1287,18 @@
         "points": [
           [
             {
-              "x": 386,
-              "y": 1363
+              "x": 123,
+              "y": 1385
             },
             {
-              "x": 386,
-              "y": 1475
+              "x": 123,
+              "y": 1519
             }
           ]
         ],
         "caption": {
-          "x": 429,
-          "y": 1382
+          "x": 166,
+          "y": 1404
         }
       },
       {
@@ -1227,26 +1309,26 @@
         "points": [
           [
             {
-              "x": 320,
-              "y": 1363
-            },
-            {
-              "x": 320,
-              "y": 1419
+              "x": 189,
+              "y": 1385
             },
             {
               "x": 189,
-              "y": 1419
+              "y": 1463
             },
             {
-              "x": 189,
-              "y": 1475
+              "x": 320,
+              "y": 1463
+            },
+            {
+              "x": 320,
+              "y": 1519
             }
           ]
         ],
         "caption": {
-          "x": 350,
-          "y": 1382
+          "x": 219,
+          "y": 1426
         }
       },
       {
@@ -1257,18 +1339,18 @@
         "points": [
           [
             {
-              "x": 156,
-              "y": 1543
+              "x": 353,
+              "y": 1587
             },
             {
-              "x": 156,
-              "y": 1625
+              "x": 353,
+              "y": 1669
             }
           ]
         ],
         "caption": {
-          "x": 186,
-          "y": 1562
+          "x": 383,
+          "y": 1606
         }
       },
       {
@@ -1279,26 +1361,26 @@
         "points": [
           [
             {
-              "x": 123,
-              "y": 1475
+              "x": 386,
+              "y": 1519
             },
             {
-              "x": 123,
-              "y": 1126
+              "x": 386,
+              "y": 1148
             },
             {
-              "x": 287,
-              "y": 1126
+              "x": 222,
+              "y": 1148
             },
             {
-              "x": 287,
-              "y": 1070
+              "x": 222,
+              "y": 1092
             }
           ]
         ],
         "caption": {
-          "x": 166,
-          "y": 1456
+          "x": 429,
+          "y": 1500
         }
       },
       {
@@ -1309,18 +1391,18 @@
         "points": [
           [
             {
-              "x": 386,
-              "y": 1543
+              "x": 123,
+              "y": 1587
             },
             {
-              "x": 386,
-              "y": 1625
+              "x": 123,
+              "y": 1669
             }
           ]
         ],
         "caption": {
-          "x": 416,
-          "y": 1562
+          "x": 153,
+          "y": 1606
         }
       },
       {
@@ -1331,40 +1413,40 @@
         "points": [
           [
             {
-              "x": 386,
-              "y": 1693
+              "x": 123,
+              "y": 1737
             },
             {
-              "x": 386,
-              "y": 1768
+              "x": 123,
+              "y": 1812
             }
           ]
         ],
         "caption": {
-          "x": 435.5,
-          "y": 1712
+          "x": 172.5,
+          "y": 1756
         }
       },
       {
         "from": "after:finish",
-        "to": "merge",
-        "label": "マージ待ち",
+        "to": "review",
+        "label": "レビュー依頼待ち",
         "id": "edge-15",
         "points": [
           [
             {
-              "x": 386,
-              "y": 1836
+              "x": 123,
+              "y": 1880
             },
             {
-              "x": 386,
-              "y": 1911
+              "x": 123,
+              "y": 1955
             }
           ]
         ],
         "caption": {
-          "x": 435.5,
-          "y": 1855
+          "x": 192,
+          "y": 1899
         }
       },
       {
@@ -1375,71 +1457,105 @@
         "points": [
           [
             {
-              "x": 386,
-              "y": 2092
+              "x": 123,
+              "y": 2136
             },
             {
-              "x": 386,
-              "y": 2167
+              "x": 123,
+              "y": 2211
             }
           ]
         ],
         "caption": {
-          "x": 416,
-          "y": 2111
+          "x": 153,
+          "y": 2155
         }
       },
       {
-        "from": "merge",
+        "from": "review",
         "to": "before:cleanup",
         "id": "edge-17",
         "points": [
           [
             {
-              "x": 386,
-              "y": 1979
+              "x": 123,
+              "y": 2023
             },
             {
-              "x": 386,
-              "y": 2024
+              "x": 123,
+              "y": 2068
             }
           ]
         ]
       },
       {
         "from": "step:cleanup",
-        "to": "end",
-        "label": "片付け成功",
+        "to": "merge",
+        "label": "マージ待ち",
         "id": "edge-18",
         "points": [
           [
             {
-              "x": 386,
-              "y": 2235
+              "x": 123,
+              "y": 2279
             },
             {
-              "x": 386,
-              "y": 2310
+              "x": 123,
+              "y": 2354
             }
           ]
         ],
         "caption": {
-          "x": 435.5,
-          "y": 2254
+          "x": 172.5,
+          "y": 2298
         }
       },
       {
-        "from": "detect",
-        "to": "before:repro",
+        "from": "merge",
+        "to": "step:complete",
         "id": "edge-19",
         "points": [
           [
             {
-              "x": 287,
+              "x": 123,
+              "y": 2422
+            },
+            {
+              "x": 123,
+              "y": 2467
+            }
+          ]
+        ]
+      },
+      {
+        "from": "step:complete",
+        "to": "end",
+        "id": "edge-20",
+        "points": [
+          [
+            {
+              "x": 123,
+              "y": 2535
+            },
+            {
+              "x": 123,
+              "y": 2580
+            }
+          ]
+        ]
+      },
+      {
+        "from": "detect",
+        "to": "before:repro",
+        "id": "edge-21",
+        "points": [
+          [
+            {
+              "x": 222,
               "y": 92
             },
             {
-              "x": 287,
+              "x": 222,
               "y": 137
             }
           ]
@@ -1456,7 +1572,7 @@
         "id": "stage",
         "label": "Stage を読む",
         "kind": "service",
-        "detail": "起動条件に合う Step を選びます。テンプレートの条件は 未着手 → repro（start: manual）、再現済 → refine、Issue更新済 → implement（assign: manual）、修正中 → verify（verify_start: auto）、検証済 → finish（finish_start: auto）、PR マージ後 → cleanup（cleanup: auto） です。",
+        "detail": "起動条件に合う Step を選びます。テンプレートの条件は 未着手 → repro（start: manual）、再現済 → refine、Issue更新済 → implement（assign: manual）、修正中 → verify（verify_start: auto）、検証済 → finish（finish_start: auto）、指定ユーザーへのレビュー依頼後 → cleanup（cleanup: auto）、PR マージ後 → complete です。",
         "icon": "folder",
         "x": 254,
         "y": 24,

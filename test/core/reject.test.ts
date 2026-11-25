@@ -95,11 +95,9 @@ it('does not manufacture an after gate, an automatic gate or a nonexistent issue
     expect(h.a.stages.ensure).not.toHaveBeenCalled()
     expect(h.a.stages.set).not.toHaveBeenCalled()
 })
-it('does not allocate any step, including merged cleanup, for the rejected stage', async () => {
+it('does not allocate cleanup for the rejected stage even with a matching review request', async () => {
     const h = await setup({ stage: '対象外' })
-    const p = pr()
-    p.state = 'merged'
-    h.prs.set(1, [p])
+    h.prs.set(1, [{ ...pr(), requestedReviewers: ['reviewer-one'] }])
     await h.o.tick()
     await h.o.tick()
     expect((await h.o.states.read(1))?.step).toBeNull()

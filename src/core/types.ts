@@ -17,6 +17,7 @@ export type TrackerPR = {
     isDraft: boolean
     author: string
     url: string
+    requestedReviewers?: string[]
 }
 export type WorkspaceInfo = {
     key: string
@@ -133,6 +134,7 @@ export type Step = {
     db_reset?: boolean
     when_stage?: string
     when_pr_merged?: boolean
+    when_pr_review_requested?: string[]
     gate_before?: string
     gate_after?: string
     /** gate_before で `--choice skip` を受け付け、step を実行せずに完了にする。 */

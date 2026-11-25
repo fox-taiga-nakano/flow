@@ -76,7 +76,7 @@ describe('GitHub snapshots', () => {
         expect(exec.run.mock.calls.every(([r]) => !/gh (issue|pr) view/.test(r.command))).toBe(true)
     })
 
-    it('batches non-candidates once and preserves merged cleanup, closed/unassigned cancellation, and missing issues', async () => {
+    it('batches non-candidates and checks review requests before closed/unassigned cancellation', async () => {
         const h = await harness({ count: 4 })
         roots.push(h.dir)
         h.workflow.gates.start = 'manual'
@@ -90,7 +90,17 @@ describe('GitHub snapshots', () => {
                     return JSON.stringify([rawIssue(1)])
                 }
                 if (r.command.startsWith('gh pr list')) {
-                    return JSON.stringify([rawPR(102, [2], 'MERGED')])
+                    expect(r.command).toContain('reviewRequests')
+                    return JSON.stringify([
+                        {
+                            ...rawPR(102, [2]),
+                            reviewRequests: [{ __typename: 'User', login: 'reviewer-two' }],
+                        },
+                        {
+                            ...rawPR(103, [3]),
+                            reviewRequests: [{ __typename: 'Team', slug: 'reviewer-one' }],
+                        },
+                    ])
                 }
                 if (r.command.startsWith('gh api graphql')) {
                     expect(r.command).toContain('query($owner:String!,$repo:String!)')
@@ -129,9 +139,9 @@ describe('GitHub snapshots', () => {
                 state.status = 'stopped'
             }
             if (n === 3) {
-                // cleanup まで終わった done。cleanup 前の done（マージ待ち）は PR のマージを見続ける
+                // マージ後の完了処理まで済んだ Issue。
                 state.status = 'done'
-                state.completed = ['cleanup']
+                state.completed = ['cleanup', 'complete']
             }
             if (n === 4) {
                 h.stages.set(n, h.workflow.stage_store.rejected)

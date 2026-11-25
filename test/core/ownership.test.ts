@@ -166,9 +166,7 @@ describe('verify start and worktree ownership', () => {
         state.workspace = ws
         state.agent = { runner: 'herdr', name: 'verify-3170', paneId: 'human:p1' }
         await h.o.save(state)
-        const merged = pr()
-        merged.state = 'merged'
-        h.prs.set(1, [merged])
+        h.prs.set(1, [{ ...pr(), requestedReviewers: ['reviewer-one'] }])
         await h.o.tick()
         await h.o.control(1, 'approve', { gate: 'cleanup' })
         await h.o.tick()
@@ -185,9 +183,7 @@ describe('verify start and worktree ownership', () => {
         const state = (await h.o.states.read(1))!
         state.workspaces.push(foreign)
         await h.o.save(state)
-        const merged = pr()
-        merged.state = 'merged'
-        h.prs.set(1, [merged])
+        h.prs.set(1, [{ ...pr(), requestedReviewers: ['reviewer-one'] }])
         await h.o.tick()
         await h.o.control(1, 'approve', { gate: 'cleanup' })
         await h.o.tick()

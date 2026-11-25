@@ -664,7 +664,11 @@ export class Orchestrator {
                 !s.workspaces.some((x) => path.resolve(x.path) === path.resolve(w.path))
         )
         // 引き継ぎは adopt_workspace が auto のときだけ。manual なら step の開始時に承認を求める（従来どおり）
-        if (foreign.length && this.workflow.gates.adopt_workspace === 'auto') {
+        const cleaned = s.completed.some((name) => {
+            const step = this.workflow.steps[name]
+            return step?.when_pr_review_requested && step.action?.remove_workspaces
+        })
+        if (!cleaned && foreign.length && this.workflow.gates.adopt_workspace === 'auto') {
             const branches = new Set(
                 (await this.a.tracker.findPullRequests(s.issue)).filter((p) => p.state === 'open').map((p) => p.branch)
             )
@@ -694,16 +698,37 @@ export class Orchestrator {
             await this.save(s)
         }
     }
-    /** done でも、マージ後の cleanup がまだなら PR のマージを見続ける（finish の done は「マージ待ち」） */
-    awaitingCleanup(s: State): boolean {
-        const cleanup = Object.entries(this.workflow.steps).find(([, step]) => step.when_pr_merged)
-        return s.status === 'done' && !!cleanup && !s.completed.includes(cleanup[0])
+    private pendingPrSteps(s: State): [string, Step][] {
+        const entries = Object.entries(this.workflow.steps)
+        if (entries.some(([name, step]) => step.when_pr_merged && s.completed.includes(name))) {
+            return []
+        }
+        return entries.filter(
+            ([name, step]) =>
+                (step.when_pr_merged || !!step.when_pr_review_requested?.length) && !s.completed.includes(name)
+        )
+    }
+    private selectPrStep(pending: [string, Step][], prs: TrackerPR[]): [string, Step] | undefined {
+        const merge = pending.find(([, step]) => step.when_pr_merged)
+        if (merge && prs.some((pr) => pr.state === 'merged')) {
+            return merge
+        }
+        return pending.find(([, step]) => {
+            const users = new Set(step.when_pr_review_requested?.map((login) => login.toLowerCase()))
+            return prs.some(
+                (pr) => pr.state === 'open' && pr.requestedReviewers?.some((login) => users.has(login.toLowerCase()))
+            )
+        })
     }
     async reconcile(s: State, candidates: Set<number>, knownIssue?: TrackerIssue): Promise<void> {
-        if (s.status === 'stopped' || (s.status === 'failed' && !s.retainResources)) {
-            return
-        }
-        if (s.status === 'done' && !this.awaitingCleanup(s)) {
+        const pending = this.pendingPrSteps(s)
+        const currentPrStep = pending.find(([name]) => name === s.step)?.[1]
+        const failed = s.status === 'failed' && !s.retainResources
+        if (
+            s.status === 'stopped' ||
+            (s.status === 'done' && pending.length === 0) ||
+            (failed && !currentPrStep?.when_pr_review_requested)
+        ) {
             return
         }
         if ((await this.a.stages.get(s.issue)) === this.workflow.stage_store.rejected) {
@@ -711,30 +736,43 @@ export class Orchestrator {
         }
         const issue = knownIssue ?? (await this.a.tracker.getIssue(s.issue))
         const prs = await this.a.tracker.findPullRequests(s.issue)
-        const cleanup = Object.entries(this.workflow.steps).find(([, step]) => step.when_pr_merged)
-        if (cleanup && s.step === cleanup[0] && !s.completed.includes(cleanup[0])) {
+        const selected = this.selectPrStep(pending, prs)
+        if (failed && !selected?.[1].when_pr_merged) {
             return
         }
-        if (cleanup && prs.some((p) => p.state === 'merged') && !s.completed.includes(cleanup[0])) {
-            // Cleanup has precedence over the closed-issue cancellation rule.
+        if (selected && selected[0] !== s.step) {
+            // PR-triggered steps take precedence over the closed-issue cancellation rule.
             if (s.agent || s.worker) {
                 await this.stopAndClose(s)
             }
             await this.release(s)
             s.startedAt = null
-            s.step = cleanup[0]
+            s.step = selected[0]
             s.status = 'idle'
             s.gate = null
             s.attempt = 0
             s.agent = null
+            s.nextRetryAt = null
+            s.resultReminder = false
+            delete s.continuation
+            delete s.pendingResult
+            delete s.approvedGate
+            delete s.launchPending
+            delete s.initialPrompt
+            delete s.inflight
+            delete s.dbReset
+            delete s.keepWorkspaces
+            delete s.baseChange
+            delete s.baseAccepted
+            delete s.remoteRetry
             await this.save(s)
             return
         }
-        // マージ待ちの done は、マージを見るだけで、ほかの判定（Issue の close・base の変更など）はしない
+        // レビュー依頼やマージを待つ done は、PR の条件だけを確認する。
         if (s.status === 'done') {
             return
         }
-        if (!issue || issue.state === 'closed' || !candidates.has(s.issue)) {
+        if (!currentPrStep && (!issue || issue.state === 'closed' || !candidates.has(s.issue))) {
             if ((s.agent || s.worker) && (['running', 'waiting_gate'].includes(s.status) || s.retainResources)) {
                 await this.stopAndClose(s)
             }
@@ -746,7 +784,7 @@ export class Orchestrator {
             await this.notify(s, '対象外のため停止', 'Issue が閉じられた、アサインが外れた、または取得条件の対象外です')
             return
         }
-        if (!(await this.checkBase(s, prs))) {
+        if (!currentPrStep && !(await this.checkBase(s, prs))) {
             return
         }
         if (s.retainResources && (s.agent || s.worker)) {
@@ -939,12 +977,10 @@ export class Orchestrator {
             return null
         }
         const prs = await this.a.tracker.findPullRequests(s.issue)
-        const cleanup = Object.entries(this.workflow.steps).find(
-            ([name, step]) =>
-                step.when_pr_merged && prs.some((p) => p.state === 'merged') && !s.completed.includes(name)
-        )
-        if (cleanup) {
-            return cleanup
+        const pending = this.pendingPrSteps(s)
+        const prStep = this.selectPrStep(pending, prs) ?? pending.find(([name]) => name === s.step)
+        if (prStep) {
+            return prStep
         }
         const choices = Object.entries(this.workflow.steps).filter(([, step]) => step.when_stage === stage)
         if (choices.length > 1) {
@@ -1362,7 +1398,7 @@ export class Orchestrator {
                 const active: State[] = []
                 for (const s of states) {
                     try {
-                        if (s.status === 'stopped' || (s.status === 'done' && !this.awaitingCleanup(s))) {
+                        if (s.status === 'stopped' || (s.status === 'done' && this.pendingPrSteps(s).length === 0)) {
                             continue
                         }
                         if ((await this.a.stages.get(s.issue)) === this.workflow.stage_store.rejected) {
